@@ -9,7 +9,7 @@
 # 
 # Author:   Sonja Petrovic <Sonja.Petrovic@iit.edu>
 # For: Tobias Windisch <windisch@ovgu.de>
-# Date: January 2016.  Ongoing work May 2016 - what is going on with commandline git?:( boo
+# Date: January 2016.  Ongoing work May 2016 - reworking so it fits within grand scheme of DMBHGraph!
 ################################################################################################
 
 
