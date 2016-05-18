@@ -285,31 +285,38 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
   mleMatr = fm$fit
   return (mleMatr)
 }
- ########################################################################
-# Get.GoF.Statistic													#
-# Estimates difference between current network and MLE					#
-# Input:																#
-# - gdir:    directed graph 						                  	#
-# - gbidir:  bidirected graph 						                  	#
-# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	#
- ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, mleMatr){
-	confMatr = Get.Configuration.Matrix(gdir,gbidir)
-	diff = confMatr-mleMatr
-	gf=0
-	for (i in 1:nrow(mleMatr)){
-		for (j in 1:ncol(mleMatr)){
-			if (!is.nan(diff[i,j])){
-				if(diff[i,j]^2 !=0){
-#					gf = gf + (diff[i,j]^2)/(mleMatr[i,j]^2)
-					gf = gf + (diff[i,j]^2)/(mleMatr[i,j])
-					if (gf==Inf) {return(Inf)}
-				}
-			}
-			else print("Warning: NaN occurence in Get.GoF.Statistic")
-		}
-	}
-	return(gf)
+########################################################################
+# Get.GoF.Statistic           							                                          #
+# Estimates goodness of fit  (GoF) statistic between current network and MLE					                      #
+# Input:																                                              #
+# - confMatr:  current network in the form of the mle 						                  	#
+# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	            #
+# - model: the model under which the mle has been calculated                          #
+########################################################################
+Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
+  if (model=="p1HL"){
+    confMatr = Get.Configuration.Matrix(gdir,gbidir)    
+  }
+  return (Chi.Square.Statistic(confMatr,mleMatr))
+}
+########################################################################            #
+# Chi.Square.Statistic      									                          	          #
+# Returns chi-square statistic between matrix confMatr and the mle matrix mleMatr  #
+# Input:																                                            #
+# - confMatr: matrix representing network or contigency table 				              #
+# - mleMatr: the mle or extended mle in the same format as confMatr                 #
+########################################################################
+Chi.Square.Statistic<- function(confMatr,mleMatr){
+  # Check that dimensions of confMatr and mleMatr are the same
+  if (length(dim(confMatr))!=length(dim(confMatr)) ||  all(dim(confMatr)!=dim(confMatr))){
+    stop("Error in Chi.Square.Statistic: confMatr & mleMatr are non-conformable arrays.")
+  }
+  gofArr= (confMatr-mleMatr)^2./mleMatr
+  indNAN = which(is.nan(gofArr))
+  indInf = which(is.infinite(gofArr))
+  gofArr[indNAN]=0
+  gf = sum(gofArr)
+  return(gf)
 }
  #######################################################################
 # Returns a 4x(n choose 2) matrix where each row is an indicator        #
