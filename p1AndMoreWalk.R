@@ -296,6 +296,8 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
 Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
   if (model=="p1HL"){
     confMatr = Get.Configuration.Matrix(gdir,gbidir)    
+  }else if (model=="p1loglinpckg"){
+    confMatr = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)  
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
 }
