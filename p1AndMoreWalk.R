@@ -253,6 +253,38 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 	mleMatr = t(matrix(out[[1]], nrow = 4))
 	return (mleMatr)
 }
+#######################################################################
+# Returns the MLE in the form of an n x n x 2 x 2 matrix where        #
+# each cell i,j,k,l equals 1 if                                       #
+# the dyad (i, j) in in state (k.l) where the states (k.l) are        #
+# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #
+#######################################################################
+Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  n=max(nd,nb)
+  if (nd>nb){
+    gbidir = add.vertices(gbidir,nd-nb)	
+  }
+  else if (nd<nb){
+    gdir = add.vertices(gdir,nb-nd)	
+  } 
+  m = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)
+  # ensure structural zeros at diagonals
+  startM =array(data=0.25, dim=c(n,n,2,2))
+  for (i in 1:n){
+    startM[i,i,,]=c(0,0,0,0)    
+  }
+  if (reciprocation=="edge-dependent"){
+    fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter)
+  }  else if (reciprocation=="const"){
+    fm <- loglin(m, list(c(1,2), c(3,4),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  } else if (reciprocation=="zero"){
+    fm <- loglin(m, list(c(1,2),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  }  
+  mleMatr = fm$fit
+  return (mleMatr)
+}
  ########################################################################
 # Get.GoF.Statistic													#
 # Estimates difference between current network and MLE					#
@@ -322,6 +354,44 @@ Get.Configuration.Matrix<-function(gdir,gbidir){
 	}
 	x[,1]=matrix(1,nrow = nrows, ncol=1)-x[,2]-x[,3]-x[,4]
 	return(x)
+}
+#######################################################################
+# Returns an n x n x 2 x 2 matrix where each cell i,j,k,l equals 1 if  #
+# the dyad (i, j) in in state (k.l) where the states (k.l) are        #
+# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)      			    #
+#######################################################################
+Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
+  num.vertices = max(vcount(gdir), vcount(gbidir))
+  x = array(data=0, dim=c(num.vertices,num.vertices,2,2))	
+  gdir.vector = as.vector(t(get.edgelist(gdir)))
+  gbidir.vector = as.vector(t(get.edgelist(gbidir)))
+  
+  if(ecount(gdir)!=0){
+    for(k in seq(1,2*ecount(gdir),2)){
+      i=gdir.vector[k]
+      j=gdir.vector[k+1]
+      x[i,j,2,1]=1
+      x[j,i,1,2]=1    
+    }
+  }
+  if(ecount(gbidir)!=0){
+    for(k in seq(1,2*ecount(gbidir),2)){
+      i=gbidir.vector[k]
+      j=gbidir.vector[k+1]
+      x[i,j,2,2]=1      
+      x[j,i,2,2]=1        
+    }
+  }
+  gcompl.vector= as.vector(t(get.edgelist(graph.complementer(graph.union(as.undirected(gdir),gbidir)))))
+  if(length(gcompl.vector)!=0){
+    for(k in seq(1,2*ecount(gbidir),2)){
+      i=gcompl.vector[k]
+      j=gcompl.vector[k+1]
+      x[i,j,1,1]=1      
+      x[j,i,1,1]=1            
+    }
+  }
+  return(x)
 }
  #######################################################################
 # Write.Walk.To.File: 												#
