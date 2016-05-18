@@ -82,10 +82,13 @@ Get.Bidirected.Move.Zeros <- function(d, b, zeros) {
 # Output: 
 #         The network obtained by applying a random move obtained by Get.Bidirected.Move.Zeros
 #         true/false flag to indicated if a move was empty (no cycle produced on this attempt)
+#
+# WARNING: SONJA, THIS OUTPUT TRUE/FALSE FLAG CLASHES(?) WITH THE ONE CRATED IN Get.Next.Network's trivial.move OPTION IN  p1AndMoreWalk.R!....
+#
 # Notes:
 #         We may stay at the same place. 
 Get.Next.Network.Zeros <- function(d,b,zeros){        #},coin=c(0,1,0){
-  empty.move=TRUE
+  trivial.move=TRUE
   bidir.move = Get.Bidirected.Move.Zeros(d,b,zeros)
   markov.move = list(graph.empty(vcount(d)),graph.empty(vcount(d)),bidir.move[[1]],bidir.move[[2]])
   if (!ecount(markov.move[[3]])==0){ 
@@ -95,7 +98,7 @@ Get.Next.Network.Zeros <- function(d,b,zeros){        #},coin=c(0,1,0){
     str(markov.move[[4]])
   }
   if (!ecount(markov.move[[1]])==0 || !ecount(markov.move[[3]])==0){
-    empty.move=FALSE
+    trivial.move=FALSE
     new.directed.graph = d
     #    new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])
     # oops have to worry about graph.union taking only simple graphs - it messes me up slightly. here is a quick fix:
@@ -108,7 +111,7 @@ Get.Next.Network.Zeros <- function(d,b,zeros){        #},coin=c(0,1,0){
     new.directed.graph = d
     new.bidirected.graph = b
   }
-  return(list(new.directed.graph,new.bidirected.graph,empty.move))		 
+  return(list(new.directed.graph,new.bidirected.graph,trivial.move))		 
 }
 #######################################################################
 

@@ -16,7 +16,6 @@ setwd("~/Dropbox/DynamicMarkov-p1/R code") #change this of course
 # Go and download the following file first: p1walk.R from this location: 
 # http://math.iit.edu/~spetrov1/DynamicP1supplement/p1walk.R 
 source('p1walk.R') # See comment on line 19 of GetCyclesWithZeros.R # 
-
 setwd("~/Dropbox/Tobias") #change this of course
 source('GetCyclesWithZeros.R')
 
@@ -99,6 +98,10 @@ for(i in 1: steps.for.walk){
   }
 }
 ##########################################################################################
+
+# SAVING THE PLOTS OF A WALK IN THE FILE: 
+Save.Walk.Plots(gdir,gbidir,single.file=TRUE,grid=c(3,3),plot.trivial.moves=FALSE)
+
 
 
 ##########################################################################################
