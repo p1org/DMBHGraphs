@@ -365,16 +365,38 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # walk (in a mac) is to select all generated files and open in preview 	#
 # and use the down arrow to view each one. Should possibly be replaced 	#
 # by an animation function sometime in the future.						#
+# ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
  #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, steps=20,coin=c(1/3,1/3,1/3)){
+Save.Walk.Plots<-function(gdir,gbidir, steps=20,coin=c(1/3,1/3,1/3),single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE){
 	network = list(gdir,gbidir)
-	for (i in 1:steps){
-		network = Get.Next.Network(network[[1]],network[[2]], coin)
-		filename = sprintf("FiberWalk%d.png",i)
-		png(filename,width=800, height=600,bg="white")
-		Plot.Mixed.Graph(network[[1]],network[[2]])	
-		dev.off()
-	}
+  if(!single.file){
+    png("FiberWalk0.png",width=800, height=600,bg="white")
+    Plot.Mixed.Graph(network[[1]],network[[2]])  
+    dev.off()
+    for (i in 1:steps){
+      network = Get.Next.Network(network[[1]],network[[2]], coin)
+      filename = sprintf("FiberWalk%d.png",i)
+      png(filename,width=800, height=600,bg="white")
+      Plot.Mixed.Graph(network[[1]],network[[2]])	
+      dev.off()
+    }     
+  }else{
+    pdf("FiberWalk")
+    # I like to plot pictures in grid format to see more than one at a time; default = 4x4 grid
+    par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
+    Plot.Mixed.Graph(network[[1]],network[[2]])      
+    for (i in 1:steps){
+      network = Get.Next.Network(network[[1]],network[[2]], coin)
+      if(!network[[3]]){
+        if(plot.trivial.moves){ 
+          Plot.Mixed.Graph(network[[1]],network[[2]])                  
+        }
+      }else{
+        Plot.Mixed.Graph(network[[1]],network[[2]])                        
+      }
+    }
+    dev.off()
+  }
 }
  #######################################################################
 # Plot.Walk 															#
@@ -416,6 +438,11 @@ Plot.Mixed.Graph<- function(gdir,gbidir){
 #	Optional input:
 #		- coin:  a fair coin by default. 
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
+# Output:
+#   - list of 3 things:
+#   1) new.directed.graph,
+#   2) new.bidirected.graph,
+#   3) boolean flag trivial.move
 # Given a mixed graph G=(d,b) returns new mixed graph G' in the p1 fiber
 # F(G) with reciprocation after applying a random Graver basis element 
 # The move could be 		#
@@ -425,6 +452,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir){
  #######################################################################
 Get.Next.Network <- function(d,b,coin=c(1/3,1/3,1/3)){
   	markov.move = Get.Move(d,b,coin)
+    trivial.move=FALSE
 	if (!ecount(markov.move[[1]])==0 || !ecount(markov.move[[3]])==0){
 		#d minus directed.to.be.removed plus directed.to.be.added:
 		new.directed.graph = graph.union(graph.difference(d,markov.move[[1]]),markov.move[[2]])
@@ -434,10 +462,11 @@ Get.Next.Network <- function(d,b,coin=c(1/3,1/3,1/3)){
 	} 
 	else{
 		#empty move, graphs unchanged
+    trivial.move=TRUE
 		new.directed.graph = d
 		new.bidirected.graph = b
 	}
-	return(list(new.directed.graph,new.bidirected.graph))		
+	return(list(new.directed.graph,new.bidirected.graph,trivial.move))		
 
 }
  #######################################################################
@@ -641,12 +670,16 @@ Get.Bidirected.Piece <- function(b) {
 	return(Get.Directed.Piece(b.directed))
 }
  #######################################################################
-# Bipartite.Walk														#
+# Bipartite.Walk														                          #
 # Given a (randomized) list of edges (edges.to.remove) return a list 	#
-# of edges (edges.to.add) that complete an even closed walk by 			#
-# connecting the endpoints of successive edges.							#
- #######################################################################
-Bipartite.Walk <- function(edges.to.remove) {
+# of edges (edges.to.add) that complete an even closed walk by 			  #
+# connecting the endpoints of successive edges.							          #
+# This can be thought of as an operation on the parameter graph       #
+# The simple optional input simpleOnly makes sures only squarefree    #
+# move are produced.                                                  #
+# multiplicity.bound TODO.					#
+#######################################################################
+Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=NULL) {
 	#connect head of (i+1)st edge to tail of ith edge to complete a walk:
 	num.edges = nrow(edges.to.remove)
 	edges.to.add = c()
@@ -655,9 +688,18 @@ Bipartite.Walk <- function(edges.to.remove) {
 	}
 	edges.to.add = c(edges.to.add, edges.to.remove[1, 1], edges.to.remove[num.edges, 
 		2])
-	# Ensure that edges.to.add form no loops or multiple edges
-	if (!is.simple(graph(edges.to.add))) 
-		return(NULL)
+  if (simple.only){
+  	# Ensure that edges.to.add form no loops or multiple edges
+  	if (!is.simple(graph(edges.to.add))) 
+	  	return(NULL)
+  }
+#  if (multiplicity.bound!=NULL){
+#    #Check that produced edges satisfy given multiplicity bound.
+#    print("TODO: multiplicity.bound")
+#    # numvertices = find number of vertices from multiplicity.bound
+#    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
+#    # return(NULL)
+#  }     
 	return(edges.to.add)
 }
 #######################################################################

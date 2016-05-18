@@ -1,6 +1,7 @@
 ################################################################################################
-# This code loads all the necessary functions to generate one random applicable Markov move on a 
-# contingency table with structural zeros. 
+# This code loads all the necessary functions to generate one random applicable Markov move 
+# for the independence model on a 2-dimensional contingency table with structural zeros. 
+#
 # It does so by taking input consisting of 1) an underlying graph of the problem (i.e., the 
 # parameter hypergraph of the log-linear model), and 2) the current table or graph as a list of 
 # edges. It returns one move, or an empty move if it gets unlucky in that one step. 
@@ -8,15 +9,14 @@
 # Load this file first, and then see ExamplesToGetCyclesWithZeros.R for how to run the code.
 # 
 # Author:   Sonja Petrovic <Sonja.Petrovic@iit.edu>
-# For: Tobias Windisch <windisch@ovgu.de>
+# For working with: Tobias Windisch <windisch@ovgu.de>
 # Date: January 2016.  Ongoing work May 2016 - reworking so it fits within grand scheme of DMBHGraph!
 ################################################################################################
 
 
 ###### prerequisites 
 library("igraph")
-
-# Heads up: You need to ensure to first load p1walk.R -- see the Example file for the 'source' command. 
+# source('~/Dropbox/Code-DynamicMarkovForParameterGraphs/p1walk-refactoring.R')
 
 
 #######################################################################
