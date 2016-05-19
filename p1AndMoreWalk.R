@@ -98,7 +98,11 @@ Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3
 		gdir = add.vertices(gdir,nb-nd)	
 	}
 	
-	mleMatr = Get.MLE.p1.HL(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
+  #!!!!!!!!!!!
+	# TODO: DECIDE if this line will change to call a general Get.MLE and pass to it the model and method of MLE calculation and 
+  # same for Get.GoF.Statistic, and Get.Next.Network
+	#!!!!!!!!!!!
+	mleMatr = Get.MLE.p1.HL(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol) 
 	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
 	if (is.nan(obs.gf)){
 		print("NaN error in calculation of GF statistic.")
