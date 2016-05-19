@@ -16,7 +16,7 @@
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
 
  ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.1){
 	#Error Checking
 	if(!is.simple(as.undirected(gdir,mode=c("each")))){
 		stop("Reciprocated edges in directed graph or gdir not simple.")
@@ -228,8 +228,7 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 	out[[3]]=a
 	out[[4]]=m
 	out[[5]]=Mest
-    #out
-    return(out)
+  return(out)
 }
 
  #######################################################################
