@@ -16,7 +16,7 @@
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
 
  ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){
 	#Error Checking
 	if(!is.simple(as.undirected(gdir,mode=c("each")))){
 		stop("Reciprocated edges in directed graph or gdir not simple.")
@@ -228,8 +228,7 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 	out[[3]]=a
 	out[[4]]=m
 	out[[5]]=Mest
-    #out
-    return(out)
+  return(out)
 }
 
  #######################################################################
@@ -253,31 +252,76 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 	mleMatr = t(matrix(out[[1]], nrow = 4))
 	return (mleMatr)
 }
- ########################################################################
-# Get.GoF.Statistic													#
-# Estimates difference between current network and MLE					#
-# Input:																#
-# - gdir:    directed graph 						                  	#
-# - gbidir:  bidirected graph 						                  	#
-# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	#
- ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, mleMatr){
-	confMatr = Get.Configuration.Matrix(gdir,gbidir)
-	diff = confMatr-mleMatr
-	gf=0
-	for (i in 1:nrow(mleMatr)){
-		for (j in 1:ncol(mleMatr)){
-			if (!is.nan(diff[i,j])){
-				if(diff[i,j]^2 !=0){
-#					gf = gf + (diff[i,j]^2)/(mleMatr[i,j]^2)
-					gf = gf + (diff[i,j]^2)/(mleMatr[i,j])
-					if (gf==Inf) {return(Inf)}
-				}
-			}
-			else print("Warning: NaN occurence in Get.GoF.Statistic")
-		}
-	}
-	return(gf)
+#######################################################################
+# Returns the MLE for the selected version of the p1 model            #
+# in the form of an n x n x 2 x 2 matrix where                        #
+# each cell i,j,k,l equals 1 if                                       #
+# the dyad (i, j) in in state (k.l) where the states (k.l) are        #
+# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #
+# TODO: Either rename method to indicate this is specific to the p1   #
+#   OR replace the parameter reciprocation, with a parameter         #
+# specifying the model                                                #
+#######################################################################
+Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  n=max(nd,nb)
+  if (nd>nb){
+    gbidir = add.vertices(gbidir,nd-nb)	
+  }
+  else if (nd<nb){
+    gdir = add.vertices(gdir,nb-nd)	
+  } 
+  m = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)
+  # ensure structural zeros at diagonals
+  startM =array(data=0.25, dim=c(n,n,2,2))
+  for (i in 1:n){
+    startM[i,i,,]=c(0,0,0,0)    
+  }
+  if (reciprocation=="edge-dependent"){
+    fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter)
+  }  else if (reciprocation=="const"){
+    fm <- loglin(m, list(c(1,2), c(3,4),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  } else if (reciprocation=="zero"){
+    fm <- loglin(m, list(c(1,2),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  }  
+  mleMatr = fm$fit
+  return (mleMatr)
+}
+########################################################################
+# Get.GoF.Statistic           							                                          #
+# Estimates goodness of fit  (GoF) statistic between current network and MLE					                      #
+# Input:																                                              #
+# - confMatr:  current network in the form of the mle 						                  	#
+# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	            #
+# - model: the model under which the mle has been calculated                          #
+########################################################################
+Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
+  if (model=="p1HL"){
+    confMatr = Get.Configuration.Matrix(gdir,gbidir)    
+  }else if (model=="p1loglinpckg"){
+    confMatr = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)  
+  }
+  return (Chi.Square.Statistic(confMatr,mleMatr))
+}
+########################################################################            #
+# Chi.Square.Statistic      									                          	          #
+# Returns chi-square statistic between matrix confMatr and the mle matrix mleMatr  #
+# Input:																                                            #
+# - confMatr: matrix representing network or contigency table 				              #
+# - mleMatr: the mle or extended mle in the same format as confMatr                 #
+########################################################################
+Chi.Square.Statistic<- function(confMatr,mleMatr){
+  # Check that dimensions of confMatr and mleMatr are the same
+  if (length(dim(confMatr))!=length(dim(confMatr)) ||  all(dim(confMatr)!=dim(confMatr))){
+    stop("Error in Chi.Square.Statistic: confMatr & mleMatr are non-conformable arrays.")
+  }
+  gofArr= (confMatr-mleMatr)^2./mleMatr
+  indNAN = which(is.nan(gofArr))
+  indInf = which(is.infinite(gofArr))
+  gofArr[indNAN]=0
+  gf = sum(gofArr)
+  return(gf)
 }
  #######################################################################
 # Returns a 4x(n choose 2) matrix where each row is an indicator        #
@@ -322,6 +366,44 @@ Get.Configuration.Matrix<-function(gdir,gbidir){
 	}
 	x[,1]=matrix(1,nrow = nrows, ncol=1)-x[,2]-x[,3]-x[,4]
 	return(x)
+}
+#######################################################################
+# Returns an n x n x 2 x 2 matrix where each cell i,j,k,l equals 1 if  #
+# the dyad (i, j) in in state (k.l) where the states (k.l) are        #
+# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)      			    #
+#######################################################################
+Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
+  num.vertices = max(vcount(gdir), vcount(gbidir))
+  x = array(data=0, dim=c(num.vertices,num.vertices,2,2))	
+  gdir.vector = as.vector(t(get.edgelist(gdir)))
+  gbidir.vector = as.vector(t(get.edgelist(gbidir)))
+  
+  if(ecount(gdir)!=0){
+    for(k in seq(1,get.length(gdir.vector),2)){
+      i=gdir.vector[k]
+      j=gdir.vector[k+1]
+      x[i,j,2,1]=1
+      x[j,i,1,2]=1    
+    }
+  }
+  if(ecount(gbidir)!=0){
+    for(k in seq(1,get.length(gbidir.vector),2)){
+      i=gbidir.vector[k]
+      j=gbidir.vector[k+1]
+      x[i,j,2,2]=1      
+      x[j,i,2,2]=1        
+    }
+  }
+  gcompl.vector= as.vector(t(get.edgelist(graph.complementer(graph.union(as.undirected(gdir),gbidir)))))
+  if(length(gcompl.vector)!=0){
+    for(k in seq(1,length(gcompl.vector),2)){
+      i=gcompl.vector[k]
+      j=gcompl.vector[k+1]
+      x[i,j,1,1]=1
+      x[j,i,1,1]=1            
+    }
+  }
+  return(x)
 }
  #######################################################################
 # Write.Walk.To.File: 												#
