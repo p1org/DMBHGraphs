@@ -16,7 +16,7 @@
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
 
  ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.1){
+Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){
 	#Error Checking
 	if(!is.simple(as.undirected(gdir,mode=c("each")))){
 		stop("Reciprocated edges in directed graph or gdir not simple.")
@@ -253,10 +253,14 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 	return (mleMatr)
 }
 #######################################################################
-# Returns the MLE in the form of an n x n x 2 x 2 matrix where        #
+# Returns the MLE for the selected version of the p1 model            #
+# in the form of an n x n x 2 x 2 matrix where                        #
 # each cell i,j,k,l equals 1 if                                       #
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
 # i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #
+# TODO: Either rename method to indicate this is specific to the p1   #
+#   OR replace the parameter reciprocation, with a parameter         #
+# specifying the model                                                #
 #######################################################################
 Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
   nd = vcount(gdir)
