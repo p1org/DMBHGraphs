@@ -375,7 +375,7 @@ Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
   gbidir.vector = as.vector(t(get.edgelist(gbidir)))
   
   if(ecount(gdir)!=0){
-    for(k in seq(1,2*ecount(gdir),2)){
+    for(k in seq(1,get.length(gdir.vector),2)){
       i=gdir.vector[k]
       j=gdir.vector[k+1]
       x[i,j,2,1]=1
@@ -383,7 +383,7 @@ Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
     }
   }
   if(ecount(gbidir)!=0){
-    for(k in seq(1,2*ecount(gbidir),2)){
+    for(k in seq(1,get.length(gbidir.vector),2)){
       i=gbidir.vector[k]
       j=gbidir.vector[k+1]
       x[i,j,2,2]=1      
@@ -392,10 +392,10 @@ Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
   }
   gcompl.vector= as.vector(t(get.edgelist(graph.complementer(graph.union(as.undirected(gdir),gbidir)))))
   if(length(gcompl.vector)!=0){
-    for(k in seq(1,2*ecount(gbidir),2)){
+    for(k in seq(1,length(gcompl.vector),2)){
       i=gcompl.vector[k]
       j=gcompl.vector[k+1]
-      x[i,j,1,1]=1      
+      x[i,j,1,1]=1
       x[j,i,1,1]=1            
     }
   }
