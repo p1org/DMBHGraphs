@@ -99,7 +99,7 @@ Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3
 	}
 	
 	mleMatr = Get.MLE.p1.HL(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
-	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr, model="p1.HLalg.nzconst")
+	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
 	if (is.nan(obs.gf)){
 		print("NaN error in calculation of GF statistic.")
 	}
