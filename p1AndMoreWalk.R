@@ -98,8 +98,8 @@ Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3
 		gdir = add.vertices(gdir,nb-nd)	
 	}
 	
-	mleMatr = Get.MLE(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
-	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
+	mleMatr = Get.MLE.p1.HL(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
+	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr, model="p1.HLalg.nzconst")
 	if (is.nan(obs.gf)){
 		print("NaN error in calculation of GF statistic.")
 	}
@@ -119,23 +119,26 @@ Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3
 	return (count/steps.for.walk)
 }
  ########################################################################
-# Implements the IPS algorithm for fitting the probability parameters	#
-# of the p1 model based on Holland and Leinhardt (1981) page 40			#
-# Input:																#
-# - network: an nxn adjacency matrix for a directed graph. Used to		#
-# extract sufficient statistics: indegrees, outdegrees, number of		#  
-# bidirectional edges													#
-# - maxiter: maximal number of iterations								#
-# - tol: tolerance for declaring convergence (based on the				#
-# ell-infinity norm of the difference between observed and fitted		#
-# row and columns sums)												#
-# Output:															#
-# - fit: 4x(n choose 2) vector of estimated probabilities				#
-#       (4 for each dyad)												#
-# - parameters: alpha, beta, rho (rho[1] - rho[n]), rhoconst,			#
-#       theta (see Holland and Leihartdt (1981), page 40).				#
+# Implements the IPS algorithm for fitting the probability parameters	  #
+# of the p1 model based on Holland and Leinhardt (1981) page 40			    #
+# Input:																                                #
+# - network: an nxn adjacency matrix for a directed graph. Used to		  #
+# extract sufficient statistics: indegrees, outdegrees, and in the      #
+# case of constant reciprocation, number of	reciprocated edges					#
+# - reciprocation: string. if "zero" the reciprocation parameter in the #
+#       model is assumed to be zero; if "nzconst" it is assumed to be a #
+#       non-zero constant.                                              #
+# - maxiter: maximal number of iterations								                #
+# - tol: tolerance for declaring convergence (based on the				      #
+# ell-infinity norm of the difference between observed and fitted		    #
+# row and columns sums)												                          #
+# Output:															                                  #
+# - fit: 4x(n choose 2) vector of estimated probabilities (4 for each   #
+# dyad)												                                          #
+# - parameters: alpha, beta, rho (rho[1] - rho[n]), rhoconst, theta     # 
+#             (see Holland and Leihartdt (1981), page 40).				      #
  ########################################################################
-p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,dim = c(1, length(outdeg))), beta = array(0, dim = c(1, length(outdeg))), rho= array(0, dim = c(1, length(outdeg))), theta = 0, rhoconst=0){
+p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6){
 	# outdegrees and indegrees are the row and column sums of the observed network
 	outdeg = apply(network, 1, sum)
 	indeg = apply(network, 2, sum)
@@ -150,8 +153,15 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 			M=M+network[i,j]*network[j,i] 
 		} 
 	}	
-	#initialize m_ij, a_ij, n_ij from equations (22), (23), (24) on page 40, Holland and Leinhardt 1981 p1 paper - available from JASA
-	k=array(0, dim=c(v,v))
+	# initialize m_ij, a_ij, n_ij from equations (22), (23), (24) on page 40, Holland and Leinhardt 1981 p1 paper - available from JASA
+	# any choices for alpha,beta,rho, theta and rhoconst should work. we pick 0.
+  alpha = array(0,dim = c(1, length(outdeg)))
+  beta = array(0, dim = c(1, length(outdeg)))
+  rho= array(0, dim = c(1, length(outdeg)))
+  theta = 0
+  rhoconst=0
+  
+  k=array(0, dim=c(v,v))
 	m=array(0, dim=c(v,v))
 	a=array(0, dim=c(v,v))
 	n=array(0, dim=c(v,v))
@@ -220,22 +230,24 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 			}
 		}
 		
-		########## Mutual step ##########
-		if(M!=0){
-			m.total = sum(m)
-			# Update H
-			H=M/(m.total/2)
-			# Update L
-			L = (vchoose2-M) /(vchoose2-m.total/2)	
-			for (i in 1:v){
-				for(j in 1:v){
-					if (i!=j){
-						m[i,j] = m[i,j]*H
-						a[i,j] = a[i,j]*L
-						n[i,j] = n[i,j]*L
-					}
-				}
-			}
+		if (reciprocation=="nzconst"){
+		  ########## Mutual step ##########
+      if(M!=0){
+  			m.total = sum(m)
+  			# Update H
+  			H=M/(m.total/2)
+  			# Update L
+  			L = (vchoose2-M) /(vchoose2-m.total/2)	
+  			for (i in 1:v){
+  				for(j in 1:v){
+  					if (i!=j){
+  						m[i,j] = m[i,j]*H
+  						a[i,j] = a[i,j]*L
+  						n[i,j] = n[i,j]*L
+  					}
+  				}
+  			}
+  		}
 		}
 		
 		########## Normalizing Step ##########
@@ -291,12 +303,18 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 
  #######################################################################
 # Returns the MLE in the form of an {(n choose 2) X 4} matrix, 		    #
-#   with each row representing the vector 							    #
+#   with each row representing the vector 							              #
 #   (pij(0,0), pij(1,0), pij(0,1), pij(1,1)) with (i,j)th row 		    #
-#   appearing in lexicographic order.								    #
- #######################################################################
-Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim = c(1, length(outdeg))), beta = array(0, dim = c(1, length(outdeg))), rho = array(0, dim = c(1, length(outdeg))), theta = 0, rhoconst = 0){
-	nd = vcount(gdir)
+#   appearing in lexicographic order.								                  #
+# Input: 
+#     - gdir: directed graph
+#     - gbidir: undirected graph
+#     - reciprocation: string. if "zero" the reciprocation parameter in the #
+#       model is assumed to be zero; if "nzconst" it is assumed to be a #
+#       non-zero constant.  
+#######################################################################
+Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", maxiter=3000, tol = 1e-06){
+ 	nd = vcount(gdir)
 	nb = vcount(gbidir)
 	if (nd>nb){
 		gbidir = add.vertices(gbidir,nd-nb)	
@@ -306,11 +324,12 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 	}
 
 	adjMatr = get.adjacency(gbidir)+get.adjacency(gdir)
-	out = p1.ips.general(adjMatr, maxiter, tol)
+	out = p1.ips.HL(adjMatr, reciprocation, maxiter, tol)
 	mleMatr = t(matrix(out[[1]], nrow = 4))
 	return (mleMatr)
 }
 #######################################################################
+# Get.MLE.p1.nxnx2x2
 # Returns the MLE for the selected version of the p1 model            #
 # in the form of an n x n x 2 x 2 matrix where                        #
 # each cell i,j,k,l equals 1 if                                       #
@@ -320,7 +339,7 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 #   OR replace the parameter reciprocation, with a parameter         #
 # specifying the model                                                #
 #######################################################################
-Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
+Get.MLE.p1.nxnx2x2<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
   nd = vcount(gdir)
   nb = vcount(gbidir)
   n=max(nd,nb)
@@ -330,7 +349,7 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
   else if (nd<nb){
     gdir = add.vertices(gdir,nb-nd)	
   } 
-  m = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)
+  m = Get.Configuration.Matrix.p1.nxnx2x2(gdir,gbidir)
   # ensure structural zeros at diagonals
   startM =array(data=0.25, dim=c(n,n,2,2))
   for (i in 1:n){
@@ -356,9 +375,9 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
 ########################################################################
 Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
   if (model=="p1HL"){
-    confMatr = Get.Configuration.Matrix(gdir,gbidir)    
+    confMatr = Get.Configuration.Matrix.p1.nchoose2x4(gdir,gbidir)    
   }else if (model=="p1loglinpckg"){
-    confMatr = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)  
+    confMatr = Get.Configuration.Matrix.p1.nxnx2x2(gdir,gbidir)  
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
 }
@@ -386,7 +405,7 @@ Chi.Square.Statistic<- function(confMatr,mleMatr){
 # vector for the state of the dyad (i, j) in the order				    #
 # i---j, i-->j, i<--j, i<->j										    #
  #######################################################################
-Get.Configuration.Matrix<-function(gdir,gbidir){
+Get.Configuration.Matrix.p1.nchoose2x4<-function(gdir,gbidir){
 	num.vertices = max(vcount(gdir), vcount(gbidir))
 	nrows = num.vertices*(num.vertices-1)/2
 	x = matrix(data=0, nrow = nrows , ncol=4)	
@@ -430,7 +449,7 @@ Get.Configuration.Matrix<-function(gdir,gbidir){
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
 # i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)      			    #
 #######################################################################
-Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
+Get.Configuration.Matrix.p1.nxnx2x2<-function(gdir,gbidir){
   num.vertices = max(vcount(gdir), vcount(gbidir))
   x = array(data=0, dim=c(num.vertices,num.vertices,2,2))	
   gdir.vector = as.vector(t(get.edgelist(gdir)))
@@ -819,7 +838,7 @@ Get.Bidirected.Piece <- function(b) {
 # move are produced.                                                  #
 # multiplicity.bound TODO.					#
 #######################################################################
-Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=NULL) {
+Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=0) {
 	#connect head of (i+1)st edge to tail of ith edge to complete a walk:
 	num.edges = nrow(edges.to.remove)
 	edges.to.add = c()
@@ -833,13 +852,13 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
   	if (!is.simple(graph(edges.to.add))) 
 	  	return(NULL)
   }
-#  if (multiplicity.bound!=NULL){
-#    #Check that produced edges satisfy given multiplicity bound.
-#    print("TODO: multiplicity.bound")
-#    # numvertices = find number of vertices from multiplicity.bound
-#    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
-#    # return(NULL)
-#  }     
+  if (length(multiplicity.bound)!=0){
+    #Check that produced edges satisfy given multiplicity bound.
+    print("TODO: multiplicity.bound")
+    # numvertices = find number of vertices from multiplicity.bound
+    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
+    # return(NULL)
+  }     
 	return(edges.to.add)
 }
 #######################################################################
@@ -895,7 +914,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir, steps.for.walk=100, mleMatr
 	# if mleMatr was not given as argument use generate the MLE
 	if (is.null(mleMatr)){
 		print("Now estimating MLE.")
-		mleMatr = Get.MLE(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
+		mleMatr = Get.MLE.p1.HL(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
 		print("MLE estimate completed.")
 	}
 	# Error Check: inputted mleMatr dimension
