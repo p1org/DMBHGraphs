@@ -1,22 +1,80 @@
 ###########################################################################
-## Using R version 3.0.0												##
+## Using R version 3.0.0												                        ##
 ## Using igraph version 0.6.5-1 -WARNING do not use an older version!! 	##
-## Authors: Despina Stasi, Sonja Petrovic, Elizabeth Gross.				##
+## Authors: Despina Stasi, Sonja Petrovic, Elizabeth Gross.				      ##
 ###########################################################################
 
-
- ########################################################################
-# Estimate.p.Value														#
-# Estimate the percentage of networks in the fiber of G= (gdir,gbdir)	#
-# that are further from the MLE than G.									#
-# Input: directed graph gdir, undirected graph gbidir
-#	Optional input:
-#		- steps.for.walk
-#		- coin:  a fair coin by default. 
+########################################################################
+# Estimate.p.Value  													                          #
+# Estimate the percentage of graphs in the fiber of D	                  #
+# that are further from the MLE than G, for a model specified by the    #
+# user.                                                                 #
+# Input: 
+#   - directed graph D                                                  #
+#	Optional input:                                                       #
+#  	- model: a string signifying the appropriate model                  #
+#     + "p1.HLalg.recip.const": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#		- steps.for.walk                                                    #
+#		- coin:  a fair coin by default.                                    #
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
-
+# 
+########################################################################
+Estimate.p.Value<-function(D, model="p1.HLalg.recip.const", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+  if (model=="p1.HLalg.recip.const" || model=="p1.HLalg.recip.const"){
+    mixed.graph = split.Directed.Graph(D)
+    unreciprocated = mixed.graph[[1]]
+    reciprocated = mixed.graph[[2]]
+  }
+  if (model=="p1.HLalg.recip.const"){
+    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="const", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)  
+  }else if(model=="p1.HLalg.recip.zero"){
+    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="const", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)      
+  }else if (model=="p1.recip.zero"){
+    # TODO: Call the appropriate algorithm for the nxnx2x2 form.
+    print("Coming Soon: Estimate.p.Value not implemented yet for p1.recip.zero.")
+  }else if (model=="p1.recip.const"){
+    print("Coming Soon: Estimate.p.Value not implemented yet for p1.recip.const.")    
+  }else if (model=="p1.recip.ed"){
+    print("Coming Soon: Estimate.p.Value not implemented yet for p1.recip.ed.")    
+  }else{
+    stop("Estimate.p.Value error: model parameter option must be one of the prespecified options.")
+  }
+}
  ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){
+# split.Directed.Graph
+# Auxiliary Method
+# Input: D, directed graph
+# Output: A list containing in this order: 
+#         - unreciprocated, a directed graph containing an edge uv iff uv is
+#             an unreciprocated edge in D
+#         - reciprocated, an undirected graph containing an edge uv iff uv is
+#             a reciprocated edge in D
+ ########################################################################
+split.Directed.Graph<-function(D){
+  reciprocated = graph.empty(vcount(D), directed = FALSE)
+  #Separate reciprocated edges
+  reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")))
+  unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")))
+  return (list(unreciprocated, reciprocated))
+}
+ ########################################################################
+# Estimate.p.Value.p1.HLalg                 														 #
+# Estimate the percentage of networks in the fiber of G= (gdir,gbdir)	   #
+# that are further from the MLE than G itself, where the assumed  model  #
+# is the p1 model, and the MLE algorithm used is the Holland-Leindhardt  # 
+# IPS algorithm for the p1.                                              #
+# Input: directed graph gdir, undirected graph gbidir                    #
+#	Optional input:                                                        #
+#		- steps.for.walk                                                     #
+#		- coin:  a fair coin by default.                                     #
+#		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move). #
+# TODO: Maybe the HL IPS is now obsolete, it seems that loglin surpasses #
+# it in convergence speeds.
+ ########################################################################
+Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001, reciprocation="const"){
 	#Error Checking
 	if(!is.simple(as.undirected(gdir,mode=c("each")))){
 		stop("Reciprocated edges in directed graph or gdir not simple.")
