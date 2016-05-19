@@ -460,7 +460,7 @@ Get.Configuration.Matrix.p1.nxnx2x2<-function(gdir,gbidir){
   gbidir.vector = as.vector(t(get.edgelist(gbidir)))
   
   if(ecount(gdir)!=0){
-    for(k in seq(1,get.length(gdir.vector),2)){
+    for(k in seq(1,length(gdir.vector),2)){
       i=gdir.vector[k]
       j=gdir.vector[k+1]
       x[i,j,2,1]=1
@@ -468,7 +468,7 @@ Get.Configuration.Matrix.p1.nxnx2x2<-function(gdir,gbidir){
     }
   }
   if(ecount(gbidir)!=0){
-    for(k in seq(1,get.length(gbidir.vector),2)){
+    for(k in seq(1,length(gbidir.vector),2)){
       i=gbidir.vector[k]
       j=gbidir.vector[k+1]
       x[i,j,2,2]=1      
