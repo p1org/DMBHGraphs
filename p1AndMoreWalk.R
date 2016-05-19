@@ -29,9 +29,9 @@ Estimate.p.Value<-function(D, model="p1.HLalg.recip.const", steps.for.walk=100, 
     reciprocated = mixed.graph[[2]]
   }
   if (model=="p1.HLalg.recip.const"){
-    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="const", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)  
+    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="nzconst", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)  
   }else if(model=="p1.HLalg.recip.zero"){
-    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="const", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)      
+    Estimate.p.Value.p1.HLalg(unreciprocated, reciprocation="nzconst", steps.for.walk, coin.for.move.types,mle.maxiter,mle.tol)      
   }else if (model=="p1.recip.zero"){
     # TODO: Call the appropriate algorithm for the nxnx2x2 form.
     print("Coming Soon: Estimate.p.Value not implemented yet for p1.recip.zero.")
@@ -74,7 +74,7 @@ split.Directed.Graph<-function(D){
 # TODO: Maybe the HL IPS is now obsolete, it seems that loglin surpasses #
 # it in convergence speeds.
  ########################################################################
-Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001, reciprocation="const"){
+Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001, reciprocation="nzconst"){
 	#Error Checking
 	if(!is.simple(as.undirected(gdir,mode=c("each")))){
 		stop("Reciprocated edges in directed graph or gdir not simple.")
@@ -139,8 +139,6 @@ Estimate.p.Value.p1.HLalg<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3
 # Output:															                                  #
 # - fit: 4x(n choose 2) vector of estimated probabilities (4 for each   #
 # dyad)												                                          #
-# - parameters: alpha, beta, rho (rho[1] - rho[n]), rhoconst, theta     # 
-#             (see Holland and Leihartdt (1981), page 40).				      #
  ########################################################################
 p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6){
 	# outdegrees and indegrees are the row and column sums of the observed network
@@ -361,10 +359,12 @@ Get.MLE.p1.nxnx2x2<-function(gdir, gbidir, reciprocation="edge-dependent", maxit
   }
   if (reciprocation=="edge-dependent"){
     fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter)
-  }  else if (reciprocation=="const"){
+  }  else if (reciprocation=="nzconst"){
     fm <- loglin(m, list(c(1,2), c(3,4),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
   } else if (reciprocation=="zero"){
     fm <- loglin(m, list(c(1,2),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  }else{
+    stop("Get.MLE.p1.nxnx2x2 error: reciprocation parameter option must be one of the prespecified options.")
   }  
   mleMatr = fm$fit
   return (mleMatr)
@@ -382,6 +382,8 @@ Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
     confMatr = Get.Configuration.Matrix.p1.nchoose2x4(gdir,gbidir)    
   }else if (model=="p1loglinpckg"){
     confMatr = Get.Configuration.Matrix.p1.nxnx2x2(gdir,gbidir)  
+  }else{
+    stop("Get.GoF.Statistic Error: model parameter must be one of the prespecified options.")
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
 }
