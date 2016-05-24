@@ -33,7 +33,7 @@ Estimate.p.Value<-function(D, model="p1.HLalg.recip.nzconst", steps.for.walk=100
   mixed.graph = split.Directed.Graph(D)
   gdir = mixed.graph[[1]]
   gbidir = mixed.graph[[2]]
-  #Error Checking
+  #Error Checking - inherited from previous version, may be unnecessary
   if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
   if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
   if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
@@ -285,8 +285,8 @@ Get.MLE<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", maxiter=3000, to
     mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", maxiter,tol)
   }else if (model=="p1.recip.zero"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", maxiter,tol)  
-  }else if (model=="p1.recip.const"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="const", maxiter,tol)      
+  }else if (model=="p1.recip.nzconst"){
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", maxiter,tol)      
   }else if (model=="p1.recip.ed"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", maxiter,tol)    
   }else{
