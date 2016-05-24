@@ -1,83 +1,102 @@
 ###########################################################################
-## Using R version 3.0.0												##
+## Using R version 3.0.0												                        ##
 ## Using igraph version 0.6.5-1 -WARNING do not use an older version!! 	##
-## Authors: Despina Stasi, Sonja Petrovic, Elizabeth Gross.				##
+## Authors: Despina Stasi, Sonja Petrovic, Elizabeth Gross.				      ##
 ###########################################################################
 
+########################################################################
+# Estimate.p.Value  													                          #
+# Estimate the percentage of graphs in the fiber of D	                  #
+# that are further from the MLE than G, for a model specified by the    #
+# user.                                                                 #
+# Input: 
+#   - directed graph D                                                  #
+#	Optional input:                                                       #
+#  	- model: a string signifying the appropriate model                  #
+#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       the MLE calculated using the loglin package.                    #
+#     + "p1.recip.nzconst": for p1 model with constant non-zero         #
+#       reciprocation with the MLE calculated using the loglin package. #
+#     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
+#       with the MLE calculated using the loglin package.               #
+#		- steps.for.walk                                                    #
+#		- coin.for.move.types:  a fair coin by default.                     #
+#		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
+# Output:                                                               #
+#   - estimated p-value between 0 and 1                                 #
+########################################################################
+Estimate.p.Value<-function(D, model="p1.HLalg.recip.nzconst", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+  mixed.graph = split.Directed.Graph(D)
+  gdir = mixed.graph[[1]]
+  gbidir = mixed.graph[[2]]
+  #Error Checking
+  if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
+  if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
+  if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
+  if(is.directed(gbidir)){stop("gbidir must be an undirected graph.")}
+  #Ensure graphs have same number of vertices
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
 
- ########################################################################
-# Estimate.p.Value														#
-# Estimate the percentage of networks in the fiber of G= (gdir,gbdir)	#
-# that are further from the MLE than G.									#
-# Input: directed graph gdir, undirected graph gbidir
-#	Optional input:
-#		- steps.for.walk
-#		- coin:  a fair coin by default. 
-#		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
-
- ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){
-	#Error Checking
-	if(!is.simple(as.undirected(gdir,mode=c("each")))){
-		stop("Reciprocated edges in directed graph or gdir not simple.")
-	}
-	if(!is.simple(gbidir)){
-		stop("gbidir must be a simple graph.")
-	}
-	if(!is.directed(gdir)){		
-		stop("gdir must be a directed graph.")
-	}
-	if(is.directed(gbidir)){		
-		stop("gbidir must be an undirected graph.")
-	}
-	#Ensure graphs have same number of vertices
-	nd = vcount(gdir)
-	nb = vcount(gbidir)
-	if (nd>nb){
-		gbidir = add.vertices(gbidir,nd-nb)	
-	}
-	else if (nd<nb){
-		gdir = add.vertices(gdir,nb-nd)	
-	}
-	
-	mleMatr = Get.MLE(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
-	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
-	if (is.nan(obs.gf)){
-		print("NaN error in calculation of GF statistic.")
-	}
-	if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
-	next.network = list(gdir,gbidir)
-	count = 0
-	for(i in 1: steps.for.walk){
-		next.network = Get.Next.Network(next.network[[1]],next.network[[2]], coin)	
-		new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], mleMatr)
-		# If the GoF statistic for new network is larger than the GoF statistic
-		# for the observed network. Note that a badly estimated MLE can give 
-		# significant errors in the p-value.
-		if (new.gf>=obs.gf){
-			count = count +1
-		}
-	}
-	return (count/steps.for.walk)
+  mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
+  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
+  if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
+  if (obs.gf== Inf){ print("Error: Infinite GF statistic for this network.") }
+  next.network = list(gdir,gbidir)
+  count = 0
+  for(i in 1: steps.for.walk){
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
+    new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
+    # If the GoF statistic for new network is larger than the GoF statistic
+    # for the observed network. Note that a badly estimated MLE can give 
+    # significant errors in the p-value.
+    if (new.gf>=obs.gf){
+      count = count +1
+    }
+  }
+  return (count/steps.for.walk)
 }
  ########################################################################
-# Implements the IPS algorithm for fitting the probability parameters	#
-# of the p1 model based on Holland and Leinhardt (1981) page 40			#
-# Input:																#
-# - network: an nxn adjacency matrix for a directed graph. Used to		#
-# extract sufficient statistics: indegrees, outdegrees, number of		#  
-# bidirectional edges													#
-# - maxiter: maximal number of iterations								#
-# - tol: tolerance for declaring convergence (based on the				#
-# ell-infinity norm of the difference between observed and fitted		#
-# row and columns sums)												#
-# Output:															#
-# - fit: 4x(n choose 2) vector of estimated probabilities				#
-#       (4 for each dyad)												#
-# - parameters: alpha, beta, rho (rho[1] - rho[n]), rhoconst,			#
-#       theta (see Holland and Leihartdt (1981), page 40).				#
+# split.Directed.Graph
+# Auxiliary Method
+# Input: D, directed graph
+# Output: A list containing in this order: 
+#         - unreciprocated, a directed graph containing an edge uv iff uv is
+#             an unreciprocated edge in D
+#         - reciprocated, an undirected graph containing an edge uv iff uv is
+#             a reciprocated edge in D
  ########################################################################
-p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,dim = c(1, length(outdeg))), beta = array(0, dim = c(1, length(outdeg))), rho= array(0, dim = c(1, length(outdeg))), theta = 0, rhoconst=0){
+split.Directed.Graph<-function(D){
+  reciprocated = graph.empty(vcount(D), directed = FALSE)
+  #Separate reciprocated edges
+  reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")))
+  unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")))
+  return (list(unreciprocated, reciprocated))
+}
+ ########################################################################
+# Implements the IPS algorithm for fitting the probability parameters	  #
+# of the p1 model based on Holland and Leinhardt (1981) page 40			    #
+# Input:																                                #
+# - network: an nxn adjacency matrix for a directed graph. Used to		  #
+# extract sufficient statistics: indegrees, outdegrees, and in the      #
+# case of constant reciprocation, number of	reciprocated edges					#
+# - reciprocation: string. if "zero" the reciprocation parameter in the #
+#       model is assumed to be zero; if "nzconst" it is assumed to be a #
+#       non-zero constant.                                              #
+# - maxiter: maximal number of iterations								                #
+# - tol: tolerance for declaring convergence (based on the				      #
+# ell-infinity norm of the difference between observed and fitted		    #
+# row and columns sums)												                          #
+# Output:															                                  #
+# - fit: 4x(n choose 2) vector of estimated probabilities (4 for each   #
+# dyad)												                                          #
+ ########################################################################
+p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6){
 	# outdegrees and indegrees are the row and column sums of the observed network
 	outdeg = apply(network, 1, sum)
 	indeg = apply(network, 2, sum)
@@ -92,8 +111,15 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 			M=M+network[i,j]*network[j,i] 
 		} 
 	}	
-	#initialize m_ij, a_ij, n_ij from equations (22), (23), (24) on page 40, Holland and Leinhardt 1981 p1 paper - available from JASA
-	k=array(0, dim=c(v,v))
+	# initialize m_ij, a_ij, n_ij from equations (22), (23), (24) on page 40, Holland and Leinhardt 1981 p1 paper - available from JASA
+	# any choices for alpha,beta,rho, theta and rhoconst should work. we pick 0.
+  alpha = array(0,dim = c(1, length(outdeg)))
+  beta = array(0, dim = c(1, length(outdeg)))
+  rho= array(0, dim = c(1, length(outdeg)))
+  theta = 0
+  rhoconst=0
+  
+  k=array(0, dim=c(v,v))
 	m=array(0, dim=c(v,v))
 	a=array(0, dim=c(v,v))
 	n=array(0, dim=c(v,v))
@@ -162,22 +188,24 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 			}
 		}
 		
-		########## Mutual step ##########
-		if(M!=0){
-			m.total = sum(m)
-			# Update H
-			H=M/(m.total/2)
-			# Update L
-			L = (vchoose2-M) /(vchoose2-m.total/2)	
-			for (i in 1:v){
-				for(j in 1:v){
-					if (i!=j){
-						m[i,j] = m[i,j]*H
-						a[i,j] = a[i,j]*L
-						n[i,j] = n[i,j]*L
-					}
-				}
-			}
+		if (reciprocation=="nzconst"){
+		  ########## Mutual step ##########
+      if(M!=0){
+  			m.total = sum(m)
+  			# Update H
+  			H=M/(m.total/2)
+  			# Update L
+  			L = (vchoose2-M) /(vchoose2-m.total/2)	
+  			for (i in 1:v){
+  				for(j in 1:v){
+  					if (i!=j){
+  						m[i,j] = m[i,j]*H
+  						a[i,j] = a[i,j]*L
+  						n[i,j] = n[i,j]*L
+  					}
+  				}
+  			}
+  		}
 		}
 		
 		########## Normalizing Step ##########
@@ -232,27 +260,64 @@ p1.ips.general <- function(network, maxiter = 3000, tol=1e-6, alpha = array(0,di
 }
 
  #######################################################################
+# Get.MLE
+# Estimates the MLE
+# Input:
+#    - model: a string signifying the appropriate model                  #
+#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       the MLE calculated using the loglin package.                    #
+#     + "p1.recip.nzconst": for p1 model with constant non-zero         #
+#       reciprocation with the MLE calculated using the loglin package. #
+#     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
+#       with the MLE calculated using the loglin package.               #
+# Output: 
+#     - The estimated mle matrix with dimensions according to the model
+#         specifications
+#######################################################################
+Get.MLE<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", maxiter=3000, tol = 1e-03){
+  if (model=="p1.HLalg.recip.nzconst"){
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", maxiter,tol)  
+  }else if(model=="p1.HLalg.recip.zero"){
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", maxiter,tol)
+  }else if (model=="p1.recip.zero"){
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", maxiter,tol)  
+  }else if (model=="p1.recip.const"){
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="const", maxiter,tol)      
+  }else if (model=="p1.recip.ed"){
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", maxiter,tol)    
+  }else{
+    stop("Get.MLE Error: model parameter option must be one of the prespecified options.")
+  }
+}  
+  #######################################################################
+# Get.MLE.p1.HL
 # Returns the MLE in the form of an {(n choose 2) X 4} matrix, 		    #
-#   with each row representing the vector 							    #
+#   with each row representing the vector 							              #
 #   (pij(0,0), pij(1,0), pij(0,1), pij(1,1)) with (i,j)th row 		    #
-#   appearing in lexicographic order.								    #
- #######################################################################
-Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim = c(1, length(outdeg))), beta = array(0, dim = c(1, length(outdeg))), rho = array(0, dim = c(1, length(outdeg))), theta = 0, rhoconst = 0){
-	nd = vcount(gdir)
+#   appearing in lexicographic order.								                  #
+# Input: 
+#     - gdir: directed graph
+#     - gbidir: undirected graph
+#     - reciprocation: string. if "zero" the reciprocation parameter in the #
+#       model is assumed to be zero; if "nzconst" it is assumed to be a #
+#       non-zero constant.  
+#######################################################################
+Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", maxiter=3000, tol = 1e-03){
+ 	nd = vcount(gdir)
 	nb = vcount(gbidir)
-	if (nd>nb){
-		gbidir = add.vertices(gbidir,nd-nb)	
-	}
-	else if (nd<nb){
-		gdir = add.vertices(gdir,nb-nd)	
-	}
-
+	if (nd>nb){	gbidir = add.vertices(gbidir,nd-nb)	}
+	else if (nd<nb){		gdir = add.vertices(gdir,nb-nd)		}
 	adjMatr = get.adjacency(gbidir)+get.adjacency(gdir)
-	out = p1.ips.general(adjMatr, maxiter, tol)
+	out = p1.ips.HL(adjMatr, reciprocation, maxiter, tol)
 	mleMatr = t(matrix(out[[1]], nrow = 4))
 	return (mleMatr)
 }
 #######################################################################
+# Get.MLE.p1.FW
 # Returns the MLE for the selected version of the p1 model            #
 # in the form of an n x n x 2 x 2 matrix where                        #
 # each cell i,j,k,l equals 1 if                                       #
@@ -262,7 +327,7 @@ Get.MLE<-function(gdir, gbidir, maxiter=3000, tol = 1e-06,alpha = array(0, dim =
 #   OR replace the parameter reciprocation, with a parameter         #
 # specifying the model                                                #
 #######################################################################
-Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
+Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20){
   nd = vcount(gdir)
   nb = vcount(gbidir)
   n=max(nd,nb)
@@ -272,7 +337,7 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
   else if (nd<nb){
     gdir = add.vertices(gdir,nb-nd)	
   } 
-  m = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)
+  m = Get.Configuration.Matrix.p1.FW(gdir,gbidir)
   # ensure structural zeros at diagonals
   startM =array(data=0.25, dim=c(n,n,2,2))
   for (i in 1:n){
@@ -280,10 +345,12 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
   }
   if (reciprocation=="edge-dependent"){
     fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter)
-  }  else if (reciprocation=="const"){
+  }  else if (reciprocation=="nzconst"){
     fm <- loglin(m, list(c(1,2), c(3,4),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
   } else if (reciprocation=="zero"){
     fm <- loglin(m, list(c(1,2),c(1,3),c(1,4),c(2,3),c(2,4)), fit=TRUE, start=startM,iter=maxiter)
+  }else{
+    stop("Get.MLE.p1.FW error: reciprocation parameter option must be one of the prespecified options.")
   }  
   mleMatr = fm$fit
   return (mleMatr)
@@ -294,13 +361,25 @@ Get.MLE.Through.loglin<-function(gdir, gbidir, reciprocation="edge-dependent", m
 # Input:																                                              #
 # - confMatr:  current network in the form of the mle 						                  	#
 # - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	            #
-# - model: the model under which the mle has been calculated                          #
+# - model: a string signifying the appropriate model under which the mle has been calculated                   #
+#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       the MLE calculated using the loglin package.                    #
+#     + "p1.recip.nzconst": for p1 model with constant non-zero         #
+#       reciprocation with the MLE calculated using the loglin package. #
+#     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
+#       with the MLE calculated using the loglin package.               #
 ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, mleMatr, model="p1HL"){
-  if (model=="p1HL"){
-    confMatr = Get.Configuration.Matrix(gdir,gbidir)    
-  }else if (model=="p1loglinpckg"){
-    confMatr = Get.Configuration.Matrix.nxnx2x2(gdir,gbidir)  
+Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr){
+  if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero"){
+    confMatr = Get.Configuration.Matrix.p1.HL(gdir,gbidir)    
+  }else if (model=="p1.recip.nzconst" || model=="p1.recip.zero" || model=="p1.recip.ed"){
+    confMatr = Get.Configuration.Matrix.p1.FW(gdir,gbidir)  
+  }else{
+    stop("Get.GoF.Statistic Error: model parameter must be one of the prespecified options.")
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
 }
@@ -324,11 +403,12 @@ Chi.Square.Statistic<- function(confMatr,mleMatr){
   return(gf)
 }
  #######################################################################
+# Get.Configuration.Matrix.p1.HL                                        #
 # Returns a 4x(n choose 2) matrix where each row is an indicator        #
-# vector for the state of the dyad (i, j) in the order				    #
-# i---j, i-->j, i<--j, i<->j										    #
+# vector for the state of the dyad (i, j) in the order				          #
+# i---j, i-->j, i<--j, i<->j										                        #
  #######################################################################
-Get.Configuration.Matrix<-function(gdir,gbidir){
+Get.Configuration.Matrix.p1.HL<-function(gdir,gbidir){
 	num.vertices = max(vcount(gdir), vcount(gbidir))
 	nrows = num.vertices*(num.vertices-1)/2
 	x = matrix(data=0, nrow = nrows , ncol=4)	
@@ -367,19 +447,20 @@ Get.Configuration.Matrix<-function(gdir,gbidir){
 	x[,1]=matrix(1,nrow = nrows, ncol=1)-x[,2]-x[,3]-x[,4]
 	return(x)
 }
-#######################################################################
+ #######################################################################
+# Get.Configuration.Matrix.p1.FW
 # Returns an n x n x 2 x 2 matrix where each cell i,j,k,l equals 1 if  #
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
 # i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)      			    #
-#######################################################################
-Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
+ #######################################################################
+Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
   num.vertices = max(vcount(gdir), vcount(gbidir))
   x = array(data=0, dim=c(num.vertices,num.vertices,2,2))	
   gdir.vector = as.vector(t(get.edgelist(gdir)))
   gbidir.vector = as.vector(t(get.edgelist(gbidir)))
   
   if(ecount(gdir)!=0){
-    for(k in seq(1,get.length(gdir.vector),2)){
+    for(k in seq(1,length(gdir.vector),2)){
       i=gdir.vector[k]
       j=gdir.vector[k+1]
       x[i,j,2,1]=1
@@ -387,7 +468,7 @@ Get.Configuration.Matrix.nxnx2x2<-function(gdir,gbidir){
     }
   }
   if(ecount(gbidir)!=0){
-    for(k in seq(1,get.length(gbidir.vector),2)){
+    for(k in seq(1,length(gbidir.vector),2)){
       i=gbidir.vector[k]
       j=gbidir.vector[k+1]
       x[i,j,2,2]=1      
@@ -512,6 +593,8 @@ Plot.Mixed.Graph<- function(gdir,gbidir){
 	}
 	plot(gmixed,layout=layout.circle,vertex.shape="none")
 }
+
+
  #######################################################################
 # Get.Next.Network
 #	Input:
@@ -529,11 +612,24 @@ Plot.Mixed.Graph<- function(gdir,gbidir){
 # F(G) with reciprocation after applying a random Graver basis element 
 # The move could be 		#
 #	only directed, or only bidirected, or a composite of the two.		#
+# Optional Input:
 #   coin is optional input; by default it's "fair": 					#
 #	c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
- #######################################################################
-Get.Next.Network <- function(d,b,coin=c(1/3,1/3,1/3)){
-  	markov.move = Get.Move(d,b,coin)
+#    - model: a string signifying the appropriate model                  #
+#       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#       + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#       + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       the MLE calculated using the loglin package.                    #
+#       + "p1.recip.nzconst": for p1 model with constant non-zero         #
+#       reciprocation with the MLE calculated using the loglin package. #
+#       + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
+#       with the MLE calculated using the loglin package.               #
+
+#######################################################################
+Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
+  	markov.move = Get.Move(d,b,model,coin)
     trivial.move=FALSE
 	if (!ecount(markov.move[[1]])==0 || !ecount(markov.move[[3]])==0){
 		#d minus directed.to.be.removed plus directed.to.be.added:
@@ -551,8 +647,48 @@ Get.Next.Network <- function(d,b,coin=c(1/3,1/3,1/3)){
 	return(list(new.directed.graph,new.bidirected.graph,trivial.move))		
 
 }
+#######################################################################
+# Get.Move                                              					    #
+#   Returns a random move, not necessarily primitive that is   		    #
+#	applicable to the observed network G that is guaranteed to move		  #
+#	to a network in the fiber, defined by the model, including itself.  # 
+# The move could be 		                                              #
+#	only directed, or only bidirected, or a composite of the two.		    #
+#                                                                     #
+# Input  					                                                    #
+#       - d: directed graph,   					                              #
+#       - b: bidirected graph						                              #
+# Optional Input:
+#    - coin: by default it's "fair": 					                      #
+#	      c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
+#    - model: a string signifying the appropriate model                  #
+#       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#       + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
+#       + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       the MLE calculated using the loglin package.                    #
+#       + "p1.recip.nzconst": for p1 model with constant non-zero         #
+#       reciprocation with the MLE calculated using the loglin package. #
+#       + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
+#       with the MLE calculated using the loglin package.               #
+# Output: 
+#     - The estimated mle matrix with dimensions according to the model
+#         specifications
+#######################################################################
+Get.Move<-function(gdir, gbidir, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
+  if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst"){
+    move = Get.Move.p1.nzconst(gdir,gbidir,coin)  
+  }else if(model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
+    mleMatr = Get.Move.p1.zero(gdir,gbidir,coin)
+  }else if (model=="p1.recip.ed"){
+    mleMatr = Get.Move.p1.ed(gdir,gbidir,coin)   
+  }else{
+    stop("Get.Move Error: model parameter option must be one of the prespecified options.")
+  }
+} 
  #######################################################################
-# Get.Move																#
+# Get.Move.p1.ed																#
 # 	Given a mixed graph G=(d,b)											#
 #		with d: directed graph, b: bidirected graph						#
 #	returns a random move, not necessarily primitive that is 			#
@@ -562,7 +698,7 @@ Get.Next.Network <- function(d,b,coin=c(1/3,1/3,1/3)){
 #   coin is optional input; by default it's "fair": 					#
 #	c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
  #######################################################################
-Get.Move <- function(d,b,coin=c(1/3,1/3,1/3)){
+Get.Move.p1.ed <- function(d,b,coin=c(1/3,1/3,1/3)){
   	# if the coin options do not sum up to 1 exit.
   	if (! sum(coin)==1) {
     	stop("invalid coin")
@@ -585,7 +721,15 @@ Get.Move <- function(d,b,coin=c(1/3,1/3,1/3)){
     	return(Get.Mixed.Move(d,b))
     }
 }
- #######################################################################
+Get.Move.p1.zero <- function(d,b,coin=c(1/3,1/3,1/3)){
+  print("TODO")
+  return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
+}
+Get.Move.p1.nzconst <- function(d,b,coin=c(1/3,1/3,1/3)){
+  print("TODO")
+  return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
+}
+#######################################################################
 # Get.Directed.Move													#
 # 	Given a mixed graph G=(d,b)										#
 #		with d: directed graph, b: bidirected graph					#
@@ -761,7 +905,7 @@ Get.Bidirected.Piece <- function(b) {
 # move are produced.                                                  #
 # multiplicity.bound TODO.					#
 #######################################################################
-Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=NULL) {
+Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=0) {
 	#connect head of (i+1)st edge to tail of ith edge to complete a walk:
 	num.edges = nrow(edges.to.remove)
 	edges.to.add = c()
@@ -775,13 +919,13 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
   	if (!is.simple(graph(edges.to.add))) 
 	  	return(NULL)
   }
-#  if (multiplicity.bound!=NULL){
-#    #Check that produced edges satisfy given multiplicity bound.
-#    print("TODO: multiplicity.bound")
-#    # numvertices = find number of vertices from multiplicity.bound
-#    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
-#    # return(NULL)
-#  }     
+  if (length(multiplicity.bound)!=0){
+    #Check that produced edges satisfy given multiplicity bound.
+    print("TODO: multiplicity.bound")
+    # numvertices = find number of vertices from multiplicity.bound
+    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
+    # return(NULL)
+  }     
 	return(edges.to.add)
 }
 #######################################################################
@@ -809,248 +953,4 @@ as.arbitrary.directed <- function(b) {
 		b.directed = graph.union(graph.difference(b.decr, b.subset.decr), b.subset.incr)
 	}
 	return(b.directed)
-}
-########################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir, steps.for.walk=100, mleMatr = NULL, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
-	#Error Checking
-	if(!is.simple(as.undirected(gdir,mode=c("each")))){
-		stop("Reciprocated edges in directed graph or gdir not simple.")
-	}
-	if(!is.simple(gbidir)){
-		stop("gbidir must be a simple graph.")
-	}
-	if(!is.directed(gdir)){		
-		stop("gdir must be a directed graph.")
-	}
-	if(is.directed(gbidir)){		
-		stop("gbidir must be an undirected graph.")
-	}
-
-	nd = vcount(gdir)
-	nb = vcount(gbidir)
-	if (nd>nb){
-		gbidir = add.vertices(gbidir,nd-nb)	
-	}
-	else if (nd<nb){
-		gdir = add.vertices(gdir,nb-nd)	
-	}
-	# if mleMatr was not given as argument use generate the MLE
-	if (is.null(mleMatr)){
-		print("Now estimating MLE.")
-		mleMatr = Get.MLE(gdir,gbidir, maxiter = mle.maxiter, tol = mle.tol)
-		print("MLE estimate completed.")
-	}
-	# Error Check: inputted mleMatr dimension
-	else if ((dim(mleMatr)[[1]]!=nd*(nd-1)/2) || (dim(mleMatr)[[2]]!=4)){
-		stop("mleMatr dimension is incorrect.")
-	}
-	obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
-	if (is.nan(obs.gf)){
-		print("NaN error in calculation of GF statistic.")
-	}
-	if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
-	next.network = list(gdir,gbidir)
-	count = 0
-	int.values=c() # To estimate convergence of count/i to p-value
-	gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
-	for(i in 1: steps.for.walk){
-		next.network = Get.Next.Network(next.network[[1]],next.network[[2]], coin)	
-		new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], mleMatr)
-		# If the GoF statistic for new network is larger than the GoF statistic
-		# for the observed network. Note that a badly estimated MLE can give 
-		# significant errors in the p-value.
-		if (new.gf>=obs.gf){
-			count = count +1
-		}
-		int.values<-c(int.values,count/i)
-		gof.values<-c(gof.values,new.gf)
-	}
-	return (list(count/steps.for.walk,int.values, gof.values, mleMatr))
-}
-#######################################################################
-########################################################################
-# Input: 
-#		-gofs: list of goodness of fit statistics, with the first one the gof of the observed network
-#       -burnsteps: the number of first entries we should ignore when estimating p-value of observed network
-# Output:
-#		- A list of 
-#			- p-value estimate
-#			- a list of p-value estimates for each step of the loop
-#######################################################################
-Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
-	count = 0	# To estimate convergence of count/i to p-value
-	p.values = c()
-	for(i in (burnsteps +2):length(gofs)){
-		# If the GoF statistic for new network is larger than the GoF statistic
- 		# for the observed network. Note that a badly estimated MLE can give 
- 		# significant errors in the p-value.
- 		if (gofs[i]>=gofs[1]){
- 			count = count +1
- 		}
- 		p.values = c(p.values, count/(i-(burnsteps+1)))
- 	}
- 	return (list(count/(length(gofs)-length(burnsteps)-1), p.values))
-}
-# Enumerates the fiber, and returns the list of graps visited, directed+bidirected parts,  a vector of counts for each graph, the Total Variation Distance of the walk, and a count of all empty moves made in each graph. #NOTE: Does not currently keep track of empty moves.
-Enumerate.Fiber<-function(gdir, gbidir, numsteps=1000, coin = c(1/3,1/3,1/3)){
-	counts=list(1)
-	empty.move.counts=list(0)	
-	network=list(gdir,gbidir)
-	
-	graphsD=list()
-	graphsB=list()
-	
-####### REPLACE	####### 
-#	graphsD[[1]]=gdir
-#	graphsB[[1]]=gbidir
-#######   WITH  ####### 
-	graphsD[[1]]= as.numeric(t(get.edgelist(gdir)))
-	graphsB[[1]]= as.numeric(t(get.edgelist(gbidir)))
-####### END REPLACE
-
-	numGraphs=1
-	
-	for (i in 1:numsteps){
-		# In case there are errors note that i is the number of steps 
-		on.exit(return(list(graphsD, graphsB, counts, TV<-(sum(abs(as.numeric(counts)/i-1/numGraphs)))/2, empty.move.counts, i)))
-
-		flag = FALSE
-		empty.move.flag=FALSE
-		prev.network = network
-		network = Get.Next.Network(network[[1]],network[[2]],coin)
-		if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
-			# new network is same as previous network
-			empty.move.flag=TRUE
-		}
-		for(j in 1:numGraphs){
-####### REPLACE	####### 
-#			if(ecount(graph.difference(network[[1]],graphsD[[j]]))==0 &&ecount(graph.difference(network[[2]],graphsB[[j]]))==0){
-#######   WITH  ####### 
-			if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
-####### END REPLACE
-				# New network was encountered before
-				counts[[j]]=counts[[j]]+1
-				flag = TRUE
-				if (empty.move.flag==TRUE){
-					empty.move.counts[[j]]=empty.move.counts[[j]]+1
-				}
-			} 
-		}
-		if (!flag){
-			# Encountered new graph
-			counts = append(counts, list(1))
-			empty.move.counts = append(empty.move.counts,list(0))
-			#old code - delete: counts[[numGraphs+1]]=counts[[numGraphs+1]]+1
-			numGraphs = numGraphs+1
-####### REPLACE	####### 
-#			graphsD[[numGraphs]]=network[[1]]
-#			graphsB[[numGraphs]]=network[[2]]
-#######   WITH  ####### 
-			graphsD[[numGraphs]]=as.numeric(t(get.edgelist(network[[1]])))
-			graphsB[[numGraphs]]=as.numeric(t(get.edgelist(network[[2]])))			
-####### END REPLACE
-		}
-	}
-	
-	#calculate the TV distance
-	TV=(sum(abs(as.numeric(counts)/numsteps-1/numGraphs)))/2
-	return (list(graphsD, graphsB, counts, TV, empty.move.counts))
-}
-
-Write.Graphs.to.File<-function(graphs, filename){
-	for (i in 1:length(graphs)){
-		if (is.igraph(graphs[[i]])){		
-			num.cols = 2*ecount(graphs[[i]]) #to pass to the write function so that all entries are in one row.
-			write(t(get.edgelist(graphs[[i]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")	
-		}
-		else{
-			num.cols=2*length(graphs[[i]])
-			if (length(graphs[[i]])!=0){
-				write(graphs[[i]], filename, append=TRUE,ncolumns=num.cols, sep = ", ")			
-			}
-			else { write("\n",filename, append=TRUE)}
-		}
-	}
-}
-
-Get.GoF.Statistics.From.File<-function(dir.graphs.filename,bidir.graphs.filename,mleMatr){
-	print("Not implemented yet.")
-}
-
-# Enumerates the fiber for use with large fibers: writes to file the list of graps visited, directed+bidirected parts,  a vector of counts for each graph, the Total Variation Distance of the walk, and a count of all empty moves made in each graph. #NOTE: Does not currently keep track of empty moves.
-Enumerate.Fiber.to.File<-function(gdir, gbidir, numsteps=1000, coin = c(1/3,1/3,1/3), filename.extension){
-	# METHOD NOT COMPLETE
-	print("Buggy code: don't know what is wrong with this method yet!")
-	counts=list(1)
-	empty.move.counts=list(0)	
-	network=list(gdir,gbidir)
-	numGraphs=1
-	num.cols.d = 2*ecount(gdir)
-	num.cols.b = 2*ecount(gbidir)
-	write(t(get.edgelist(gdir)), paste(filename.extension, "dir.graphs.txt", sep="."), append=FALSE,ncolumns=num.cols.d, sep = ", ")	
-	write(t(get.edgelist(gbidir)), paste(filename.extension, "bidir.graphs.txt", sep="."), append=FALSE,ncolumns=num.cols.b, sep = ", ")	
-		
-	for (i in 1:numsteps){
-#		on.exit(print(paste("Number of steps: ", numsteps, " ------- Number of Graphs discovered: ", numGraphs, "\n total variation distance: ",(sum(abs(counts/numsteps-1/numGraphs)))/2, "\n counts: \n", counts, "\n empty move counts: \n", empty.move.counts)))
-		flag = FALSE
-		empty.move.flag=FALSE
-		prev.network = network
-		network = Get.Next.Network(network[[1]],network[[2]],coin)
-		if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
-			empty.move.flag=TRUE 			# new network is same as previous network
-		}		
-		# OPEN CONNECTION  
-		conD = file(paste(filename.extension, "dir.graphs.txt", sep="."), open = "r")
-		conB = file(paste(filename.extension, "bidir.graphs.txt", sep="."), open ="r")
-		graph.index = 0
-		# (WHILE FILE HAS MORE GRAPHS TO READ: READ GRAPH, COMPARE IT TO CURRENT. REST AS BEFORE)
-		while ( (length(str.dir.graph <- readLines(conD, n = 1, warn = FALSE)) > 0) && 
-		(length(str.bidir.graph <- readLines(conB, n = 1, warn = FALSE)) > 0) && flag==FALSE) {
-	#		dir.graphs = readLines(con = paste(filename.extension, "dir.graphs.txt", n = 50)		
-	#		bidir.graphs = readLines(con = paste(filename.extension, "bidir.graphs.txt", n = 50)
-			graph.index = graph.index+1
-
-			dir.what = unlist(strsplit(str.dir.graph,split=','))
-			bidir.what = unlist(strsplit(str.bidir.graph,split=','))
-			dir.graph = as.numeric(dir.what)
-			bidir.graph = as.numeric(bidir.what)
-			d = graph(  dir.graph, n = vcount(gdir), directed = TRUE)
-			b = graph(bidir.graph, n = vcount(gbidir), directed = FALSE)
-
-			if (ecount(graph.difference(network[[1]],d)) == 0 && ecount(graph.difference(network[[2]],b)) == 0){
-				# Current network was visited before
-				counts[[graph.index]]=counts[[graph.index]]+1
-				flag = TRUE
-				if (empty.move.flag==TRUE){
-					empty.move.counts[[graph.index]]=empty.move.counts[[graph.index]]+1
-				}
-			} 
-		}
-		# CLOSE CONNECTION  
-		close(conD)
-		close(conB)
-		if (!flag){
-			# Encountered new graph
-			counts = append(counts, list(1))
-			empty.move.counts = append(empty.move.counts,list(0))
-			numGraphs = numGraphs+1
-			# Write new graph to files 
-			### CAUTION: writing to the file line by line can be very time consuming. 
-			### Rewrite this to only write to file every so often (every 1000 graphs?)
-			write(t(get.edgelist(network[[1]])), paste(filename.extension, "dir.graphs.txt", sep="."), append=TRUE,ncolumns=num.cols.d, sep = ", ")	
-			write(t(get.edgelist(network[[2]])), paste(filename.extension, "bidir.graphs.txt", sep="."), append=TRUE,ncolumns=num.cols.b, sep = ", ")	
-			}	
-		
-		# Logging information. Time consuming, but avoids losing all info if the program is interrupted early
-		
-		# Write counts to file
-		write(counts, paste(filename.extension, "distinct.graph.counts.txt", sep="."), append=FALSE, ncolumns=length(counts), sep = ", ")	
-		# Write empty move counts to file
-		write(empty.move.counts, paste(filename.extension, "empty.move.counts.txt", sep="."), append=FALSE, ncolumns=length(counts), sep = ", ")	
-
-	}
-	# calculate the TV distance
-	TV=(sum(abs(as.numeric(counts)/numsteps-1/numGraphs)))/2
-	write(TV, paste(filename.extension, "tv.distance.txt", sep="."), append=FALSE, ncolumns=length(counts), sep = ", ")	
-	return (numGraphs)
 }
