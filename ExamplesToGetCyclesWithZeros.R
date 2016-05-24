@@ -18,6 +18,8 @@ setwd("~/Dropbox/DynamicMarkov-p1/R code") #change this of course
 source('p1walk.R') # See comment on line 19 of GetCyclesWithZeros.R # 
 setwd("~/Dropbox/Tobias") #change this of course
 source('GetCyclesWithZeros.R')
+source('p1AndMoreWalk.R') 
+
 
 options(error=traceback)
 
