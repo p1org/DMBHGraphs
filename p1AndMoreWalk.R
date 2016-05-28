@@ -233,9 +233,21 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
     pj = aj+mj 			# estimate of outdegree probabilites
     Mest = sum(m)/2     # estimate of number of bidirected edges
     
-    if (reciprocation=="nzconst" && M!=0){
-      maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg, abs(Mest-M)/M)
-    }else maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg)
+    #    if (reciprocation=="nzconst" && M!=0){
+    pidiff=abs(pi-outdeg)/outdeg 
+    nanindout = which(is.nan(pidiff))
+    pidiff[nanindout]=0
+    
+    pjdiff=abs(pj-indeg)/indeg 
+    nanindin = which(is.nan(pjdiff))
+    pjdiff[nanindin]=0
+    
+    if (reciprocation=="nzconst"){
+      Mdiff = abs(Mest-M)/M
+      if (is.nan(Mdiff)) Mdiff=0
+      maxDifference = max(pidiff,pjdiff,Mdiff)
+      #      maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg, abs(Mest-M)/M)
+    }else maxDifference=max(pidiff,pjdiff) #else maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg)
     
     if (!is.nan(maxDifference)){
       converge = (maxDifference < tol )
