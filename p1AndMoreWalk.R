@@ -5,45 +5,16 @@
 ###########################################################################
 library(igraph)
 ########################################################################
-# Estimate.p.Value  													                          #
-# Estimate the percentage of graphs in the fiber of D	                  #
-# that are further from the MLE than G, for a model specified by the    #
-# user.                                                                 #
-# Input: 
-#   - directed graph D                                                  #
-#	Optional input:                                                       #
-#  	- model: a string signifying the appropriate model                  #
-#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
-#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
-#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
-#       the MLE calculated using the loglin package.                    #
-#     + "p1.recip.nzconst": for p1 model with constant non-zero         #
-#       reciprocation with the MLE calculated using the loglin package. #
-#     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
-#       with the MLE calculated using the loglin package.               #
-#		- steps.for.walk                                                    #
-#		- coin.for.move.types:  a fair coin by default.                     #
-#		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
-# Output:                                                               #
-#   - estimated p-value between 0 and 1                                 #
-########################################################################
-Estimate.p.Value<-function(D, model="p1.HLalg.recip.nzconst", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
-  mixed.graph = split.Directed.Graph(D)
-  dir = mixed.graph[[1]]
-  bidir = mixed.graph[[2]]
-  return (Estimate.p.Value(gdir=dir,gbidir=bidir,model,steps.for.walk,coin.for.move.types,mle.maxiter, mle.tol))  
-}
-########################################################################
 # Estimate.p.Value    												                          #
 # Estimate the percentage of graphs in the fiber of D	                  #
 # that are further from the MLE than G, for a model specified by the    #
 # user.                                                                 #
 # Input: 
-#   - gdir, igraph object directed graph                                                  #
-#   - gbidir, igraph object undirected graph
+#   - gdir, igraph object directed graph, if no gbidir is given         #
+#       we assume that gdir may contain reciprocated edges. if gbidir   #
+#       is given we assume gdir contains only unreciprocated edges.     #
 #	Optional input:                                                       #
+#   - gbidir, igraph object undirected graph
 #  	- model: a string signifying the appropriate model                  #
 #     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
@@ -61,27 +32,32 @@ Estimate.p.Value<-function(D, model="p1.HLalg.recip.nzconst", steps.for.walk=100
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
-  #Error Checking
-  if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
-  if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
-  if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
-  if(is.directed(gbidir)){stop("gbidir must be an undirected graph.")}
-  #Ensure graphs have same number of vertices
-  nd = vcount(gdir)
-  nb = vcount(gbidir)
-  if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
-  
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+  if (ecount(gbidir)==0){
+    mixed.graph = split.Directed.Graph(gdir)
+    gdir = mixed.graph[[1]]
+    gbidir = mixed.graph[[2]]  
+  }else{
+    #Error Checking
+    if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
+    if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
+    if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
+    if(is.directed(gbidir)){stop("gbidir must be an undirected graph.")}
+    #Ensure graphs have same number of vertices
+    nd = vcount(gdir)
+    nb = vcount(gbidir)
+    if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
+  }  
   mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
-  obs.gf = round (obs.gf,digits=6)
+  obs.gf = round (obs.gf,digits=8)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
   count = 0
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin.for.move.types)	
     new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
-    new.gf=round(new.gf, digits=6)
+    new.gf=round(new.gf, digits=8)
     # If the GoF statistic for new network is larger or equal than the GoF statistic
     # for the observed network. Note that a badly estimated MLE can give 
     # significant errors in the p-value.
@@ -257,9 +233,14 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
     mj = apply(m, 2, sum)
     pi = ai+mi			# estimate of indegree probabilities
     pj = aj+mj 			# estimate of outdegree probabilites
-    Mest = sum(m)/2 		# estimate of number of bidirected edges
-    maxDifference = max(max(abs(pi - outdeg)), max(abs(pj - indeg)), abs(Mest-M))
-    if (!is.nan(maxDifference)){
+    if (reciprocation=="nzconst"){
+      Mest = sum(m)/2   	# estimate of number of bidirected edges
+      maxDifference = max(max(abs(pi - outdeg))/outdeg, max(abs(pj - indeg))/indeg, abs(Mest-M)/M)
+    }else{
+      maxDifference = max(max(abs(pi - outdeg)), max(abs(pj - indeg)))  
+    }
+    
+if (!is.nan(maxDifference)){
       converge = (maxDifference < tol )
     }
     else {
@@ -269,7 +250,7 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
     num.iter = num.iter +1
   }
   if (num.iter == maxiter){
-    print(maxDifference)
+    print("Warning: calculations stopped after maximum number of iterations have been reach. There may or may not have been convergence.")
   }
   fit = numeric(4 * vchoose2)
   k=1
@@ -281,11 +262,13 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
   }
   fit
   out=list()
-  out[[1]]=fit
+  out[[1]]=round(fit,digits=8)
   out[[2]]=n
   out[[3]]=a
   out[[4]]=m
-  out[[5]]=Mest
+  if (reciprocation=="nzconst"){
+    out[[5]]=Mest    
+  }
   return(out)
 }
 
@@ -397,7 +380,7 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 #      maxdiff=max(maxdiff,mleHL[index,]-as.vector(mleFW[i,j,,]))
     }
   }
-  diffMatr = mleHL-FWtoHL
+  diffMatr = abs(mleHL-FWtoHL)
   maxdiff = max(diffMatr)
   return (list(maxdiff, diffMatr))
 }
@@ -1093,7 +1076,7 @@ as.arbitrary.directed <- function(b) {
 # ################################################################################################################
 # ################################################################################################################
 # ################################################################################################################
-#Need to update rest of fucntions
+#Need to update rest of functions
 # ################################################################################################################
 # Estimate.p.Value.for.Testing<-function(gdir, gbidir, model= , steps.for.walk=100, mleMatr = NULL, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
 #   #Error Checking
