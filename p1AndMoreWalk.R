@@ -196,19 +196,17 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
     
     if (reciprocation=="nzconst"){
       ########## Mutual step ##########
-      if(M!=0){
-        m.total = sum(m)
-        # Update H
-        H=M/(m.total/2)
-        # Update L
-        L = (vchoose2-M) /(vchoose2-m.total/2)	
-        for (i in 1:v){
-          for(j in 1:v){
-            if (i!=j){
-              m[i,j] = m[i,j]*H
-              a[i,j] = a[i,j]*L
-              n[i,j] = n[i,j]*L
-            }
+      m.total = sum(m)
+      # Update H
+      if (M!=0) H=M/(m.total/2) else H=0
+      # Update L
+      L = (vchoose2-M) /(vchoose2-m.total/2)	
+      for (i in 1:v){
+        for(j in 1:v){
+          if (i!=j){
+            m[i,j] = m[i,j]*H
+            a[i,j] = a[i,j]*L
+            n[i,j] = n[i,j]*L
           }
         }
       }
@@ -233,14 +231,13 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
     mj = apply(m, 2, sum)
     pi = ai+mi			# estimate of indegree probabilities
     pj = aj+mj 			# estimate of outdegree probabilites
-    if (reciprocation=="nzconst"){
-      Mest = sum(m)/2   	# estimate of number of bidirected edges
-      maxDifference = max(max(abs(pi - outdeg))/outdeg, max(abs(pj - indeg))/indeg, abs(Mest-M)/M)
-    }else{
-      maxDifference = max(max(abs(pi - outdeg)), max(abs(pj - indeg)))  
-    }
+    Mest = sum(m)/2     # estimate of number of bidirected edges
     
-if (!is.nan(maxDifference)){
+    if (reciprocation=="nzconst" && M!=0){
+      maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg, abs(Mest-M)/M)
+    }else maxDifference = max(abs(pi - outdeg)/outdeg, abs(pj - indeg)/indeg)
+    
+    if (!is.nan(maxDifference)){
       converge = (maxDifference < tol )
     }
     else {
@@ -266,9 +263,7 @@ if (!is.nan(maxDifference)){
   out[[2]]=n
   out[[3]]=a
   out[[4]]=m
-  if (reciprocation=="nzconst"){
-    out[[5]]=Mest    
-  }
+  out[[5]] = Mest    
   return(out)
 }
 
@@ -372,17 +367,18 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20
 compare.p1.MLEs<-function(mleHL,mleFW){
   num.vertices = dim(mleFW)[[1]]
   FWtoHL = array(data=0,dim=dim(mleHL))
-#  maxdiff=0
+  #  maxdiff=0
   for(i in 1:(num.vertices-1)){
     for (j in (i+1):num.vertices){
       index = num.vertices*(i-1)-(i-1)*(i)/2+j-i
       FWtoHL[index,]=as.vector(mleFW[i,j,,]) 
-#      maxdiff=max(maxdiff,mleHL[index,]-as.vector(mleFW[i,j,,]))
+      #      maxdiff=max(maxdiff,mleHL[index,]-as.vector(mleFW[i,j,,]))
     }
   }
   diffMatr = abs(mleHL-FWtoHL)
   maxdiff = max(diffMatr)
-  return (list(maxdiff, diffMatr))
+  mse = sqrt(sum(diffMatr^2))/length(diffMatr)
+  return (list(maxdiff, mse, diffMatr))
 }
 #########################################################################################################
 # Get.GoF.Statistic           							                                          #
@@ -796,7 +792,7 @@ Get.Move.p1.ed <- function(d,b, coin=c(1/3,1/3,1/3)){
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
 Get.Move.p1.zero.or.nzconst <- function(d,b){
-  # TODO: Mixed moves are also likely, can we incorporate those without biasing the moves too much?
+  # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
   d = graph.union(d,as.directed(b,mode="mutual"))
   move = Get.Directed.Move.p1.const.or.zero(d)
   return (move)
@@ -990,7 +986,7 @@ Get.Directed.Piece <- function(d){
     if (num.edges.left==2) k=2 #avoid unwanted behaviour of sample function
     else k = sample(2:num.edges.left,1) #size of current part.
     if (num.edges.left-k == 1) k=k+1 #E's assumption on not leaving out that last edge hanging. 
-    more.edges=Bipartite.Walk(random.subset.of.d[s:(s+k-1),])#stupid comma to get the rows!
+    more.edges=Bipartite.Walk(random.subset.of.d[s:(s+k-1),]) 
     if (is.null(more.edges)) return(NULL)
     else edges.to.add = c(edges.to.add,more.edges ) 
     num.edges.left=num.edges.left-k
@@ -1030,8 +1026,7 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
   for (i in 1:(num.edges - 1)) {
     edges.to.add = c(edges.to.add, edges.to.remove[i + 1, 1], edges.to.remove[i, 2])
   }
-  edges.to.add = c(edges.to.add, edges.to.remove[1, 1], edges.to.remove[num.edges, 
-                                                                        2])
+  edges.to.add = c(edges.to.add, edges.to.remove[1, 1], edges.to.remove[num.edges,2])
   if (simple.only){
     # Ensure that edges.to.add form no loops or multiple edges
     if (!is.simple(graph(edges.to.add))) 
@@ -1072,167 +1067,181 @@ as.arbitrary.directed <- function(b) {
   }
   return(b.directed)
 }
-# ################################################################################################################
-# ################################################################################################################
-# ################################################################################################################
-# ################################################################################################################
-#Need to update rest of functions
-# ################################################################################################################
-# Estimate.p.Value.for.Testing<-function(gdir, gbidir, model= , steps.for.walk=100, mleMatr = NULL, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
-#   #Error Checking
-#   if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
-#   if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
-#   if(!is.directed(gdir)){	stop("gdir must be a directed graph.") }
-#   if(is.directed(gbidir)){		
-#     stop("gbidir must be an undirected graph.")
-#   }
-#   
-#   nd = vcount(gdir)
-#   nb = vcount(gbidir)
-#   if (nd>nb){
-#     gbidir = add.vertices(gbidir,nd-nb)	
-#   }
-#   else if (nd<nb){
-#     gdir = add.vertices(gdir,nb-nd)	
-#   }
-#   # if mleMatr was not given as argument use generate the MLE
-#   if (is.null(mleMatr)){
-#     print("Now estimating MLE.")
-#     mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol,alpha, beta, rho, theta, rhoconst)
-#     print("MLE estimate completed.")
-#   }
-#   # Error Check: inputted mleMatr dimension
-#   else if ((dim(mleMatr)[[1]]!=nd*(nd-1)/2) || (dim(mleMatr)[[2]]!=4)){
-#     stop("mleMatr dimension is incorrect.")
-#   }
-#   obs.gf = Get.GoF.Statistic(gdir, gbidir, mleMatr)
-#   if (is.nan(obs.gf)){
-#     print("NaN error in calculation of GF statistic.")
-#   }
-#   if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
-#   next.network = list(gdir,gbidir)
-#   count = 0
-#   int.values=c() # To estimate convergence of count/i to p-value
-#   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
-#   for(i in 1: steps.for.walk){
-#     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], coin)	
-#     new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], mleMatr)
-#     # If the GoF statistic for new network is larger than the GoF statistic
-#     # for the observed network. Note that a badly estimated MLE can give 
-#     # significant errors in the p-value.
-#     if (new.gf>=obs.gf){
-#       count = count +1
-#     }
-#     int.values<-c(int.values,count/i)
-#     gof.values<-c(gof.values,new.gf)
-#   }
-#   return (list(count/steps.for.walk,int.values, gof.values, mleMatr))
-# }
-# #######################################################################
-# ########################################################################
-# # Input: 
-# #		-gofs: list of goodness of fit statistics, with the first one the gof of the observed network
-# #       -burnsteps: the number of first entries we should ignore when estimating p-value of observed network
-# # Output:
-# #		- A list of 
-# #			- p-value estimate
-# #			- a list of p-value estimates for each step of the loop
-# #######################################################################
-# Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
-#   count = 0	# To estimate convergence of count/i to p-value
-#   p.values = c()
-#   for(i in (burnsteps +2):length(gofs)){
-#     # If the GoF statistic for new network is larger than the GoF statistic
-#     # for the observed network. Note that a badly estimated MLE can give 
-#     # significant errors in the p-value.
-#     if (gofs[i]>=gofs[1]){
-#       count = count +1
-#     }
-#     p.values = c(p.values, count/(i-(burnsteps+1)))
-#   }
-#   return (list(count/(length(gofs)-length(burnsteps)-1), p.values))
-# }
-# # Enumerates the fiber, and returns the list of graps visited, directed+bidirected parts,  a vector of counts for each graph, the Total Variation Distance of the walk, and a count of all empty moves made in each graph. #NOTE: Does not currently keep track of empty moves.
-# Enumerate.Fiber<-function(gdir, gbidir, numsteps=1000, coin = c(1/3,1/3,1/3)){
-#   counts=list(1)
-#   empty.move.counts=list(0)	
-#   network=list(gdir,gbidir)
-#   
-#   graphsD=list()
-#   graphsB=list()
-#   
-#   ####### REPLACE	####### 
-#   #	graphsD[[1]]=gdir
-#   #	graphsB[[1]]=gbidir
-#   #######   WITH  ####### 
-#   graphsD[[1]]= as.numeric(t(get.edgelist(gdir)))
-#   graphsB[[1]]= as.numeric(t(get.edgelist(gbidir)))
-#   ####### END REPLACE
-#   
-#   numGraphs=1
-#   
-#   for (i in 1:numsteps){
-#     # In case there are errors note that i is the number of steps 
-#     on.exit(return(list(graphsD, graphsB, counts, TV<-(sum(abs(as.numeric(counts)/i-1/numGraphs)))/2, empty.move.counts, i)))
-#     
-#     flag = FALSE
-#     empty.move.flag=FALSE
-#     prev.network = network
-#     network = Get.Next.Network(network[[1]],network[[2]],coin)
-#     if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
-#       # new network is same as previous network
-#       empty.move.flag=TRUE
-#     }
-#     for(j in 1:numGraphs){
-#       ####### REPLACE	####### 
-#       #			if(ecount(graph.difference(network[[1]],graphsD[[j]]))==0 &&ecount(graph.difference(network[[2]],graphsB[[j]]))==0){
-#       #######   WITH  ####### 
-#       if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
-#         ####### END REPLACE
-#         # New network was encountered before
-#         counts[[j]]=counts[[j]]+1
-#         flag = TRUE
-#         if (empty.move.flag==TRUE){
-#           empty.move.counts[[j]]=empty.move.counts[[j]]+1
-#         }
-#       } 
-#     }
-#     if (!flag){
-#       # Encountered new graph
-#       counts = append(counts, list(1))
-#       empty.move.counts = append(empty.move.counts,list(0))
-#       #old code - delete: counts[[numGraphs+1]]=counts[[numGraphs+1]]+1
-#       numGraphs = numGraphs+1
-#       ####### REPLACE	####### 
-#       #			graphsD[[numGraphs]]=network[[1]]
-#       #			graphsB[[numGraphs]]=network[[2]]
-#       #######   WITH  ####### 
-#       graphsD[[numGraphs]]=as.numeric(t(get.edgelist(network[[1]])))
-#       graphsB[[numGraphs]]=as.numeric(t(get.edgelist(network[[2]])))			
-#       ####### END REPLACE
-#     }
-#   }
-#   
-#   #calculate the TV distance
-#   TV=(sum(abs(as.numeric(counts)/numsteps-1/numGraphs)))/2
-#   return (list(graphsD, graphsB, counts, TV, empty.move.counts))
-# }
-# 
-# Write.Graphs.to.File<-function(graphs, filename){
-#   for (i in 1:length(graphs)){
-#     if (is.igraph(graphs[[i]])){		
-#       num.cols = 2*ecount(graphs[[i]]) #to pass to the write function so that all entries are in one row.
-#       write(t(get.edgelist(graphs[[i]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")	
-#     }
-#     else{
-#       num.cols=2*length(graphs[[i]])
-#       if (length(graphs[[i]])!=0){
-#         write(graphs[[i]], filename, append=TRUE,ncolumns=num.cols, sep = ", ")			
-#       }
-#       else { write("\n",filename, append=TRUE)}
-#     }
-#   }
-# }
+################################################################################################################
+################################################################################################################
+# Estimate.p.Value.for.Testing
+################################################################################################################
+################################################################################################################
+################################################################################################################
+Estimate.p.Value.for.Testing<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", steps.for.walk=100, mleMatr = NULL, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+  #Error Checking
+  if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
+  if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
+  if(!is.directed(gdir)){	stop("gdir must be a directed graph.") }
+  if(is.directed(gbidir)){		
+    stop("gbidir must be an undirected graph.")
+  }
+  
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  if (nd>nb){
+    gbidir = add.vertices(gbidir,nd-nb)	
+  }
+  else if (nd<nb){
+    gdir = add.vertices(gdir,nb-nd)	
+  }
+  # if mleMatr was not given as argument use generate the MLE
+  if (is.null(mleMatr)){
+    print("Now estimating MLE.")
+    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol,alpha, beta, rho, theta, rhoconst)
+    print("MLE estimate completed.")
+  }
+  # Either update to take into account model or leave the mle dimension checking ot Get.GoF.Statistic
+  #  # Error Check: inputted mleMatr dimension
+  #  else if ((dim(mleMatr)[[1]]!=nd*(nd-1)/2) || (dim(mleMatr)[[2]]!=4)){
+  #    stop("mleMatr dimension is incorrect.")
+  #  }
+  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
+  if (is.nan(obs.gf)){
+    print("NaN error in calculation of GF statistic.")
+  }
+  if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
+  next.network = list(gdir,gbidir)
+  count = 0
+  int.values=c() # To estimate convergence of count/i to p-value
+  gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
+  for(i in 1: steps.for.walk){
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
+    new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
+    # If the GoF statistic for new network is larger than the GoF statistic
+    # for the observed network. Note that a badly estimated MLE can give 
+    # significant errors in the p-value.
+    if (new.gf>=obs.gf){
+      count = count +1
+    }
+    int.values<-c(int.values,count/i)
+    gof.values<-c(gof.values,new.gf)
+  }
+  return (list(count/steps.for.walk,int.values, gof.values, mleMatr))
+}
+#######################################################################
+########################################################################
+# Estimate.p.Value.From.GoFsß
+# Input: 
+#		-gofs: list of goodness of fit statistics, with the first one the gof of the observed network
+#       -burnsteps: the number of first entries we should ignore when estimating p-value of observed network
+# Output:
+#		- A list of 
+#			- p-value estimate
+#			- a list of p-value estimates for each step of the loop
+#######################################################################
+Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
+  count = 0	# To estimate convergence of count/i to p-value
+  p.values = c()
+  for(i in (burnsteps +2):length(gofs)){
+    # If the GoF statistic for new network is larger than the GoF statistic
+    # for the observed network. Note that a badly estimated MLE can give 
+    # significant errors in the p-value.
+    if (gofs[i]>=gofs[1]){
+      count = count +1
+    }
+    p.values = c(p.values, count/(i-(burnsteps+1)))
+  }
+  return (list(count/(length(gofs)-length(burnsteps)-1), p.values))
+}
+###############################################################################################
+###############################################################################################
+# Enumerate.Fiber
+# Enumerates the fiber, and returns a list
+#   Output: a list of
+#     - the list of graphs visited, directed+bidirected parts,  
+#     - a vector of counts for each graph, 
+#     - the Total Variation Distance of the walk, and 
+#     - a count of all empty moves made in each graph. 
+# #NOTE: Does not currently keep track of empty moves.
+###############################################################################################
+Enumerate.Fiber<-function(gdir, gbidir, model="", numsteps=1000, coin = c(1/3,1/3,1/3)){
+  counts=list(1)
+  empty.move.counts=list(0)	
+  network=list(gdir,gbidir)
+  
+  graphsD=list()
+  graphsB=list()
+  
+  ####### REPLACE	####### 
+  #	graphsD[[1]]=gdir
+  #	graphsB[[1]]=gbidir
+  #######   WITH  ####### 
+  graphsD[[1]]= as.numeric(t(get.edgelist(gdir)))
+  graphsB[[1]]= as.numeric(t(get.edgelist(gbidir)))
+  ####### END REPLACE
+  
+  numGraphs=1
+  
+  for (i in 1:numsteps){
+    # In case there are errors note that i is the number of steps 
+    on.exit(return(list(graphsD, graphsB, counts, TV<-(sum(abs(as.numeric(counts)/i-1/numGraphs)))/2, empty.move.counts, i)))
+    
+    flag = FALSE
+    empty.move.flag=FALSE
+    prev.network = network
+    network = Get.Next.Network(network[[1]],network[[2]],coin)
+    #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
+    # new network is same as previous network
+    #      empty.move.flag=TRUE
+    #    }
+    # replaced by
+    if (network[[3]]==TRUE) empty.move.flag=TRUE
+    for(j in 1:numGraphs){
+      ####### REPLACE	####### 
+      #			if(ecount(graph.difference(network[[1]],graphsD[[j]]))==0 &&ecount(graph.difference(network[[2]],graphsB[[j]]))==0){
+      #######   WITH  ####### 
+      if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
+        ####### END REPLACE
+        # New network was encountered before
+        counts[[j]]=counts[[j]]+1
+        flag = TRUE
+        if (empty.move.flag==TRUE){
+          empty.move.counts[[j]]=empty.move.counts[[j]]+1
+        }
+      } 
+    }
+    if (!flag){
+      # Encountered new graph
+      counts = append(counts, list(1))
+      empty.move.counts = append(empty.move.counts,list(0))
+      #old code - delete: counts[[numGraphs+1]]=counts[[numGraphs+1]]+1
+      numGraphs = numGraphs+1
+      ####### REPLACE	####### 
+      #			graphsD[[numGraphs]]=network[[1]]
+      #			graphsB[[numGraphs]]=network[[2]]
+      #######   WITH  ####### 
+      graphsD[[numGraphs]]=as.numeric(t(get.edgelist(network[[1]])))
+      graphsB[[numGraphs]]=as.numeric(t(get.edgelist(network[[2]])))			
+      ####### END REPLACE
+    }
+  }
+  
+  #calculate the TV distance
+  TV=(sum(abs(as.numeric(counts)/numsteps-1/numGraphs)))/2
+  return (list(graphsD, graphsB, counts, TV, empty.move.counts))
+}
+
+Write.Graphs.to.File<-function(graphs, filename){
+  for (i in 1:length(graphs)){
+    if (is.igraph(graphs[[i]])){		
+      num.cols = 2*ecount(graphs[[i]]) #to pass to the write function so that all entries are in one row.
+      write(t(get.edgelist(graphs[[i]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")	
+    }
+    else{
+      num.cols=2*length(graphs[[i]])
+      if (length(graphs[[i]])!=0){
+        write(graphs[[i]], filename, append=TRUE,ncolumns=num.cols, sep = ", ")			
+      }
+      else { write("\n",filename, append=TRUE)}
+    }
+  }
+}
 # 
 # Get.GoF.Statistics.From.File<-function(dir.graphs.filename,bidir.graphs.filename,mleMatr){
 #   print("Not implemented yet.")
