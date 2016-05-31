@@ -26,29 +26,33 @@ library(igraph)
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
+#   - mleMatr: the mleMatr, in the format required by model specs       #
 #		- steps.for.walk                                                    #
 #		- coin.for.move.types:  a fair coin by default.                     #
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", mleMatr=0, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
-  }else{
-    #Error Checking
-    if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
-    if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
-    if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
-    if(is.directed(gbidir)){stop("gbidir must be an undirected graph.")}
-    #Ensure graphs have same number of vertices
-    nd = vcount(gdir)
-    nb = vcount(gbidir)
-    if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
+  }
+  
+  #Error Checking
+  if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
+  if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
+  if(!is.directed(gdir)){stop("gdir must be a directed graph.")}
+  if(is.directed(gbidir)){stop("gbidir must be an undirected graph.")}
+  #Ensure graphs have same number of vertices
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
+  
+  if (mleMatr==0){
+    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
   }  
-  mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
   obs.gf = round (obs.gf,digits=8)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
