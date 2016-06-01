@@ -776,7 +776,7 @@ Get.Move.p1.ed <- function(d,b, coin=c(1/3,1/3,1/3)){
   # Now just see where coin.value is in relation to the coin vector (a,b,c):
   # first coin option is : coin \in [0.0, a]:
   if (coin.value <= coin[1]) { 
-    dir.move = Get.Directed.Move(d,b)
+    dir.move = Get.Directed.Move.p1.ed(d,b)
     return(list(dir.move[[1]],dir.move[[2]], graph.empty(vcount(b),directed=FALSE), graph.empty(vcount(b),directed=FALSE)))
   }
   # second coin option is: coin \in (a,a+b]:
@@ -1142,7 +1142,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir, model="p1.HLalg.recip.nzcon
 }
 #######################################################################
 ########################################################################
-# Estimate.p.Value.From.GoFsß
+# Estimate.p.Value.From.GoFs
 # Input: 
 #		-gofs: list of goodness of fit statistics, with the first one the gof of the observed network
 #       -burnsteps: the number of first entries we should ignore when estimating p-value of observed network
@@ -1176,21 +1176,16 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - a count of all empty moves made in each graph. 
 # #NOTE: Does not currently keep track of empty moves.
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="", numsteps=1000, coin = c(1/3,1/3,1/3)){
-  counts=list(1)
-  empty.move.counts=list(0)	
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, coin = c(1/3,1/3,1/3)){
+  counts=c(1)
+  current.network.index=1
+  empty.move.counts=c(0)
   network=list(gdir,gbidir)
   
   graphsD=list()
   graphsB=list()
-  
-  ####### REPLACE	####### 
-  #	graphsD[[1]]=gdir
-  #	graphsB[[1]]=gbidir
-  #######   WITH  ####### 
   graphsD[[1]]= as.numeric(t(get.edgelist(gdir)))
   graphsB[[1]]= as.numeric(t(get.edgelist(gbidir)))
-  ####### END REPLACE
   
   numGraphs=1
   
@@ -1198,48 +1193,47 @@ Enumerate.Fiber<-function(gdir, gbidir, model="", numsteps=1000, coin = c(1/3,1/
     # In case there are errors note that i is the number of steps 
     on.exit(return(list(graphsD, graphsB, counts, TV<-(sum(abs(as.numeric(counts)/i-1/numGraphs)))/2, empty.move.counts, i)))
     
-    flag = FALSE
+    found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
-    network = Get.Next.Network(network[[1]],network[[2]],coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, coin)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
     #      empty.move.flag=TRUE
     #    }
     # replaced by
-    if (network[[3]]==TRUE) empty.move.flag=TRUE
-    for(j in 1:numGraphs){
-      ####### REPLACE	####### 
-      #			if(ecount(graph.difference(network[[1]],graphsD[[j]]))==0 &&ecount(graph.difference(network[[2]],graphsB[[j]]))==0){
-      #######   WITH  ####### 
-      if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
-        ####### END REPLACE
-        # New network was encountered before
-        counts[[j]]=counts[[j]]+1
-        flag = TRUE
-        if (empty.move.flag==TRUE){
-          empty.move.counts[[j]]=empty.move.counts[[j]]+1
-        }
-      } 
-    }
-    if (!flag){
+    if (network[[3]]==TRUE){
+      # trivial move
+      empty.move.flag=TRUE
+      empty.move.counts[current.network.index]=empty.move.counts[current.network.index]+1
+      found.graph.flag = TRUE
+      counts[current.network.index]=counts[current.network.index]+1          
+    }else{
+      j=1
+      while (!found.graph.flag && j<=numGraphs){
+        if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
+          # network is the jth graph encountered
+          found.graph.flag = TRUE
+          current.network.index=j
+          counts[j]=counts[j]+1
+        }else
+          j=j+1
+      }      
+    } 
+    if (!found.graph.flag){
       # Encountered new graph
-      counts = append(counts, list(1))
-      empty.move.counts = append(empty.move.counts,list(0))
-      #old code - delete: counts[[numGraphs+1]]=counts[[numGraphs+1]]+1
+      counts = c(counts,1)
+      empty.move.counts = c(empty.move.counts,0)
+      print(as.vector(counts))#testing
+
       numGraphs = numGraphs+1
-      ####### REPLACE	####### 
-      #			graphsD[[numGraphs]]=network[[1]]
-      #			graphsB[[numGraphs]]=network[[2]]
-      #######   WITH  ####### 
       graphsD[[numGraphs]]=as.numeric(t(get.edgelist(network[[1]])))
       graphsB[[numGraphs]]=as.numeric(t(get.edgelist(network[[2]])))			
-      ####### END REPLACE
     }
   }
   
   #calculate the TV distance
-  TV=(sum(abs(as.numeric(counts)/numsteps-1/numGraphs)))/2
+  TV=(sum(abs(counts/numsteps-1/numGraphs)))/2
   return (list(graphsD, graphsB, counts, TV, empty.move.counts))
 }
 
