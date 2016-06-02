@@ -26,6 +26,8 @@ library(igraph)
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
+#   - ignore.trivial.moves: if set to true do not use loops in p-value  #
+#     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
 #		- steps.for.walk                                                    #
 #		- coin.for.move.types:  a fair coin by default.                     #
@@ -33,7 +35,7 @@ library(igraph)
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", mleMatr=0, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=0, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -58,18 +60,20 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
   count = 0
+  steps.used=0
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin.for.move.types)	
-    new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
-    new.gf=round(new.gf, digits=8)
-    # If the GoF statistic for new network is larger or equal than the GoF statistic
-    # for the observed network. Note that a badly estimated MLE can give 
-    # significant errors in the p-value.
-    if (new.gf>=obs.gf){
-      count = count +1
+    if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
+      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
+      new.gf=round(new.gf, digits=8)
+      # If the GoF statistic for new network is larger or equal than the GoF statistic
+      # for the observed network. Note that a badly estimated MLE can give 
+      # significant errors in the p-value.
+      if (new.gf>=obs.gf){  count = count +1  }
+      steps.used=steps.used+1
     }
   }
-  return (count/steps.for.walk)
+  return (count/steps.used)
 }
 ########################################################################
 # split.Directed.Graph
