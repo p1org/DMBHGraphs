@@ -60,7 +60,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
   count = 0
-  steps.used=0
+  steps.used=1
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin.for.move.types)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
@@ -1135,7 +1135,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
   count = 0
   int.values=c() # To estimate convergence of count/i to p-value
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
-  steps.used=0
+  steps.used=1
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)  
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
