@@ -5,22 +5,23 @@
 ###########################################################################
 library(igraph)
 ########################################################################
-# Estimate.p.Value    												                          #
-# Estimate the percentage of graphs in the fiber of D	                  #
-# that are further from the MLE than G, for a model specified by the    #
-# user.                                                                 #
+# Estimate.p.Value    												                              #
+# Estimate the percentage of graphs in the fiber of D	                      #
+# that are further from the MLE than G, for a model specified by the        #
+# user.                                                                     #
 # Input: 
-#   - gdir, igraph object directed graph, if no gbidir is given         #
-#       we assume that gdir may contain reciprocated edges. if gbidir   #
-#       is given we assume gdir contains only unreciprocated edges.     #
-#	Optional input:                                                       #
+#   - gdir, igraph object directed graph, if no gbidir is given             #
+#       we assume that gdir may contain reciprocated edges. if gbidir       #
+#       is given we assume gdir contains only unreciprocated edges.         #
+#	Optional input:                                                           #
 #   - gbidir, igraph object undirected graph
-#  	- model: a string signifying the appropriate model                  #
-#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+#  	- model: a string signifying the appropriate model                      #
+#     + "p1.HLalg.recip.nzconst": for p1 model with constant non-zero       #
+#       reciprocation                                                       #
+#       and the MLE calculated with Holland-Leinhardt's IPS algorithm       #
+#     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation effect  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
-#       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#     + "p1.recip.zero": for p1 model with zero reciprocation with      #
 #       the MLE calculated using the loglin package.                    #
 #     + "p1.recip.nzconst": for p1 model with constant non-zero         #
 #       reciprocation with the MLE calculated using the loglin package. #
@@ -30,12 +31,12 @@ library(igraph)
 #     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
 #		- steps.for.walk                                                    #
-#		- coin.for.move.types:  a fair coin by default.                     #
+#		- coin:  a fair coin by default.                     #
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=0, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=0, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -62,7 +63,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 0
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin.for.move.types)	
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
       new.gf=round(new.gf, digits=8)
@@ -99,9 +100,9 @@ split.Directed.Graph<-function(D){
 # - network: an nxn adjacency matrix for a directed graph. Used to		  #
 # extract sufficient statistics: indegrees, outdegrees, and in the      #
 # case of constant reciprocation, number of	reciprocated edges					#
-# - reciprocation: string. if "zero" the reciprocation parameter in the #
+# - reciprocation: string. if "zero" the reciprocation effect in the    #
 #       model is assumed to be zero; if "nzconst" it is assumed to be a #
-#       non-zero constant.                                              #
+#       non-zero constant effect.                                       #
 # - maxiter: maximal number of iterations								                #
 # - tol: tolerance for declaring convergence (based on the				      #
 # ell-infinity norm of the difference between observed and fitted		    #
@@ -401,17 +402,17 @@ compare.p1.MLEs<-function(mleHL,mleFW){
   return (list(maxdiff, mse, diffMatr))
 }
 #########################################################################################################
-# Get.GoF.Statistic           							                                          #
-# Estimates goodness of fit  (GoF) statistic between current network and MLE					                      #
-# Input:																                                              #
-# - confMatr:  current network in the form of the mle 						                  	#
-# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	            #
-# - model: a string signifying the appropriate model under which the mle has been calculated                   #
-#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
+# Get.GoF.Statistic           							                                                                  #
+# Estimates goodness of fit  (GoF) statistic between current network and MLE					                        #
+# Input:																                                                                      #
+# - confMatr:  current network in the form of the mle 						                  	                        #
+# - mleMatr: the mle or extended mle in a 4x(n choose 2) matrix	format. 	                                    #
+# - model: a string signifying the appropriate model under which the mle has been calculated                  #
+#     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation                                    #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#     + "p1.recip.zero": for p1 model with zero reciprocation effect with   #
 #       the MLE calculated using the loglin package.                    #
 #     + "p1.recip.nzconst": for p1 model with constant non-zero         #
 #       reciprocation with the MLE calculated using the loglin package. #
@@ -666,7 +667,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#       + "p1.recip.zero": for p1 model with zero reciprocation with   #
+#       + "p1.recip.zero": for p1 model with zero reciprocation effect with   #
 #       the MLE calculated using the loglin package using Fienberg-Wasserman's
 #       configuration matrix.                                                 #
 #       + "p1.recip.nzconst": for p1 model with constant non-zero         #
@@ -727,7 +728,7 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
 #       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation     #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
-#       + "p1.recip.zero": for p1 model with zero reciprocation with          #
+#       + "p1.recip.zero": for p1 model with zero reciprocation effect with          #
 #       the MLE calculated using the loglin package                           #
 #       using Fienberg-Wasserman's configuration matrix.                      #
 #       + "p1.recip.nzconst": for p1 model with constant non-zero             #
@@ -1093,7 +1094,7 @@ as.arbitrary.directed <- function(b) {
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
