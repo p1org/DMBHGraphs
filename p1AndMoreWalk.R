@@ -1093,7 +1093,12 @@ as.arbitrary.directed <- function(b) {
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", steps.for.walk=100, mleMatr = NULL, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, coin.for.move.types=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+  if (ecount(gbidir)==0){
+    mixed.graph = split.Directed.Graph(gdir)
+    gdir = mixed.graph[[1]]
+    gbidir = mixed.graph[[2]]  
+  }
   #Error Checking
   if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
   if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
@@ -1113,10 +1118,10 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir, model="p1.HLalg.recip.nzcon
   # if mleMatr was not given as argument use generate the MLE
   if (is.null(mleMatr)){
     print("Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol,alpha, beta, rho, theta, rhoconst)
+    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol)
     print("MLE estimate completed.")
   }
-  # Either update to take into account model or leave the mle dimension checking ot Get.GoF.Statistic
+  # Either update to take into account model or leave the mle dimension checking to Get.GoF.Statistic
   #  # Error Check: inputted mleMatr dimension
   #  else if ((dim(mleMatr)[[1]]!=nd*(nd-1)/2) || (dim(mleMatr)[[2]]!=4)){
   #    stop("mleMatr dimension is incorrect.")
@@ -1130,19 +1135,24 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir, model="p1.HLalg.recip.nzcon
   count = 0
   int.values=c() # To estimate convergence of count/i to p-value
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
+  steps.used=0
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
-    new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
-    # If the GoF statistic for new network is larger than the GoF statistic
-    # for the observed network. Note that a badly estimated MLE can give 
-    # significant errors in the p-value.
-    if (new.gf>=obs.gf){
-      count = count +1
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)  
+    if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
+      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
+      new.gf=round(new.gf, digits=8)
+      # If the GoF statistic for new network is larger or equal than the GoF statistic
+      # for the observed network. Note that a badly estimated MLE can give 
+      # significant errors in the p-value.
+      if (new.gf>=obs.gf){  
+        count = count +1  
+      }
+      steps.used=steps.used+1
     }
     int.values<-c(int.values,count/i)
-    gof.values<-c(gof.values,new.gf)
+    gof.values<-c(gof.values,new.gf) 
   }
-  return (list(count/steps.for.walk,int.values, gof.values, mleMatr))
+  return (list(count/steps.used,int.values, gof.values, mleMatr))
 }
 #######################################################################
 ########################################################################
