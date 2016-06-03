@@ -18,7 +18,7 @@ library(igraph)
 #  	- model: a string signifying the appropriate model                  #
 #     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #     + "p1.recip.zero": for p1 model with zero reciprocation with   #
 #       the MLE calculated using the loglin package.                    #
@@ -294,7 +294,7 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #    - model: a string signifying the appropriate model                  #
 #     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #     + "p1.recip.zero": for p1 model with zero reciprocation with   #
 #       the MLE calculated using the loglin package.                    #
@@ -409,7 +409,7 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 # - model: a string signifying the appropriate model under which the mle has been calculated                   #
 #     + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#     + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#     + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #     + "p1.recip.zero": for p1 model with zero reciprocation with   #
 #       the MLE calculated using the loglin package.                    #
@@ -664,7 +664,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #    - model: a string signifying the appropriate model                  #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
-#       + "p1.HLalg.recip.zero": for p1 model with constant reciprocation #
+#       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
 #       + "p1.recip.zero": for p1 model with zero reciprocation with   #
 #       the MLE calculated using the loglin package using Fienberg-Wasserman's
@@ -725,7 +725,7 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #    - model: a string signifying the appropriate model                       #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
-#       + "p1.HLalg.recip.zero": for p1 model with constant reciprocation     #
+#       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation     #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
 #       + "p1.recip.zero": for p1 model with zero reciprocation with          #
 #       the MLE calculated using the loglin package                           #
