@@ -1149,9 +1149,9 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
         count = count +1  
       }
       steps.used=steps.used+1
+      int.values<-c(int.values,count/i)
+      gof.values<-c(gof.values,new.gf) 
     }
-    int.values<-c(int.values,count/i)
-    gof.values<-c(gof.values,new.gf) 
   }
   return (list(count/steps.used,int.values, gof.values, mleMatr))
 }
