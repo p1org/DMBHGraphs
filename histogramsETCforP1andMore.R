@@ -6,7 +6,13 @@
 # user.                                                                 #
 ### ^^^^^ I WANT TO CHANGE THIS ONE LINE UP IN THE DESCIRPTION TO SPECIFY WE ARE USING A CHI-SQ STATISTIC AS GOF.
 
-
+#
+# to/do wish list: 
+# 
+# there should really be 1 fn (below) that crates plots out of 1 simulation
+# and then
+# another function (tbd) that plots simulation summaries over multiple runs. 
+# 
 
 
 ########################################################################
