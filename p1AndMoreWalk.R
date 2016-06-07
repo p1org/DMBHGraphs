@@ -36,7 +36,7 @@ library(igraph)
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=0, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -53,7 +53,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   nb = vcount(gbidir)
   if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
   
-  if (mleMatr==0){
+  if (is.null(mleMatr)){
     mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
   }  
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
