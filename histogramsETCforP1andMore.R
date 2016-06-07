@@ -1,13 +1,4 @@
 ########################################################################
-# Estimate.p.Value    												                          #
-# Estimate the percentage of graphs in the fiber of D	                  #
-# that are further from the MLE than G (that is, whose chi-square 
-# statistic value is larger than that of G), for a model specified by the    
-# user.                                                                 #
-### ^^^^^ I DO WANT TO CHANGE THIS ONE LINE UP IN THE DESCIRPTION TO SPECIFY WE ARE USING A CHI-SQ STATISTIC AS GOF.
-
- 
-########################################################################
 # GoF.Simulations.Summary
 # Given outputs of several GoF simulations
 # (such as those obtained from a run of Estimate.p.Value.For.Testing),
