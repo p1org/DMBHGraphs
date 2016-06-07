@@ -62,7 +62,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   obs.gf = round (obs.gf,digits=8)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
-  count = 0
+  count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
@@ -1135,7 +1135,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
   }
   if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
   next.network = list(gdir,gbidir)
-  count = 0
+  count = 1
   int.values=c() # To estimate convergence of count/i to p-value
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
@@ -1168,6 +1168,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
 #			- p-value estimate
 #			- a list of p-value estimates for each step of the loop
 #######################################################################
+######NEED TO UPDATE TO IGNORE TRIVIAL MOVES AS ESTIMATE.p.VALUE
 Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
   count = 0	# To estimate convergence of count/i to p-value
   p.values = c()
