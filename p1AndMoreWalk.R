@@ -6,10 +6,12 @@
 library(igraph)
 ########################################################################
 # Estimate.p.Value    												                              #
-# Estimate the percentage of graphs in the fiber of D	                      #
-# that are further from the MLE than G, for a model specified by the        #
-# user.                                                                     #
-# Input: 
+# Estimate the percentage of graphs in the fiber of D	has a larger          #
+# goodness of fit(gof) statistic for a model specified by the user.         #
+# Currently the gof statistic is the chi squared statistic measuring        #
+# distance from the MLE.                                                    #
+# that are further from the MLE than G,                                     #
+# Input:                                                                    #
 #   - gdir, igraph object directed graph, if no gbidir is given             #
 #       we assume that gdir may contain reciprocated edges. if gbidir       #
 #       is given we assume gdir contains only unreciprocated edges.         #
