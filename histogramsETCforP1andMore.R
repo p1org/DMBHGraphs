@@ -4,25 +4,31 @@
 # that are further from the MLE than G (that is, whose chi-square 
 # statistic value is larger than that of G), for a model specified by the    
 # user.                                                                 #
-### ^^^^^ I WANT TO CHANGE THIS ONE LINE UP IN THE DESCIRPTION TO SPECIFY WE ARE USING A CHI-SQ STATISTIC AS GOF.
+### ^^^^^ I DO WANT TO CHANGE THIS ONE LINE UP IN THE DESCIRPTION TO SPECIFY WE ARE USING A CHI-SQ STATISTIC AS GOF.
 
+ 
+########################################################################
+# GoF.Simulations.Summary
+# Given outputs of several GoF simulations
+# (such as those obtained from a run of Estimate.p.Value.For.Testing),
+# plot convergence plots of GoF statisitc and p-value..
 #
-# to/do wish list: 
+# Input: 
+#   - gof.values, a LIST OF LISTS? VECTOR OF LISTS? WHAT - list of values of the GoF statistic from a random walk, whose 1st entry is the OBSERVED ONE
+#   - p.values, a LIST OF LISTS? VECTOR OF LISTS? WHAT - list of p-value esitmates from a random walk
 # 
-# there should really be 1 fn (below) that crates plots out of 1 simulation
-# and then
-# another function (tbd) that plots simulation summaries over multiple runs. 
-# 
-
+GoF.Testing.Plots <- function(){
+  # this is so that when we run 100 simulations, we get a mean p-value, 
+  # and upper and lower quantiles for them, over the 100 simulations. 
+  # clearly better than plotting 100 separate plots.
+  print("to do.")
+}
 
 ########################################################################
-#
-#         ***** IN PROGRESS ******* IN PROGRESS *****  IN PROGRESS *****
-#
 # GoF.Testing.Plots  
-# Given a random walk, e.g., output of a run of Estimate.p.Value.For.Testing, 
-#...what I really want is input 2 things: list of gof values and pvalues; don't assume output of a fn.
-# plot histogram of GoF statisitcs and p-values for the random walk.
+# Given outputs of a single GoF simulation 
+# (such as those obtained from a run of Estimate.p.Value.For.Testing), 
+# plot histogram of GoF statisitcs and p-values for the random walk. 
 # 
 # Input: 
 #   - gof.values, a list of values of the GoF statistic from a random walk, whose 1st entry is the OBSERVED ONE
@@ -32,9 +38,9 @@
 #   - filename, 
 #   - burn, integer number of burn-in steps; 0 default
 #   - grid, vector c(i,j) indicating plots to be made on an ixj grid
-#   - .....[list of other things one may want to plot] - UNFINISHED
+#   - .....[list of other things one may want to plot?] - UNFINISHED
 # Output:                                                               
-#   - plot
+#   - plots (or saved file with plots)
 # Typical usage of this function:
 #   fiber.walk=Estimate.p.Value.for.Testing(D,B,steps.for.walk=10)
 #   gof.values = fiber.walk[[3]]
@@ -45,8 +51,7 @@ GoF.Testing.Plots <- function(gof.values,p.values, dataname="Set title w/ option
   
   print("This is still a little shitty b/c I don't check if input is of correct format..e.g., the two lists should be of same length if they come from the same simulation. For typical usage of the function, see function header @code. ")    
   
-  # the following only makes sense if dataname has no special characters!!  BUT I REALLY PREFER IT THIS WAY!! 
-  # SO - TO DO - ADD CHECKS AND MAKE THIS WORK: 
+  # the following only makes sense if dataname has no special characters!! but i would have really preferred to set it this way: 
   #       if(filesave){pdf(paste('GoF testing plots for',dataname))}
   # otherwise i resort to 1 filename each time:
   if(filesave){
@@ -69,7 +74,7 @@ GoF.Testing.Plots <- function(gof.values,p.values, dataname="Set title w/ option
   }
   
   if(filesave){
-    print(paste("Plots are saved to",filename,".pdf."))
+    print(paste("Plots are saved to",filename,".pdf in the working directory (check with getwd())."))
     dev.off()  # close file connection.
   }
 }
