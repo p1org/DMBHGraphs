@@ -723,14 +723,14 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3)){
 #       - d: directed graph,   					                                      #
 #       - b: bidirected graph						                                      #
 # Optional Input:                                                             #
-#    - ed.coin: by default it's "fair": 					                                #
+#    - ed.coin: by default it's "fair": 					                            #
 #	      c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).  #
 #    - model: a string signifying the appropriate model                       #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
-#       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation     #
+#       + "p1.HLalg.recip.zero": for p1 model with zero reciprocation         #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm         #
-#       + "p1.recip.zero": for p1 model with zero reciprocation effect with          #
+#       + "p1.recip.zero": for p1 model with zero reciprocation effect with   #
 #       the MLE calculated using the loglin package                           #
 #       using Fienberg-Wasserman's configuration matrix.                      #
 #       + "p1.recip.nzconst": for p1 model with constant non-zero             #
@@ -739,6 +739,9 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3)){
 #       + "p1.recip.ed": for p1 model with edge-dependent reciprocation       #
 #       with the MLE calculated using the loglin package                      #
 #       using Fienberg-Wasserman's configuration matrix.                      #
+#    - nzconst.coin: (only for p1.recip.nzconst and p1.HLalg.recip.nzconst 
+#          models) specifies the percentage of edge-dependent fiber moves that#
+#          will be forced in the nzconst fiber #
 # Output: 
 #         - A list of four igraph objects representing the move
 #           + directed igraph object: the directed only edges to remove
@@ -753,8 +756,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), 
       move = Get.Bidirected.Move(gdir, gbidir)
       move[[1]]=as.directed(move[[1]],mode="mutual")
       move[[2]]=as.directed(move[[2]],mode="mutual")
-    }
-    else {
+    }else {
       coin.value = runif(1)
       if (coin.value<=nzconst.coin[1]){
         mixed.move = Get.Move.p1.ed(gdir, gbidir, ed.coin)
@@ -818,10 +820,6 @@ Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
 # Input:  
 #         -d: a directed graph, igraph object
 #         -b: an undirected graph, igraph object
-# Optional Input:
-#         - mode
-#              + "zero"
-#              + "nzconst"
 # Output:
 #         - A list of two igraph objects representing the move
 #           + directed igraph object: the directed edges to remove from the full graph d+b
@@ -832,35 +830,7 @@ Get.Move.p1.zero.or.nzconst <- function(d,b){
  d = graph.union(d,as.directed(b,mode="mutual"))
  move = Get.Directed.Move.p1.const.or.zero(d)
  return (move)
-}
-# Get.Move.p1.zero.or.nzconst <- function(d,b, nzconst.coin=c(ecount(d)/(ecount(d)+ecount(b)), ecount(b)/(ecount(d)+ecount(b))){
-#   # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
-#   ed.coin.value = runif(1)
-#   if (ed.coin.value <= ed.coin[1]){   
-#     d = graph.union(d,as.directed(b,mode="mutual"))
-#     move = Get.Directed.Move.p1.const.or.zero(d)
-#   }
-#   else{
-#     bidir.move = Get.Bidirected.Move(d,b)
-#     
-#     # Check that edges.to.add makes a simple graph, and has no bidirected edges.
-#     if (!is.simple(as.undirected(g.add,mode="each")))
-#       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
-#     # Check that edges.to.add does not conflict with d - edges.to.remove in any direction
-#     if (!ecount(graph.intersection(as.undirected(graph.difference(d,g.remove)),as.undirected(g.add)))==0) 
-#       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))   
-#     # Check that edges.to.add does not conflict with bidirected part of graph:    
-#     if (!is.null(b)) {
-#       if (!ecount(graph.intersection(as.undirected(g.add),b))==0){
-#         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
-#       }
-#     }
-#     
-#     #check move? translate to dir move? 
-#     move = list(graph.union(bidir.move[[1]],as.directed(bidir.move[[1]],mode="mutual"))
-#   }
-#   return (move)
-# }  
+} 
 #######################################################################
 # Get.Directed.Move.p1.const.or.zero  											#
 # 	Given a mixed graph G=(d,b)										#
