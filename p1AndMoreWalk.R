@@ -33,12 +33,12 @@ library(igraph)
 #     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
 #		- steps.for.walk                                                    #
-#		- coin:  a fair coin by default.                     #
+#		- ed.coin:  a fair ed.coin by default.                     #
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 0.001){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -65,7 +65,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)	
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
       new.gf=round(new.gf, digits=8)
@@ -541,7 +541,7 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
 # sequence of integers separated by commas. First two integers 	   		#
 # signify first edge etc. 										    #
 #######################################################################
-Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,coin=c(1/3,1/3,1/3), filename = "walk.txt"){
+Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,ed.coin=c(1/3,1/3,1/3), filename = "walk.txt"){
   write("====================", filename)
   num.cols = 2*max(ecount(gdir),ecount(gbidir)) #to pass to the write function so that all entries are in one row.
   network = list(gdir,gbidir)
@@ -554,7 +554,7 @@ Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=2
     write("Bidirected Graph", filename, append=TRUE)
     write(t(get.edgelist(network[[2]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")
     write("====================", filename, append=TRUE)
-    network = Get.Next.Network(network[[1]],network[[2]], model, coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
   }
 }
 #######################################################################
@@ -578,14 +578,14 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # by an animation function sometime in the future.						#
 # ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
 #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,coin=c(1/3,1/3,1/3),single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE){
+Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,ed.coin=c(1/3,1/3,1/3),single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE){
   network = list(gdir,gbidir)
   if(!single.file){
     png("FiberWalk0.png",width=800, height=600,bg="white")
     Plot.Mixed.Graph(network[[1]],network[[2]])  
     dev.off()
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model, coin)
+      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
       filename = sprintf("FiberWalk%d.png",i)
       png(filename,width=800, height=600,bg="white")
       Plot.Mixed.Graph(network[[1]],network[[2]])	
@@ -597,7 +597,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
     par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
     Plot.Mixed.Graph(network[[1]],network[[2]])      
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model, coin)
+      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
       if(!network[[3]]){
         if(plot.trivial.moves){ 
           Plot.Mixed.Graph(network[[1]],network[[2]])                  
@@ -614,11 +614,11 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
 # Performs a walk on the fiber and plots the consecutive networks. 		#
 # It does not store consecutive networks.								#
 #######################################################################
-Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,coin=c(1/3,1/3,1/3)){	
+Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,ed.coin=c(1/3,1/3,1/3)){	
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
-    network = Get.Next.Network(network[[1]],network[[2]], model, coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
     Plot.Mixed.Graph(network[[1]],network[[2]])	
   }
 }
@@ -650,7 +650,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #		- d: a directed graph                                                             #
 #		- b: a bidirected graph                                                           #
 #	Optional input:                                                                     #
-#		- coin:  a fair coin by default. 
+#		- ed.coin:  a fair ed.coin by default. 
 #		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
 # Output:
 #   - list of 3 things:
@@ -662,7 +662,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 # The move could be 		#
 #	only directed, or only bidirected, or a composite of the two.		#
 # Optional Input:
-#   coin is optional input; by default it's "fair": 					#
+#   ed.coin is optional input; by default it's "fair": 					#
 #	c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 #    - model: a string signifying the appropriate model                  #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
@@ -679,8 +679,8 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       with the MLE calculated using the loglin package.               #
 #       using Fienberg-Wasserman's configuration matrix.                  #
 #######################################################################
-Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
-  markov.move = Get.Move.p1(d,b,model,coin)
+Get.Next.Network <- function(d,b, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3)){
+  markov.move = Get.Move.p1(d,b,model,ed.coin)
   trivial.move=FALSE
   if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
     if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
@@ -723,7 +723,7 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #       - d: directed graph,   					                                      #
 #       - b: bidirected graph						                                      #
 # Optional Input:                                                             #
-#    - coin: by default it's "fair": 					                                #
+#    - ed.coin: by default it's "fair": 					                                #
 #	      c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).  #
 #    - model: a string signifying the appropriate model                       #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
@@ -746,12 +746,25 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #           + undirected igraph object: the reciprocated only edges to remove (only if model is p1.recip.ed)
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
-Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
+Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
-    move = Get.Move.p1.zero.or.nzconst(gdir,gbidir)
-  }else if (model=="p1.recip.ed"){
-    move = Get.Move.p1.ed(gdir,gbidir,coin)   
-  }else{
+    if (ecount(gdir)==0 && (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst")){
+      # ed fiber ed.coincides with nzconst fiber
+      move = Get.Bidirected.Move(gdir, gbidir)
+      move[[1]]=as.directed(move[[1]],mode="mutual")
+      move[[2]]=as.directed(move[[2]],mode="mutual")
+    }
+    else {
+      coin.value = runif(1)
+      if (coin.value<=nzconst.coin[1]){
+        mixed.move = Get.Move.p1.ed(gdir, gbidir, ed.coin)
+        move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
+      }else
+        move = Get.Move.p1.zero.or.nzconst(gdir,gbidir)
+    }
+  } else if (model=="p1.recip.ed"){
+    move = Get.Move.p1.ed(gdir,gbidir,ed.coin)   
+  } else{
     stop("Get.Move Error: model parameter option must be one of the prespecified options.")
   }
   return (move)
@@ -763,7 +776,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #	applicable to the observed network G that is guaranteed to move		              #
 #	to any network in the edge-dependent-reciprocation p1 fiber. The move could be 		#
 #	only directed, or only bidirected, or a composite of the two.		#
-#   coin is optional input; by default it's "fair": 					#
+#   ed.coin is optional input; by default it's "fair": 					#
 #	c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 # Input:  
 #         -d: a directed graph, igraph object
@@ -775,24 +788,24 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",coin=c(1/3,1/3,1/3)){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Move.p1.ed <- function(d,b, coin=c(1/3,1/3,1/3)){
-  # if the coin options do not sum up to 1 exit.
-  if (! sum(coin)==1) { stop("invalid coin") }
+Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
+  # if the ed.coin options do not sum up to 1 exit.
+  if (! sum(ed.coin)==1) { stop("invalid ed.coin") }
   #Generate a random real number between 0 and 1.
-  coin.value = runif(1)
-  # Now just see where coin.value is in relation to the coin vector (a,b,c):
-  # first coin option is : coin \in [0.0, a]:
-  if (coin.value <= coin[1]) { 
+  ed.coin.value = runif(1)
+  # Now just see where ed.coin.value is in relation to the ed.coin vector (a,b,c):
+  # first ed.coin option is : ed.coin \in [0.0, a]:
+  if (ed.coin.value <= ed.coin[1]) { 
     dir.move = Get.Directed.Move.p1.ed(d,b)
     return(list(dir.move[[1]],dir.move[[2]], graph.empty(vcount(b),directed=FALSE), graph.empty(vcount(b),directed=FALSE)))
   }
-  # second coin option is: coin \in (a,a+b]:
-  else if (coin[1]<coin.value && coin.value <= coin[1]+coin[2]) {
+  # second ed.coin option is: ed.coin \in (a,a+b]:
+  else if (ed.coin[1]<ed.coin.value && ed.coin.value <= ed.coin[1]+ed.coin[2]) {
     bidir.move = Get.Bidirected.Move(d,b)
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),bidir.move[[1]],bidir.move[[2]]))
   }
-  # third coin option is : coin \in (a+b,a+b+c]:
-  else if (coin[2]<coin.value) {
+  # third ed.coin option is : ed.coin \in (a+b,a+b+c]:
+  else if (ed.coin[2]<ed.coin.value) {
     return(Get.Mixed.Move(d,b))
   }
 }
@@ -815,11 +828,39 @@ Get.Move.p1.ed <- function(d,b, coin=c(1/3,1/3,1/3)){
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
 Get.Move.p1.zero.or.nzconst <- function(d,b){
-  # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
-  d = graph.union(d,as.directed(b,mode="mutual"))
-  move = Get.Directed.Move.p1.const.or.zero(d)
-  return (move)
-}  
+ # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
+ d = graph.union(d,as.directed(b,mode="mutual"))
+ move = Get.Directed.Move.p1.const.or.zero(d)
+ return (move)
+}
+# Get.Move.p1.zero.or.nzconst <- function(d,b, nzconst.coin=c(ecount(d)/(ecount(d)+ecount(b)), ecount(b)/(ecount(d)+ecount(b))){
+#   # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
+#   ed.coin.value = runif(1)
+#   if (ed.coin.value <= ed.coin[1]){   
+#     d = graph.union(d,as.directed(b,mode="mutual"))
+#     move = Get.Directed.Move.p1.const.or.zero(d)
+#   }
+#   else{
+#     bidir.move = Get.Bidirected.Move(d,b)
+#     
+#     # Check that edges.to.add makes a simple graph, and has no bidirected edges.
+#     if (!is.simple(as.undirected(g.add,mode="each")))
+#       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
+#     # Check that edges.to.add does not conflict with d - edges.to.remove in any direction
+#     if (!ecount(graph.intersection(as.undirected(graph.difference(d,g.remove)),as.undirected(g.add)))==0) 
+#       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))   
+#     # Check that edges.to.add does not conflict with bidirected part of graph:    
+#     if (!is.null(b)) {
+#       if (!ecount(graph.intersection(as.undirected(g.add),b))==0){
+#         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
+#       }
+#     }
+#     
+#     #check move? translate to dir move? 
+#     move = list(graph.union(bidir.move[[1]],as.directed(bidir.move[[1]],mode="mutual"))
+#   }
+#   return (move)
+# }  
 #######################################################################
 # Get.Directed.Move.p1.const.or.zero  											#
 # 	Given a mixed graph G=(d,b)										#
@@ -900,7 +941,7 @@ Get.Directed.Move.p1.ed <- function(d,b){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Bidirected.Move <- function(d, b) {
+Get.Bidirected.Move <- function(d=graph.empty(vcount(b)), b) {
   bidir.piece = Get.Bidirected.Piece(b)
   if (is.null(bidir.piece[[1]])) 
     return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
@@ -1096,7 +1137,7 @@ as.arbitrary.directed <- function(b) {
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -1140,7 +1181,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, coin)  
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin)  
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
       new.gf=round(new.gf, digits=8)
@@ -1168,7 +1209,6 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
 #			- p-value estimate
 #			- a list of p-value estimates for each step of the loop
 #######################################################################
-######NEED TO UPDATE TO IGNORE TRIVIAL MOVES AS ESTIMATE.p.VALUE
 Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
   count = 0	# To estimate convergence of count/i to p-value
   p.values = c()
@@ -1194,7 +1234,7 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - a count of all empty moves made in each graph. 
 # #NOTE: Does not currently keep track of empty moves.
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, coin = c(1/3,1/3,1/3)){
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, ed.coin = c(1/3,1/3,1/3)){
   counts=c(1)
   current.network.index=1
   empty.move.counts=c(0)
@@ -1214,7 +1254,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps
     found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
-    network = Get.Next.Network(network[[1]],network[[2]], model, coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
     #      empty.move.flag=TRUE
@@ -1276,7 +1316,7 @@ Write.Graphs.to.File<-function(graphs, filename){
 # }
 # 
 # # Enumerates the fiber for use with large fibers: writes to file the list of graps visited, directed+bidirected parts,  a vector of counts for each graph, the Total Variation Distance of the walk, and a count of all empty moves made in each graph. #NOTE: Does not currently keep track of empty moves.
-# Enumerate.Fiber.to.File<-function(gdir, gbidir, numsteps=1000, coin = c(1/3,1/3,1/3), filename.extension){
+# Enumerate.Fiber.to.File<-function(gdir, gbidir, numsteps=1000, ed.coin = c(1/3,1/3,1/3), filename.extension){
 #   # METHOD NOT COMPLETE
 #   print("Buggy code: don't know what is wrong with this method yet!")
 #   counts=list(1)
@@ -1293,7 +1333,7 @@ Write.Graphs.to.File<-function(graphs, filename){
 #     flag = FALSE
 #     empty.move.flag=FALSE
 #     prev.network = network
-#     network = Get.Next.Network(network[[1]],network[[2]],coin)
+#     network = Get.Next.Network(network[[1]],network[[2]],ed.coin)
 #     if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
 #       empty.move.flag=TRUE 			# new network is same as previous network
 #     }		
