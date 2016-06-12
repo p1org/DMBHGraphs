@@ -753,20 +753,12 @@ Get.Next.Network <- function(d,b, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3),nzc
 #######################################################################
 Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
-#     if (ecount(gdir)==0 && (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst")){
-#       # ed fiber ed.coincides with nzconst fiber
-#       # this choice will cause faster mixing
-#       move = Get.Bidirected.Move(gdir, gbidir)
-#       move[[1]]=as.directed(move[[1]],mode="mutual")
-#       move[[2]]=as.directed(move[[2]],mode="mutual")
-#     }else {
-      coin.value = runif(1)
-      if (coin.value<=nzconst.coin[1]){
-        mixed.move = Get.Move.p1.ed(gdir, gbidir, ed.coin)
-        move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
-      }else
-        move = Get.Move.p1.zero.or.nzconst(gdir,gbidir)
-#    }
+    coin.value = runif(1)
+    if (coin.value<=nzconst.coin[1]){
+      mixed.move = Get.Move.p1.ed(gdir, gbidir, ed.coin)
+      move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
+    }else
+      move = Get.Move.p1.zero.or.nzconst(gdir,gbidir)
   } else if (model=="p1.recip.ed"){
     move = Get.Move.p1.ed(gdir,gbidir,ed.coin)   
   } else{
@@ -829,10 +821,10 @@ Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
 Get.Move.p1.zero.or.nzconst <- function(d,b){
- # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
- d = graph.union(d,as.directed(b,mode="mutual"))
- move = Get.Directed.Move.p1.const.or.zero(d)
- return (move)
+  # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
+  d = graph.union(d,as.directed(b,mode="mutual"))
+  move = Get.Directed.Move.p1.const.or.zero(d)
+  return (move)
 } 
 #######################################################################
 # Get.Directed.Move.p1.const.or.zero  											#
@@ -1256,7 +1248,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps
       counts = c(counts,1)
       empty.move.counts = c(empty.move.counts,0)
       print(as.vector(counts))#testing
-
+      
       numGraphs = numGraphs+1
       graphsD[[numGraphs]]=as.numeric(t(get.edgelist(network[[1]])))
       graphsB[[numGraphs]]=as.numeric(t(get.edgelist(network[[2]])))			
