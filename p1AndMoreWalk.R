@@ -1136,6 +1136,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
   #    stop("mleMatr dimension is incorrect.")
   #  }
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
+  obs.gf = round(obs.gf, digits=8)
   if (is.nan(obs.gf)){
     print("NaN error in calculation of GF statistic.")
   }
