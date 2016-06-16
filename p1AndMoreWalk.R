@@ -1096,7 +1096,13 @@ as.arbitrary.directed <- function(b) {
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, coin=c(1/3,1/3,1/3), mle.maxiter = 10000, mle.tol = 1e-03){
+################################################################################################################
+#
+# Optional input: 
+#     - communities, community assingment for the nodes, an optional input for the beta stochastic block model. By default, every node is in its own community.
+#       We have to figure out how to pass this down; it looks like it will probably propagate all the way until Get.Next.network..
+#
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", communities=c(1:length(V(gbidir))), ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03){
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
