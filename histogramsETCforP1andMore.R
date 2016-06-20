@@ -52,7 +52,7 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
   par(mfrow = grid, mar=c(2,1,0,0)+3) # spacing; it goes c(bottom, left, top, right)  
   
   # 1) plot p-value estimates: 
-  plot(p.value.estimates, main=dataname,sub=paste(length(p.value.estimates),"steps"),  xlab="Length of Walk", ylab="p-values", ylim=c(0,1))
+  plot(p.value.estimates, main=dataname,sub=paste(length(p.value.estimates),"steps"),  xlab="Length of Walk", ylab="p-values", ylim=c(0,1), pch='.' )
   
   # 2) plot the sampling distribution of the GoF statistic:
   hist(gof.values,main=dataname, xlab="Goodness of Fit Statistic", ylab="frequency")
@@ -61,13 +61,13 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
   # 3) MAYBE someone has burn-in:
   if(burn>0){
     p.estimates = Estimate.p.Value.From.GoFs(gof.values, burn) 
-    plot(p.estimates[[2]],  main=dataname ,sub=paste(length(p.estimates[[2]]),"steps"),  xlab=paste("Length of Walk (after", burn,"burn-in steps)"), ylab="p-values", ylim=c(0,1))    
+    plot(p.estimates[[2]],  main=dataname ,sub=paste(length(p.estimates[[2]]),"steps"),  xlab=paste("Length of Walk (after", burn,"burn-in steps)"), ylab="p-values", ylim=c(0,1), pch='.')    
     hist(gof.values[burn+2:length(gof.values)],main=dataname, xlab="Goodness of Fit Statistic", ylab="frequency")
     abline(v=gof.values[1], col="red")
   }
   
   if(filesave){
-    print(paste("Plots are saved to",filename,".pdf in the working directory (check with getwd())."))
+    print(paste("Plots are saved to",filename,"in the working directory (check with getwd())."))
     dev.off()  # close file connection.
   }
   # turn off grid printing:
