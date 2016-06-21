@@ -38,7 +38,7 @@ library(igraph)
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, SBM.blocks=NULL){ 
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -65,14 +65,14 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin)	
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
       new.gf=round(new.gf, digits=8)
       # If the GoF statistic for new network is larger or equal than the GoF statistic
       # for the observed network. Note that a badly estimated MLE can give 
       # significant errors in the p-value.
-      if (new.gf>=obs.gf){  count = count +1  }
+      if (new.gf>=obs.gf){ count = count +1 }
       steps.used=steps.used+1
     }
   }
@@ -309,7 +309,13 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
 #######################################################################
-Get.MLE<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", maxiter=3000, tol = 1e-03){
+Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
+  if (ecount(gbidir)==0){
+    mixed.graph = split.Directed.Graph(gdir)
+    gdir = mixed.graph[[1]]
+    gbidir = mixed.graph[[2]]  
+  }
+  
   if (model=="p1.HLalg.recip.nzconst"){
     mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", maxiter,tol)  
   }else if(model=="p1.HLalg.recip.zero"){
@@ -320,9 +326,14 @@ Get.MLE<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", maxiter=3000, to
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", maxiter,tol)      
   }else if (model=="p1.recip.ed"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", maxiter,tol)    
-  }else{
+  }else if (model=="beta-SBM"){
+    mleMatr = Get.MLE.beta.SBM(gdir,gbidir, maxiter,tol, SBM.blocks)    
+    print("MLE estimation for the beta-SBM model is under construction.")
+  }
+  else{
     stop("Get.MLE Error: model parameter option must be one of the prespecified options.")
   }
+  return (mleMatr)
 }  
 #######################################################################
 # Get.MLE.p1.HL
@@ -386,6 +397,40 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20
   mleMatr = fm$fit
   return (mleMatr)
 }
+#######################################################################
+# Get.MLE.beta.SBM                                              
+# Returns the MLE for the beta-SBM model   
+# UNDER CONSTRUCTION
+#######################################################################
+Get.MLE.beta.SBM<-function(g, blocks, maxiter=20, tol=0.1, print.deviation=FALSE){
+  print("Get.MLE.beta.SBM is being tested.")
+  n = vcount(g)
+  k = max(blocks)
+  m = Get.Configuration.Matrix.beta.SBM(g,blocks)
+
+  # Ensure structural zeros get preserved
+  startM =array(data=0, dim=c(n,n,k+choose(k,2)))
+  n.block = rep(0,k)
+  for (i in 1:k){
+    v.block[[i]] = which(blocks==i)
+    n.block[i] = length(v.block[[i]])
+    startM[v.block[[i]], v.block[[i]], i] = rep(1,n.block[i]^2)
+    for (j in 1:n)
+      startM[j,j,i]=0
+  }
+  for (i in 1:(k-1)){
+    for (j in (i+1):k){
+      offset = k*(i-1)-(i-1)*(i)/2+j-i
+      startM[v.block[[i]], v.block[[j]],  k+offset] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[j]], v.block[[i]],  k+offset] = rep(1,n.block[i]*n.block[j])
+    }
+  }
+  
+  fm <- loglin(m, list(c(1), c(2),c(3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)  
+  mleMatr = fm$fit
+  return (mleMatr)
+}
+#########################################################################################################
 #########################################################################################################
 compare.p1.MLEs<-function(mleHL,mleFW){
   num.vertices = dim(mleFW)[[1]]
@@ -536,13 +581,44 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
   return(x)
 }
 #######################################################################
+# Get.Configuration.Matrix.beta.SBM
+# Computes the configuration matrix for the beta-SBM model. Required for MLE
+# computations and goodness of fit calculations.
+# Input:
+#   - g, igraph undirected object, the graph
+#   - blocks, vector of integers, blocks[i] is the block that vertex i is assigned to
+# Output:
+#   - x, array n x n x (k + (k choose 2)) array representing the graph and its block structure.
+#     The first k slices [,,i] 1<=i<=k contains the adjacency matrix of the subgraph within each 
+#     block i. The following k choose 2 slices represent the subgraphs between two blocks 1<=i<j<=n.
+#######################################################################
+Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
+  n = vcount(g)
+  k = max(blocks)
+  x = array(data=0, dim=c(n,n,choose(k,2)+k))
+  adj = get.adjacency(g, sparse=FALSE) # would be better to find a way to represent x as a sparse array
+  
+  for (i in 1:k){
+    v.block[[i]] = which(blocks==i)
+    x[v.block[[i]], v.block[[i]], i] = adj[v.block[[i]],v.block[[i]]]
+  }
+  for (i in 1:(k-1)){
+    for (j in (i+1):k){
+      offset = k*(i-1)-(i-1)*(i)/2+j-i
+      x[v.block[[i]], v.block[[j]], k+offset] = adj[v.block[[i]],v.block[[j]]]  
+      x[v.block[[j]], v.block[[i]], k+offset] = adj[v.block[[j]],v.block[[i]]]  
+    }
+  }
+  return(x)
+}
+#######################################################################
 # Write.Walk.To.File: 												#
 # performs a walk and saves the consecutive networks 	    				#
 # in string format to file.	Prints each network in a new line as a     #
 # sequence of integers separated by commas. First two integers 	   		#
 # signify first edge etc. 										    #
 #######################################################################
-Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt"){
+Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", SBM.blocks=NULL){
   write("====================", filename)
   num.cols = 2*max(ecount(gdir),ecount(gbidir)) #to pass to the write function so that all entries are in one row.
   network = list(gdir,gbidir)
@@ -555,7 +631,7 @@ Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=2
     write("Bidirected Graph", filename, append=TRUE)
     write(t(get.edgelist(network[[2]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")
     write("====================", filename, append=TRUE)
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)
   }
 }
 #######################################################################
@@ -579,27 +655,27 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # by an animation function sometime in the future.						#
 # ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
 #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE){
+Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, SBM.blocks=NULL){
   network = list(gdir,gbidir)
   if(!single.file){
-    png("FiberWalk0.png",width=800, height=600,bg="white")
+    png(sprintf("%s0.png",filename),width=800, height=600,bg="white")
     Plot.Mixed.Graph(network[[1]],network[[2]])  
     dev.off()
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin)
-      filename = sprintf("FiberWalk%d.png",i)
+      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)
+      filename = sprintf("%s%d.png",filename,i)
       png(filename,width=800, height=600,bg="white")
       Plot.Mixed.Graph(network[[1]],network[[2]])	
       dev.off()
     }     
   }else{
-    pdf("FiberWalk")
+    pdf(filename)
     # I like to plot pictures in grid format to see more than one at a time; default = 4x4 grid
     par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
     Plot.Mixed.Graph(network[[1]],network[[2]])      
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin)
-      if(!network[[3]]){
+      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)
+      if(network[[3]]){
         if(plot.trivial.moves){ 
           Plot.Mixed.Graph(network[[1]],network[[2]])                  
         }
@@ -615,12 +691,13 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
 # Performs a walk on the fiber and plots the consecutive networks. 		#
 # It does not store consecutive networks.								#
 #######################################################################
-Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20,ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){	
+Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, SBM.blocks=NULL){	
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin)
-    Plot.Mixed.Graph(network[[1]],network[[2]])	
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)
+    if (ignore.trivial.moves==FALSE || network[[3]]==FALSE)
+      Plot.Mixed.Graph(network[[1]],network[[2]])	
   }
 }
 ########################################################################
@@ -677,41 +754,56 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       reciprocation with the MLE calculated using the loglin package    #
 #       using Fienberg-Wasserman's configuration matrix.                  #
 #       + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
-#       with the MLE calculated using the loglin package.               #
+#       with the MLE calculated using the loglin package.                 #
 #       using Fienberg-Wasserman's configuration matrix.                  #
+#       + "beta.SBM": for the beta SBM model                                 #
 #######################################################################
-Get.Next.Network <- function(d,b, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b)))){
-  markov.move = Get.Move.p1(d,b,model,ed.coin, nzconst.coin)
-  trivial.move=FALSE
-  if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
-    if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
-      g.as.directed = graph.union(graph.difference(graph.union(d,as.directed(b,mode="mutual")),markov.move[[1]]),markov.move[[2]])
-      g.as.mixed = split.Directed.Graph(g.as.directed)
-      new.directed.graph = g.as.mixed[[1]]
-      new.bidirected.graph = g.as.mixed[[2]]
-      if (model=="p1.HLalg.recip.nzconst"|| model=="p1.recip.nzconst"){
-        # Ensure number of reciprocal edges remains constant.
-        if (ecount(new.bidirected.graph) != ecount(b)){
-          trivial.move=TRUE
-          new.directed.graph = d
-          new.bidirected.graph = b
-        }
-      }
-    }else if (model=="p1.recip.ed"){
-      #d minus directed.to.be.removed plus directed.to.be.added:
-      new.directed.graph = graph.union(graph.difference(d,markov.move[[1]]),markov.move[[2]])        
-      
-      #b minus bidirected.to.be.removed plus bidirected.to.be.added
-      new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])      
-    }else stop("Get.Next.Network Error: model parameter must be prespecified options.") 
-  }else{
-    #empty move, graphs unchanged
-    trivial.move=TRUE
+Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), SBM.blocks=NULL){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks)){stop("Get.Next.Network error: SBM.blocks cannot be null.")}
+    if (length(SBM.blocks)!=vcount(b)){stop("Get.Next.Network error: SBM.blocks must be same length as number of vertices in b.")}
+    move = Get.Move.beta.SBM(b, blocks=SBM.blocks)
+    trivial.move = move[[3]]
+    #b minus bidirected.to.be.removed plus bidirected.to.be.added
+    new.bidirected.graph = graph.union(graph.difference(b, move[[1]]), move[[2]])
     new.directed.graph = d
-    new.bidirected.graph = b
+#    print(paste("New Network"))                        #for testing
+#    print(get.edgelist(new.bidirected.graph))          #for testing
+  }else{
+    #p1 model
+    markov.move = Get.Move.p1(d,b,model,ed.coin, nzconst.coin)
+    trivial.move=FALSE
+    if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
+      if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
+        g.as.directed = graph.union(graph.difference(graph.union(d,as.directed(b,mode="mutual")),markov.move[[1]]),markov.move[[2]])
+        g.as.mixed = split.Directed.Graph(g.as.directed)
+        new.directed.graph = g.as.mixed[[1]]
+        new.bidirected.graph = g.as.mixed[[2]]
+        if (model=="p1.HLalg.recip.nzconst"|| model=="p1.recip.nzconst"){
+          # Ensure number of reciprocal edges remains constant.
+          if (ecount(new.bidirected.graph) != ecount(b)){
+            trivial.move=TRUE
+            new.directed.graph = d
+            new.bidirected.graph = b
+          }
+        }
+      }else if (model == "p1.recip.ed"){
+        #d minus directed.to.be.removed plus directed.to.be.added:
+        new.directed.graph = graph.union(graph.difference(d,markov.move[[1]]),markov.move[[2]])        
+        
+        #b minus bidirected.to.be.removed plus bidirected.to.be.added
+        new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])      
+      }    else stop("Get.Next.Network Error: model parameter must be prespecified options.") 
+    }else{
+      #empty move, graphs unchanged
+      trivial.move=TRUE
+      new.directed.graph = d
+      new.bidirected.graph = b
+    }
   }
   return(list(new.directed.graph,new.bidirected.graph,trivial.move)) 
 }
+
 ##############################################################################
 # Get.Move.p1                                              					            #
 #   Returns a random move, not necessarily primitive that is   		            #
@@ -906,7 +998,10 @@ Get.Directed.Move.p1.ed <- function(d,b){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Bidirected.Move <- function(d=graph.empty(vcount(b)), b) {
+Get.Bidirected.Move <- function(d=NULL, b) {
+  if (is.null(d)){
+    d = graph.empty(vcount(b))
+  }
   bidir.piece = Get.Bidirected.Piece(b)
   if (is.null(bidir.piece[[1]])) 
     return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
@@ -1102,7 +1197,7 @@ as.arbitrary.directed <- function(b) {
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, SBM.blocks=NULL){
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
@@ -1147,7 +1242,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), m
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin)  
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)  
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
       new.gf=round(new.gf, digits=8)
@@ -1198,9 +1293,8 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - a vector of counts for each graph, 
 #     - the Total Variation Distance of the walk, and 
 #     - a count of all empty moves made in each graph. 
-# #NOTE: Does not currently keep track of empty moves.
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, ed.coin = c(1/3,1/3,1/3)){
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), SBM.blocks=NULL){
   counts=c(1)
   current.network.index=1
   empty.move.counts=c(0)
@@ -1220,7 +1314,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps
     found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin)
+    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
     #      empty.move.flag=TRUE
