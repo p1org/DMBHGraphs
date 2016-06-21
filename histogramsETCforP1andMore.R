@@ -79,7 +79,7 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
 # - Plots p-value convergence plots and gof histograms for each run both in a file and on for immediate viewing.
 # - Calculates the quartiles from the progressive p-value estimats and plots these as well.  
 ########
-Testing.Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname){
+Test.Goodness.Of.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname){
   if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
