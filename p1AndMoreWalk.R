@@ -29,6 +29,7 @@ library(igraph)
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
+#     + "beta.SBM"
 #   - ignore.trivial.moves: if set to true do not use loops in p-value  #
 #     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
@@ -39,11 +40,23 @@ library(igraph)
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
 Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, SBM.blocks=NULL){ 
-  if (ecount(gbidir)==0){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(gdir))       
+      stop("Estimate.p.Value error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+    else{
+      if (!is.directed(gdir)){
+        gbidir = gdir
+        gdir = graph.empty(vcount(gdir), directed = TRUE)
+      }
+    }    
+  }else if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
   }
+  
   
   #Error Checking
   if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
@@ -56,9 +69,9 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
   
   if (is.null(mleMatr)){
-    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol) 
+    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
   }  
-  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
+  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
   obs.gf = round (obs.gf,digits=8)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
@@ -67,7 +80,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
-      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
+      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
       new.gf=round(new.gf, digits=8)
       # If the GoF statistic for new network is larger or equal than the GoF statistic
       # for the observed network. Note that a badly estimated MLE can give 
@@ -77,6 +90,78 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
     }
   }
   return (count/steps.used)
+}
+################################################################################################################
+################################################################################################################
+# Estimate.p.Value.for.Testing
+################################################################################################################
+################################################################################################################
+################################################################################################################
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, SBM.blocks=NULL){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(gdir))       
+      stop("Estimate.p.Value.for.Testing error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+    else if (!is.directed(gdir)){
+      gbidir = gdir
+      gdir = graph.empty(vcount(gdir), directed = TRUE)
+    }    
+  }else if (ecount(gbidir)==0){
+    mixed.graph = split.Directed.Graph(gdir)
+    gdir = mixed.graph[[1]]
+    gbidir = mixed.graph[[2]]  
+  }
+  #Error Checking
+  if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
+  if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
+  if(!is.directed(gdir)){  stop("gdir must be a directed graph.") }
+  if(is.directed(gbidir)){		
+    stop("gbidir must be an undirected graph.")
+  }
+  
+  nd = vcount(gdir)
+  nb = vcount(gbidir)
+  if (nd>nb){
+    gbidir = add.vertices(gbidir,nd-nb)	
+  }
+  else if (nd<nb){
+    gdir = add.vertices(gdir,nb-nd)	
+  }
+  # if mleMatr was not given as argument use generate the MLE
+  if (is.null(mleMatr)){
+    print("Now estimating MLE.")
+    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
+    print("MLE estimate completed.")
+  }
+  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
+  obs.gf = round(obs.gf, digits=8)
+  if (is.nan(obs.gf)){
+    print("NaN error in calculation of GF statistic.")
+  }
+  if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
+  next.network = list(gdir,gbidir)
+  count = 1
+  int.values=c() # To estimate convergence of count/i to p-value
+  gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
+  steps.used=1
+  for(i in 1: steps.for.walk){
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)  
+    if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
+      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
+      new.gf=round(new.gf, digits=8)
+      # If the GoF statistic for new network is larger or equal than the GoF statistic
+      # for the observed network. Note that a badly estimated MLE can give 
+      # significant errors in the p-value.
+      if (new.gf>=obs.gf){  
+        count = count +1  
+      }
+      steps.used=steps.used+1
+      int.values<-c(int.values,count/steps.used)
+      gof.values<-c(gof.values,new.gf) 
+    }
+  }
+  return (list(count/steps.used,int.values, gof.values, mleMatr))
 }
 ########################################################################
 # split.Directed.Graph
@@ -310,11 +395,22 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #         specifications
 #######################################################################
 Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
-  if (ecount(gbidir)==0){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(gdir))       
+      stop("Get.MLE error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+    else{
+      if (!is.directed(gdir)){
+        gbidir = gdir
+        gdir = graph.empty(vcount(gdir), directed = TRUE)
+      }
+    }    
+  }else if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
-  }
+  }  
   
   if (model=="p1.HLalg.recip.nzconst"){
     mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", maxiter,tol)  
@@ -326,11 +422,9 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", maxiter,tol)      
   }else if (model=="p1.recip.ed"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", maxiter,tol)    
-  }else if (model=="beta-SBM"){
-    mleMatr = Get.MLE.beta.SBM(gdir,gbidir, maxiter,tol, SBM.blocks)    
-    print("MLE estimation for the beta-SBM model is under construction.")
-  }
-  else{
+  }else if (model=="beta.SBM"){
+    mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, maxiter,tol)    
+  }else{
     stop("Get.MLE Error: model parameter option must be one of the prespecified options.")
   }
   return (mleMatr)
@@ -364,10 +458,7 @@ Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", maxiter=3000, tol
 # in the form of an n x n x 2 x 2 matrix where                        #
 # each cell i,j,k,l equals 1 if                                       #
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
-# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #
-# TODO: Either rename method to indicate this is specific to the p1   #
-#   OR replace the parameter reciprocation, with a parameter         #
-# specifying the model                                                #
+# i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #                                            #
 #######################################################################
 Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20, tol=0.1, print.deviation=FALSE){
   nd = vcount(gdir)
@@ -399,18 +490,29 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20
 }
 #######################################################################
 # Get.MLE.beta.SBM                                              
-# Returns the MLE for the beta-SBM model   
-# UNDER CONSTRUCTION
+# Computes the MLE for the beta-SBM model through an iterative proportional fitting algorithm.
+# Input:
+#   - g, igraph, undirected object
+#   - blocks, integer vector of length n (the number of vertices in g);
+#       blocks[i] is the block that vertex i of g is assigned to.
+# Optional Input:
+#   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
+#   - tol: floate, the tolerance of the IPS algorithm.
+#   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
+# Output:
+#   - mleMatr, array of dimensions n x n x (k + k choose 2), for k is the
+#       number of blocks;
+#       represents the mle estimate of the model.
 #######################################################################
 Get.MLE.beta.SBM<-function(g, blocks, maxiter=20, tol=0.1, print.deviation=FALSE){
-  print("Get.MLE.beta.SBM is being tested.")
   n = vcount(g)
   k = max(blocks)
   m = Get.Configuration.Matrix.beta.SBM(g,blocks)
-
+  
   # Ensure structural zeros get preserved
   startM =array(data=0, dim=c(n,n,k+choose(k,2)))
   n.block = rep(0,k)
+  v.block = rep(list(),k)
   for (i in 1:k){
     v.block[[i]] = which(blocks==i)
     n.block[i] = length(v.block[[i]])
@@ -466,14 +568,32 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
+#     + "beta.SBM"
 ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr){
+Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr, SBM.blocks=NULL){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(gdir))       
+      stop("Get.GoF.Statistic error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+    else{
+      if (!is.directed(gdir)){
+        gbidir = gdir
+        gdir = graph.empty(vcount(gdir), directed = TRUE)
+      }
+    }    
+  }  
+  
   if (!is.igraph(gdir)||!is.igraph(gbidir)){stop("Get.GoF.Statistic Error: objects passed must be igraph objects.")}
+  
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero"){
     confMatr = Get.Configuration.Matrix.p1.HL(gdir,gbidir)    
   }else if (model=="p1.recip.nzconst" || model=="p1.recip.zero" || model=="p1.recip.ed"){
     confMatr = Get.Configuration.Matrix.p1.FW(gdir,gbidir)  
-  }else{
+  }else if (model=="beta.SBM"){
+    confMatr = Get.Configuration.Matrix.beta.SBM(gbidir,blocks=SBM.blocks)
+  }
+  else{
     stop("Get.GoF.Statistic Error: model parameter must be one of the prespecified options.")
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
@@ -597,6 +717,8 @@ Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
   k = max(blocks)
   x = array(data=0, dim=c(n,n,choose(k,2)+k))
   adj = get.adjacency(g, sparse=FALSE) # would be better to find a way to represent x as a sparse array
+  
+  v.block=rep(list(),k)
   
   for (i in 1:k){
     v.block[[i]] = which(blocks==i)
@@ -723,13 +845,17 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 
 
 #####################################################################################
-# Get.Next.Network                                                                    #
-#	Input:                                                                              #
-#		- d: a directed graph                                                             #
-#		- b: a bidirected graph                                                           #
-#	Optional input:                                                                     #
-#		- ed.coin:  a fair ed.coin by default. 
-#		c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
+# Get.Next.Network                                                                  #
+#	Input:                                                                            #
+#		- d: igraph object, directed                                                    #
+#		- b: igraph object, undirected                                                  #
+#	Optional input:                                                                   #
+#		- ed.coin: vector of floats, length 3; to be used for p1.ed.recip model;
+#       a fair coin by default. 
+#       c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
+#   - nzconst.coin: vector of floats, length 2; to be used for p1 non-zero constant reciprocation
+#   - SBM.blocks: vector of integers represeting the block assignment of the vertices of b, 
+#       length equal to the number of vertices of b. It is mandatory input for the beta.SBM model.
 # Output:
 #   - list of 3 things:
 #   1) new.directed.graph,
@@ -760,15 +886,17 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #######################################################################
 Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), SBM.blocks=NULL){
   if (model == "beta.SBM"){
-    if (is.null(SBM.blocks)){stop("Get.Next.Network error: SBM.blocks cannot be null.")}
-    if (length(SBM.blocks)!=vcount(b)){stop("Get.Next.Network error: SBM.blocks must be same length as number of vertices in b.")}
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(b))
+      stop("Get.Next.Network error: SBM.blocks must be same length as number of vertices in b.")
     move = Get.Move.beta.SBM(b, blocks=SBM.blocks)
     trivial.move = move[[3]]
     #b minus bidirected.to.be.removed plus bidirected.to.be.added
     new.bidirected.graph = graph.union(graph.difference(b, move[[1]]), move[[2]])
     new.directed.graph = d
-#    print(paste("New Network"))                        #for testing
-#    print(get.edgelist(new.bidirected.graph))          #for testing
+    #    print(paste("New Network"))                        #for testing
+    #    print(get.edgelist(new.bidirected.graph))          #for testing
   }else{
     #p1 model
     markov.move = Get.Move.p1(d,b,model,ed.coin, nzconst.coin)
@@ -895,7 +1023,7 @@ Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
   }
   # third ed.coin option is : ed.coin \in (a+b,a+b+c]:
   else if (ed.coin[2]<ed.coin.value) {
-    return(Get.Mixed.Move(d,b))
+    return(Get.Mixed.Move.p1.ed(d,b))
   }
 }
 #################################################################################
@@ -913,11 +1041,168 @@ Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
 Get.Move.p1.zero.or.nzconst <- function(d,b){
-  # TODO: Mixed moves are also likely, can we incorporate those or will doing so bias the moves too much?
   d = graph.union(d,as.directed(b,mode="mutual"))
   move = Get.Directed.Move.p1.const.or.zero(d)
   return (move)
 } 
+##############################################################################
+##############################################################################
+##############################################################################
+# Get.Move.beta.SBM                                                    		    #
+#   Returns a random move, not necessarily primitive that is   		            #
+#	applicable to the observed network G that is guaranteed to move		          #
+#	to a network in the beta-SBM fiber, defined by the model, including itself. #  
+#                                                                             #
+# Input  					                                                            #
+#       - g: undirected graph, as an undirected igraph object                 #					                                      #                  #
+#       - blocks: a vector designating the block assignments of the nodes     #
+#                 blocks[i]=j if vertex i is assigned to block j
+#       - coin: controls 
+#             
+# Output: 
+#         - A list of two undirected igraph objects representing the move
+#           + undirected igraph object: the (undirected) edges to remove
+#           + undirected igraph object: the (undirected) edges to add
+#           + boolean flag indicating whether the move is empty
+#######################################################################
+Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2)){
+  # Iterate through all the blocks generating a random bidirected move within
+  # each block and a bipartite move between blocks.
+  if(is.null(blocks)) print("Error: blocks parameter cannot be empty in Get.Move.beta.SBM.")
+  n = vcount(g)
+  k = max(blocks)
+  
+  move = list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE)
+  v.block = list()
+  g.block = list()
+  for (i in 1:k){
+    # The subgraphs within the blocks
+    v.block[[i]] = which(blocks==i)
+    g.block[[i]] = Get.Induced.Subgraph(g, v.block[[i]])
+  }
+  coin.value = runif(1)
+  if (coin.value<=coin[1]){
+    # This part of the code allows for moves containing the swich ab,cd<->ac,bd where block[a]=block[b]=block[c]!=block[d]
+    # to be produced. These moves are both valid and necessary as such moves preserve everyone's degree in the full graph, 
+    # allow degrees of indivudual vertices to change within a block and between two blocks, and do not change the number of edges
+    # within block i or between block i and block j.
+    small.move.coin.value = runif(1)
+    if(small.move.coin.value<0.5){
+      # Perform a small move guaranteed to generate a network in a different sub-fiber with different within-block vertex degrees.
+      indices = sample(1:k,2)
+      i = indices[1]
+      j = indices[2]
+      v.included = c(sample(v.block[[i]],3), sample(v.block[[j]],1))  
+    }else{
+      r = sample(2:k,1)
+      included.blocks = sample(1:k, r)
+      v.included = c()
+      for (i in included.blocks){
+        v.included =c(v.included, v.block[[i]])
+      }
+    }
+    g.subgraph = Get.Induced.Subgraph(g,v.included)
+    proposed.move = list(graph.empty(n),graph.empty(n,directed=FALSE))
+    
+    count=0
+    while (ecount(proposed.move[[1]])==0 && count<50){
+      proposed.move = Get.Bidirected.Move(graph.empty(vcount(g.subgraph)),g.subgraph)
+      count= count+1
+    }
+    # Error checking making sure we are removing same total number of edges as we are adding
+    if (ecount(proposed.move[[1]]) != ecount(proposed.move[[2]])){
+      return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
+    }
+    
+    graph.to.remove = graph.difference(proposed.move[[1]],proposed.move[[2]])
+    graph.to.add = graph.difference(proposed.move[[2]],proposed.move[[1]])
+    if (ecount(graph.to.remove)==0 && ecount(graph.to.add)==0)
+      return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
+    
+    for (i in 1:k){
+      # Check that number of edges within block i remain constant
+      if ( ecount(Get.Induced.Subgraph(graph.to.remove,v.block[[i]])) != ecount(Get.Induced.Subgraph(graph.to.add,v.block[[i]])) )
+        return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
+      if (i<k){
+        for (j in (i+1):k){
+          # Check that number of edges between block i and block j remain constant
+          g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]))
+          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]]))
+          num.g.between.i.j.edges.to.remove = length(which(get.edge.ids(g.between.i.j, as.vector(t(get.edgelist(graph.to.remove))))>0))
+          
+          num.g.between.i.j.edges.to.add = 0
+          edges.to.add = get.edgelist(graph.to.add)
+          for ( l in 1:ecount(graph.to.add) ){
+            if ( (is.element(edges.to.add[l,1],v.block[[i]]) && is.element(edges.to.add[l,2],v.block[[j]])) || (is.element(edges.to.add[l,1],v.block[[j]]) && is.element(edges.to.add[l,2],v.block[[i]]) ) )
+              num.g.between.i.j.edges.to.add = num.g.between.i.j.edges.to.add + 1
+          }
+          
+          if (num.g.between.i.j.edges.to.add != num.g.between.i.j.edges.to.remove){
+            return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))            
+          }
+        }
+      }
+    }
+    move[[1]] = proposed.move[[1]] #graph.to.remove
+    move[[2]] = proposed.move[[2]] #graph.to.add
+    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]], move[[2]]))>0 && ecount(graph.difference(move[[2]], move[[1]]))>0)
+      move[[3]]=FALSE
+  }else{
+    for (i in 1:k){
+      # Produce a move within block i
+      move.within.i = Get.Within.Blocks.Move.beta.SBM(g.block[[i]])
+      move[[1]] = graph.union(move.within.i[[1]],move[[1]])
+      move[[2]] = graph.union(move.within.i[[2]],move[[2]])
+      if (i<k){
+        for (j in (i+1):k){
+          #Produce a move between block i and j
+          g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]))
+          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]]))
+          move.between.i.j = Get.Between.Blocks.Move.beta.SBM(g.between.i.j) 
+          move[[1]] = graph.union(move.between.i.j[[1]],move[[1]])
+          move[[2]] = graph.union(move.between.i.j[[2]],move[[2]])
+        }     
+      }
+    }
+    # Error checking making sure we are removing same number of edges as we are adding
+    if (ecount(move[[1]])!=ecount(move[[2]])){
+      return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
+    }
+    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]],move[[2]]))>0 && ecount(graph.difference(move[[2]],move[[1]]))>0)
+      move[[3]]=FALSE
+  }
+  return (move)
+} 
+Get.Between.Blocks.Move.beta.SBM<-function(g){
+  d = as.directed(g, mode = c("arbitrary"))
+  b = graph.empty(vcount(d), d=FALSE)
+  move = Get.Directed.Move.p1.ed(d,b)
+  move[[1]] = as.undirected(move[[1]])
+  move[[2]] = as.undirected(move[[2]])
+  return (move)
+}
+Get.Within.Blocks.Move.beta.SBM<-function(g){
+  return (Get.Bidirected.Move(graph.empty(vcount(g)),g))
+}
+##############################################################################
+# Get.Induced.Subgraph
+#   Method necessary as neither induced.subgraph nor subgraph.edges gives exactly the required result
+#   Alternatively one would need to use named-vertex igraph objects throughtout the code.
+# Input:
+#     - g: igraph object
+#     - vertices: list of vertices of g
+# Output:
+#     - igraph object representing the subgraph of g induced by vertices and 
+#       containing all vertices of g
+##############################################################################
+Get.Induced.Subgraph<-function(g,vertices){
+  pairs = combn(vertices,2)
+  ei = get.edge.ids(g, pairs)
+  ei = ei[ei!=0]
+  return (subgraph.edges(g, ei, delete.vertice=FALSE))
+}
+##############################################################################
+##############################################################################
 #######################################################################
 # Get.Directed.Move.p1.const.or.zero  											#
 # 	Given a mixed graph G=(d,b)										#
@@ -1007,8 +1292,8 @@ Get.Bidirected.Move <- function(d=NULL, b) {
     return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   else {
     # Finally, check :
-    g.add = graph(bidir.piece[[2]], directed = FALSE)
-    g.remove = graph(bidir.piece[[1]], directed = FALSE)
+    g.add = graph(bidir.piece[[2]], n=vcount(b), directed = FALSE)
+    g.remove = graph(bidir.piece[[1]],n=vcount(b),  directed = FALSE)
     #(1) edges.to.add makes a simple graph. This can happen if more than one partitions.
     if (!is.simple(g.add))
       return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
@@ -1025,7 +1310,7 @@ Get.Bidirected.Move <- function(d=NULL, b) {
   }
 }
 #######################################################################
-# Get.Mixed.Move													    #
+# Get.Mixed.Move.p1.ed													    #
 # Given d: directed part of a mixed graph							    #
 #   and b: bidirected part of a mixed graph,  						    #
 # returns a composite move consisting of a directed piece, and a bidirected piece (either or both of the pieces can be empty.)	    #
@@ -1040,7 +1325,7 @@ Get.Bidirected.Move <- function(d=NULL, b) {
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Mixed.Move <- function(d, b) {
+Get.Mixed.Move.p1.ed <- function(d, b) {
   dir.piece = Get.Directed.Piece(d)
   if (is.null(dir.piece[[1]])){
     g.remove.dir = graph.empty(vcount(d))
@@ -1124,13 +1409,12 @@ Get.Directed.Piece <- function(d){
 #######################################################################
 Get.Bidirected.Piece <- function(b) {
   ## THIS function computes bidirected move ONLY without checks for conflicts.
-  #this calls Bipartite.Walk but first checks if edges are a matching?
+  # this calls Bipartite.Walk but first checks if edges are a matching?
   # Randomly direct the entire bidirected graph and call Get.Directed.Piece
   
   if (ecount(b) < 2) 
     return(NULL)
   b.directed = as.arbitrary.directed(b)	
-  # now cheat: just call directedPiece on this:
   return(Get.Directed.Piece(b.directed))
 }
 #######################################################################
@@ -1141,9 +1425,9 @@ Get.Bidirected.Piece <- function(b) {
 # This can be thought of as an operation on the parameter graph       #
 # The simple optional input simpleOnly makes sures only squarefree    #
 # move are produced.                                                  #
-# multiplicity.bound TODO.					#
+# multiplicity.bound TODO.					                                  #
 #######################################################################
-Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=0) {
+Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=NULL) {
   #connect head of (i+1)st edge to tail of ith edge to complete a walk:
   num.edges = nrow(edges.to.remove)
   edges.to.add = c()
@@ -1156,7 +1440,7 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
     if (!is.simple(graph(edges.to.add))) 
       return(NULL)
   }
-  if (multiplicity.bound!=0){
+  if (!is.null(multiplicity.bound)){
     #Check that produced edges satisfy given multiplicity bound.
     print("TODO: multiplicity.bound")
     # numvertices = find number of vertices from multiplicity.bound
@@ -1167,9 +1451,9 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
 }
 #######################################################################
 #######################################################################
-# as.arbitrary.directed													#
+# as.arbitrary.directed													                      #
 # Given an undirected graph b, return a directed graph containing an	#
-# arbitrarily directed copy of each edge of b.							#
+# arbitrarily directed copy of each edge of b.							          #
 #######################################################################
 as.arbitrary.directed <- function(b) {
   # Create a directed graph out of the edges of b
@@ -1179,8 +1463,7 @@ as.arbitrary.directed <- function(b) {
   # Direct the first num.edges.to.reverse edges in one way and the others the other way
   if (num.edges.to.reverse==0) {
     b.directed = b.decr
-  } 
-  else{
+  }else{
     random.edge.indices = sample(1:ecount(b), num.edges.to.reverse)
     b.subset.decr = graph(t(get.edges(b, random.edge.indices))) #get.edges and get.edgelist direct edges in a different order somehow!
     el = get.edgelist(b.subset.decr, names = FALSE) ## magically swap cols to reverse direction
@@ -1191,74 +1474,7 @@ as.arbitrary.directed <- function(b) {
   }
   return(b.directed)
 }
-################################################################################################################
-################################################################################################################
-# Estimate.p.Value.for.Testing
-################################################################################################################
-################################################################################################################
-################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir)), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, SBM.blocks=NULL){
-  if (ecount(gbidir)==0){
-    mixed.graph = split.Directed.Graph(gdir)
-    gdir = mixed.graph[[1]]
-    gbidir = mixed.graph[[2]]  
-  }
-  #Error Checking
-  if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
-  if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
-  if(!is.directed(gdir)){	stop("gdir must be a directed graph.") }
-  if(is.directed(gbidir)){		
-    stop("gbidir must be an undirected graph.")
-  }
-  
-  nd = vcount(gdir)
-  nb = vcount(gbidir)
-  if (nd>nb){
-    gbidir = add.vertices(gbidir,nd-nb)	
-  }
-  else if (nd<nb){
-    gdir = add.vertices(gdir,nb-nd)	
-  }
-  # if mleMatr was not given as argument use generate the MLE
-  if (is.null(mleMatr)){
-    print("Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol)
-    print("MLE estimate completed.")
-  }
-  # Either update to take into account model or leave the mle dimension checking to Get.GoF.Statistic
-  #  # Error Check: inputted mleMatr dimension
-  #  else if ((dim(mleMatr)[[1]]!=nd*(nd-1)/2) || (dim(mleMatr)[[2]]!=4)){
-  #    stop("mleMatr dimension is incorrect.")
-  #  }
-  obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr)
-  obs.gf = round(obs.gf, digits=8)
-  if (is.nan(obs.gf)){
-    print("NaN error in calculation of GF statistic.")
-  }
-  if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
-  next.network = list(gdir,gbidir)
-  count = 1
-  int.values=c() # To estimate convergence of count/i to p-value
-  gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
-  steps.used=1
-  for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, SBM.blocks)  
-    if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
-      new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr)
-      new.gf=round(new.gf, digits=8)
-      # If the GoF statistic for new network is larger or equal than the GoF statistic
-      # for the observed network. Note that a badly estimated MLE can give 
-      # significant errors in the p-value.
-      if (new.gf>=obs.gf){  
-        count = count +1  
-      }
-      steps.used=steps.used+1
-      int.values<-c(int.values,count/steps.used)
-      gof.values<-c(gof.values,new.gf) 
-    }
-  }
-  return (list(count/steps.used,int.values, gof.values, mleMatr))
-}
+
 #######################################################################
 ########################################################################
 # Estimate.p.Value.From.GoFs
