@@ -10,7 +10,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
     else if (length(SBM.blocks)!=vcount(gdir))       
-      stop("Estimate.p.Value error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+      stop("Test.Model.Fit error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
     else{
       if (!is.directed(gdir)){
         gbidir = gdir
@@ -23,7 +23,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     gbidir = mixed.graph[[2]]  
   }
   
-  if (is.null(mleMatr)) { mleMatr = Get.MLE(D.bay,B.bay, model, tol, maxiter, SBM.blocks=SBM.blocks) }
+  if (is.null(mleMatr)) { mleMatr = Get.MLE(gdir, gbidir, model, tol, maxiter, SBM.blocks=SBM.blocks) }
   
   if (ignore.trivial.moves){
     trivs.label = "no trivial moves"
