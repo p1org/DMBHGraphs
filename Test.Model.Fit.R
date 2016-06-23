@@ -5,14 +5,25 @@
 # - Plots p-value convergence plots and gof histograms for each run both in a file and on for immediate viewing.
 # - Calculates the quartiles from the progressive p-value estimates and plots these as well.  
 ########
-Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname){
-  if (ecount(gbidir)==0){
+Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, SBM.blocks=NULL){
+  if (model == "beta.SBM"){
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+      stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
+    else if (length(SBM.blocks)!=vcount(gdir))       
+      stop("Estimate.p.Value error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
+    else{
+      if (!is.directed(gdir)){
+        gbidir = gdir
+        gdir = graph.empty(vcount(gdir), directed = TRUE)
+      }
+    }    
+  }else if (ecount(gbidir)==0){
     mixed.graph = split.Directed.Graph(gdir)
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
   }
   
-  if (is.null(mleMatr)) { mleMatr = Get.MLE(D.bay,B.bay, model, tol, maxiter) }
+  if (is.null(mleMatr)) { mleMatr = Get.MLE(D.bay,B.bay, model, tol, maxiter, SBM.blocks=SBM.blocks) }
   
   if (ignore.trivial.moves){
     trivs.label = "no trivial moves"
@@ -29,10 +40,10 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   p.values = array(0,dim=c(iterations))
   p.progressive.estimates = array(0,dim=c(iterations,numSteps))
   gof.values = array(0,dim=c(iterations,numSteps+1))
-  
+  minNumSteps = numSteps
   for (i in 1:iterations){
     cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr)
+    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks)
     cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
     p.values[i] = tmp[[1]]
     num.moves = length(tmp[[2]])
@@ -46,6 +57,8 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     save(gof.values, file=sprintf("%s.gof.values.values.RData",base.filename))
     
     cat(sprintf("mean(p.values[1:%d]) = %f | median(p.values[1:%d]) = %f | var(p.values[1:%d]) = %f\n", i, mean(p.values[1:i]), i, median(p.values[1:i]), i, var(p.values[1:i])))
+    if (ignore.trivial.moves) 
+      minNumSteps = min(num.moves,  minNumSteps)
   }
   filename=sprintf("%s.p.values.txt",base.filename)
   write(paste(testname, " ", model, " ", trivs.label), filename)
@@ -57,6 +70,9 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   #####
   
   qs=apply(p.progressive.estimates,FUN=quantile,2)
+  if (ignore.trivial.moves){
+    qs = qs[,1:minNumSteps]
+  }
   pdf(sprintf("%s.p.value.quartiles.fig.pdf",base.filename))
   plot(qs[3,], ylab="p-value estimates",xlab="step", type="o",ylim=c(0,1),lwd=0.25, pch='.', main=paste(testname, trivs.label, model))
   lines(qs[2,], type="o", col="gray",lwd=0.25, pch='.')
