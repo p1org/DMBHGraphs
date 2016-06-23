@@ -55,6 +55,7 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
   plot(p.value.estimates, main=dataname,sub=paste(length(p.value.estimates),"steps"),  xlab="Length of Walk", ylab="p-values", ylim=c(0,1), pch='.' )
   
   # 2) plot the sampling distribution of the GoF statistic:
+  # THIS IS NOT PLOTTING TITLES CORRECTLY.  DATANAME IS REPEATED TWICE! NEEDS A FIX. 
   hist(gof.values,main=dataname, xlab="Goodness of Fit Statistic", ylab="frequency")
   abline(v=gof.values[1], col="red")
   
