@@ -40,7 +40,7 @@ GoF.Simulations.Summary <- function(){
 ########################################################################
 GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title w/ option 'dataname'", burn=0, filesave=FALSE,filename='GoF testing plots', grid=c(2,2)){
   
-  print("This is still a little shitty b/c I don't check if input is of correct format..e.g., the two lists should be of same length if they come from the same simulation. For typical usage of the function, see function header @code. ")    
+#  print("This is still a little shitty b/c I don't check if input is of correct format..e.g., the two lists should be of same length if they come from the same simulation. For typical usage of the function, see function header @code. ")    
   
   # the following only makes sense if dataname has no special characters!! but i would have really preferred to set it this way: 
   #       if(filesave){pdf(paste('GoF testing plots for',dataname))}
@@ -52,7 +52,11 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
   par(mfrow = grid, mar=c(2,1,0,0)+3) # spacing; it goes c(bottom, left, top, right)  
   
   # 1) plot p-value estimates: 
+<<<<<<< HEAD
   plot(p.value.estimates, main=dataname,sub=paste(length(p.value.estimates),"steps"),  xlab="Length of Walk", ylab="p-values", ylim=c(0,1), pch='.' )
+=======
+  plot(p.value.estimates, main=dataname,sub=paste(length(p.value.estimates),"steps"),  xlab="Length of Walk", ylab="p-values", ylim=c(0,1), pch='.',lwd=0.25 )
+>>>>>>> master
   
   # 2) plot the sampling distribution of the GoF statistic:
   # THIS IS NOT PLOTTING TITLES CORRECTLY.  DATANAME IS REPEATED TWICE! NEEDS A FIX. 
@@ -62,13 +66,21 @@ GoF.Testing.Plots <- function(gof.values,p.value.estimates, dataname="Set title 
   # 3) MAYBE someone has burn-in:
   if(burn>0){
     p.estimates = Estimate.p.Value.From.GoFs(gof.values, burn) 
+<<<<<<< HEAD
     plot(p.estimates[[2]],  main=dataname ,sub=paste(length(p.estimates[[2]]),"steps"),  xlab=paste("Length of Walk (after", burn,"burn-in steps)"), ylab="p-values", ylim=c(0,1), pch='.')    
+=======
+    plot(p.estimates[[2]],  main=dataname ,sub=paste(length(p.estimates[[2]]),"steps"),  xlab=paste("Length of Walk (after", burn,"burn-in steps)"), ylab="p-values", ylim=c(0,1), pch='.',lwd=0.25)    
+>>>>>>> master
     hist(gof.values[burn+2:length(gof.values)],main=dataname, xlab="Goodness of Fit Statistic", ylab="frequency")
     abline(v=gof.values[1], col="red")
   }
   
   if(filesave){
+<<<<<<< HEAD
     print(paste("Plots are saved to",filename,"in the working directory (check with getwd())."))
+=======
+  #  print(paste("Plots are saved to",filename,"in the working directory (check with getwd())."))
+>>>>>>> master
     dev.off()  # close file connection.
   }
   # turn off grid printing:
