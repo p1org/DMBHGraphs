@@ -53,9 +53,11 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks)
     cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
     p.values[i] = tmp[[1]]
+    if (length(tmp[[3]])<2){ stop("Please increase numSteps: The walk produced has less than two graphs; no results will be reported.")}
     num.moves = length(tmp[[2]])
     p.progressive.estimates[i,1:num.moves] = tmp[[2]]
     gof.values[i,1:(num.moves+1)] =  tmp[[3]]
+    
     GoF.Testing.Plots(gof.values[i,1:(num.moves+1)], p.progressive.estimates[i,1:num.moves], filesave=TRUE, filename = sprintf("%s.iteration%d.figs.pdf",base.filename, i), grid=c(2,1), dataname = plotlabel)
     GoF.Testing.Plots(gof.values[i,1:(num.moves+1)], p.progressive.estimates[i,1:num.moves], grid=c(2,1), dataname=paste(testname, trivs.label, model))
     
@@ -79,7 +81,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   #####
   
   qs=apply(p.progressive.estimates,FUN=quantile,2)
-  if (ignore.trivial.moves){
+  if (ignore.trivial.moves && minNumSteps>1){
     qs = qs[,1:minNumSteps]
   }
   pdf(sprintf("%s.p.value.quartiles.fig.pdf",base.filename))
