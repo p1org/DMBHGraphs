@@ -5,7 +5,7 @@
 # - Plots p-value convergence plots and gof histograms for each run both in a file and on for immediate viewing.
 # - Calculates the quartiles from the progressive p-value estimates and plots these as well.  
 ########
-Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, SBM.blocks=NULL){
+Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -50,7 +50,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   }
   for (i in 1:iterations){
     cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks)
+    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks)
     cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
     p.values[i] = tmp[[1]]
     if (length(tmp[[3]])<2){ stop("Please increase numSteps: The walk produced has less than two graphs; no results will be reported.")}
