@@ -65,7 +65,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     save(p.progressive.estimates, file=sprintf("%s.p.progressive.estimates.values.RData",base.filename))
     save(gof.values, file=sprintf("%s.gof.values.values.RData",base.filename))
     
-    
+    # Mcmc.Diagnostics(gof.values[i,1:num.moves+1],)
     
     cat(sprintf("mean(p.values[1:%d]) = %f | median(p.values[1:%d]) = %f | var(p.values[1:%d]) = %f\n", i, mean(p.values[1:i]), i, median(p.values[1:i]), i, var(p.values[1:i])))
     if (ignore.trivial.moves) 
