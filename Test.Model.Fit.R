@@ -97,6 +97,10 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   return (list(p.values, p.progressive.estimates, gof.values, qs))
 }
 
+
+#### ================================================================================ ####
+#### ================================================================================ ####
+
 ########
 # Test.Model.Fit.Parallel
 # - Same as Test.Model.Fit -- except it is set up to run iterations many parallel computations (for use on a cluster!)
@@ -207,3 +211,5 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
   return (list(p.values, p.progressive.estimates, gof.values, qs))
 }
 
+#### ================================================================================ ####
+#### ================================================================================ ####
