@@ -155,16 +155,16 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
   result <- foreach(i=1:iterations) %dopar% {
     #cat(sprintf("iteration = %d\n",i))
     tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks)
-    #cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
-    #if (length(tmp[[3]])<2){ stop("Please increase numSteps: The walk produced has less than two graphs; no results will be reported.")}
-    #num.moves = length(tmp[[2]])
     tmp
   }
   # =================================== end for cluster =========================================# 
   
   for (i in 1:iterations){
     cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks)
+    tmp = result[[i]];
+    # =================================== for cluster =============================================# 
+    #    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks)
+    # =================================== end for cluster =========================================# 
     cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
     p.values[i] = tmp[[1]]
     if (length(tmp[[3]])<2){ stop("Please increase numSteps: The walk produced has less than two graphs; no results will be reported.")}
