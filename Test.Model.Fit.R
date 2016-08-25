@@ -127,7 +127,7 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
     }    
   }
   
-  if (is.null(mleMatr)) { mleMatr = Get.MLE(gdir, gbidir, model, tol, maxiter, SBM.blocks=SBM.blocks) }
+  if (is.null(mleMatr)) { mleMatr = Get.MLE(gdir, gbidir, model, maxiter, tol, SBM.blocks=SBM.blocks) }
   
   if (ignore.trivial.moves){
     trivs.label = "no trivial moves"
