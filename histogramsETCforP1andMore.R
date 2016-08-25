@@ -1,18 +1,33 @@
 ########################################################################
-# GoF.Simulations.Summary
-# Given outputs of several GoF simulations
-# (such as those obtained from a run of Estimate.p.Value.For.Testing),
-# plot convergence plots of GoF statisitc and p-value..
+# Mcmc.Diagnostics
+# Given some summary of the output of an MCMC run, plot the usual
+# MCMC diagnostics
 #
 # Input: 
-#   - gof.values, a LIST OF LISTS? VECTOR OF LISTS? WHAT - list of values of the GoF statistic from a random walk, whose 1st entry is the OBSERVED ONE
-#   - p.value.estimates, a LIST OF LISTS? VECTOR OF LISTS? WHAT - list of p-value esitmates from a random walk
+#   - list...
 # 
-GoF.Simulations.Summary <- function(){
-  # this is so that when we run 100 simulations, we get a mean p-value, 
-  # and upper and lower quantiles for them, over the 100 simulations. 
-  # clearly better than plotting 100 separate plots.
-  print("to do.")
+Mcmc.Diagnostics <- function(mcmcStats, dataname="Set title w/ option 'dataname'", burn=0, filesave=FALSE,filename='GoF testing plots', grid=c(2,2)){
+  require("coda"); #for mcmc diagnostics
+  # ========================= # 
+  # CODE FROM VISHESH: 
+  mcmcStats = cbind(sampShellDist,sampDegreeDist,
+                    sampBetweeness,sampTri,
+                    sampEdge,sampCentrality);
+  colnames(mcmcStats) = c(paste('shell',seq(from=0,to=n-1),sep=""),
+                          paste('degree',seq(from=0,to=n-1),sep=""),
+                          paste('betweenness',seq(from=1,to=n),sep=""),
+                          "triangles",
+                          'edges',
+                          'centrality');
+  mcmcStats = as.mcmc(mcmcStats);
+  save.image(paste(name,".Rdata",sep=""));
+  #load(paste(name,".Rdata",sep=""));
+  pdf(paste(name,"Diagnostics.pdf"));
+  #summary(mcmcStats);
+  plot(mcmcStats);
+  autocorr.plot(mcmcStats);
+  # ========================= # 
+  dev.off();
 }
 
 ########################################################################
