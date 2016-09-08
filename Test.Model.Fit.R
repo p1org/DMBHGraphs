@@ -65,8 +65,8 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     save(p.progressive.estimates, file=sprintf("%s.p.progressive.estimates.values.RData",base.filename))
     save(gof.values, file=sprintf("%s.gof.values.values.RData",base.filename))
     
-    # Mcmc.Diagnostics(gof.values[i,1:num.moves+1],)
-    
+    Mcmc.Diagnostics(gof.values[i,1:num.moves+1], statsNamesList = c("ChiSquareGoF"), dataname=paste(testname, trivs.label, model), filename = sprintf("%s.iteration%d.",base.filename, i))
+
     cat(sprintf("mean(p.values[1:%d]) = %f | median(p.values[1:%d]) = %f | var(p.values[1:%d]) = %f\n", i, mean(p.values[1:i]), i, median(p.values[1:i]), i, var(p.values[1:i])))
     if (ignore.trivial.moves) 
       minNumSteps = min(num.moves,  minNumSteps)
@@ -104,7 +104,6 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
 ########
 # Test.Model.Fit.Parallel
 # - Same as Test.Model.Fit -- except it is set up to run iterations many parallel computations (for use on a cluster!)
-# =========== NEW, UNTESTED METHOD ============== # 
 ########
 Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
@@ -179,8 +178,8 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
     save(p.progressive.estimates, file=sprintf("%s.p.progressive.estimates.values.RData",base.filename))
     save(gof.values, file=sprintf("%s.gof.values.values.RData",base.filename))
     
-    # Mcmc.Diagnostics(gof.values[i,1:num.moves+1],)
-    
+    Mcmc.Diagnostics(gof.values[i,1:num.moves+1], statsNamesList = c("ChiSquareGoF"), dataname=paste(testname, trivs.label, model), filename = sprintf("%s.iteration%d.",base.filename, i))
+        
     cat(sprintf("mean(p.values[1:%d]) = %f | median(p.values[1:%d]) = %f | var(p.values[1:%d]) = %f\n", i, mean(p.values[1:i]), i, median(p.values[1:i]), i, var(p.values[1:i])))
     if (ignore.trivial.moves) 
       minNumSteps = min(num.moves,  minNumSteps)
