@@ -28,7 +28,7 @@ Mcmc.Diagnostics <- function(mcmcStatsList, statsNamesList, dataname="Set title 
   colnames(mcmcStats)=statsNamesList
   mcmcStats=as.mcmc(mcmcStats)
 
-  save.image(paste(filename,".Rdata",sep=""));
+  save.image(paste(filename,"McmcDiag.Rdata",sep=""));
   #load(paste(name,".Rdata",sep=""));
   pdf(paste(filename,"MCMCdiagnostics.pdf"));
   #summary(mcmcStats);
