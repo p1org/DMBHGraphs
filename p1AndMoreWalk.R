@@ -1432,12 +1432,26 @@ Get.Bidirected.Piece <- function(b) {
 # Given a (randomized) list of edges (edges.to.remove) return a list 	#
 # of edges (edges.to.add) that complete an even closed walk by 			  #
 # connecting the endpoints of successive edges.							          #
-# This can be thought of as an operation on the parameter graph       #
-# The simple optional input simpleOnly makes sures only squarefree    #
-# move are produced.                                                  #
-# multiplicity.bound TODO.					                                  #
+# This can be thought of as an operation on the parameter graph.      #
+#
+# The zeros=NULL argument option is there for the case of structural  #
+# zeros of the model. zeros can be specified to be a list of edges    #
+# that are forbidden. 
+# DEVELOPER NOTES:
+# This optional argumetn isn't passed from anywhere so nothing but    #
+# the default can happen. Maybe we'll read the zeros off from the     #
+# parameter hypergraph specified in the model specification; or maybe #
+# we'll have user input VECTOR LIST OF EDGES that are forbidden. We don't know yet. 
+#
+# The multiplicity.bound=1 argument option makes sure only            #
+# squarefree move are produced.                                       #
+# In general, multiplicity.bound is an integer denoting the maximum   #					                                  
+# number of times each edge in the graph can apper.                   #
+# DEVELOPER NOTES: 
+# Currently, the optional argument isn't passed from anywhere, so     #
+# nothing but the default can happen.                                 #
 #######################################################################
-Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound=NULL) {
+Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
   #connect head of (i+1)st edge to tail of ith edge to complete a walk:
   num.edges = nrow(edges.to.remove)
   edges.to.add = c()
@@ -1445,21 +1459,27 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
     edges.to.add = c(edges.to.add, edges.to.remove[i + 1, 1], edges.to.remove[i, 2])
   }
   edges.to.add = c(edges.to.add, edges.to.remove[1, 1], edges.to.remove[num.edges,2])
-  if (simple.only){
+  if (multiplicity.bound==1){
     # Ensure that edges.to.add form no loops or multiple edges
-    if (!is.simple(graph(edges.to.add))) 
+    if (!is.simple(graph(edges.to.add)))   
+      return(NULL)
+  }else {
+    # Ensure that none of the edges we are attempting to add appear with multiplicity larger than allowed 
+    if(any(count.multiple(graph(edges.to.add))>multiplicity.bound)) 
       return(NULL)
   }
-  if (!is.null(multiplicity.bound)){
-    #Check that produced edges satisfy given multiplicity bound.
-    print("TODO: multiplicity.bound")
-    ### Question: CAN THIS fall under the applicability check? 
-    ###       i.e. if all edges can appear at most 3 times, then we just declare inapplicable if multiplicity of any edge is >3.
-    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ### 
-    # numvertices = find number of vertices from multiplicity.bound
-    # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
-    # return(NULL)
-  }     
+  if (!is.null(zeros)){
+    # Ensure that edges.to.add isn't trying to add onto any structural zeros of the model
+    if (!ecount(graph.intersection(graph(zeros), edges.to.add)) == 0) 
+      return(NULL)
+  }
+  # DEVELOPER NOTES [3/3/17]:
+  # The 3 checks above are just primitive checks, so we don't return moves we know for sure we'll reject later. 
+  # They DO NOT take care of all possible APPLICABILITY checks for the model - particularly because we don't know 
+  # what the model is, not at this level. 
+  # For example the first "if" will ask if edges.to.add is a simple graph. This is a necessary check. However, when
+  # the edges are actually added to the graph, the result may actually become non-simple.
+  # -- OK -- that is checked in Get.Bidirected.Move, for example; but not that not all "get.??.move.??" functions do such checks? thinking..
   return(edges.to.add)
 }
 #######################################################################
