@@ -1223,6 +1223,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d){
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }
   else{
+    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ###
     # Ensure move is applicable
     g.add = graph(dir.piece[[2]])
     g.remove = graph(dir.piece[[1]])
@@ -1258,6 +1259,7 @@ Get.Directed.Move.p1.ed <- function(d,b){
   if (is.null(dir.piece[[1]])){ 
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }else{
+    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ###
     g.remove = graph(dir.piece[[1]])
     g.add = graph(dir.piece[[2]])
     # Check that edges.to.add makes a simple graph, and has no bidirected edges.
@@ -1297,6 +1299,7 @@ Get.Bidirected.Move <- function(d=NULL, b) {
   if (is.null(bidir.piece[[1]])) 
     return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   else {
+    ### >>>> TAG - is.applicable(bidir.piece, model=p1???)  <<<< ###
     # Finally, check :
     g.add = graph(bidir.piece[[2]], n=vcount(b), directed = FALSE)
     g.remove = graph(bidir.piece[[1]],n=vcount(b),  directed = FALSE)
@@ -1349,6 +1352,7 @@ Get.Mixed.Move.p1.ed <- function(d, b) {
     g.remove.bidir = graph(bidir.piece[[1]],directed=FALSE)
     g.add.bidir = graph(bidir.piece[[2]],directed=FALSE)	
   }
+  ### >>>> TAG - is.applicable(dir.piece, bidir.piece, model="p1.ed")  <<<< ###
   # Check that the move will be applicable
   #(1) edges.to.add makes a simple graph. This can happen if more than one partitions. 
   # We also check that the directed edges to be added do not create new reciprocal edges
@@ -1358,7 +1362,7 @@ Get.Mixed.Move.p1.ed <- function(d, b) {
   #(2) edges.to.add does not intersect b-edges.to.remove [i.e. no conflicts created!]:
   if ((!ecount(graph.intersection(graph.difference(b, g.remove.bidir), g.add.bidir)) == 0) || 
         !ecount(graph.intersection(as.undirected(graph.difference(d,g.remove.dir)),as.undirected(g.add.dir)))==0)
-    ######This line causing the bug!! will fix soon
+    ######This line causing the bug!! will fix soon (?what bug)
     return( list(graph.empty(vcount(d)), graph.empty(vcount(d)), graph.empty(vcount(b),directed=FALSE),graph.empty(vcount(b), directed=FALSE)) )
   #(3i) neither order of g.add.bidir intersects d-g.remove.dir:
   if (!is.null(d))
@@ -1449,6 +1453,9 @@ Bipartite.Walk <- function(edges.to.remove, simple.only=TRUE, multiplicity.bound
   if (!is.null(multiplicity.bound)){
     #Check that produced edges satisfy given multiplicity bound.
     print("TODO: multiplicity.bound")
+    ### Question: CAN THIS fall under the applicability check? 
+    ###       i.e. if all edges can appear at most 3 times, then we just declare inapplicable if multiplicity of any edge is >3.
+    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ### 
     # numvertices = find number of vertices from multiplicity.bound
     # if all(count.multiple(graph( edges.to.add),n=numvertices)>multiplicity.bound)
     # return(NULL)
