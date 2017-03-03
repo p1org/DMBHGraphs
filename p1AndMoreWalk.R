@@ -921,7 +921,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), 
         
         #b minus bidirected.to.be.removed plus bidirected.to.be.added
         new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])      
-      }    else stop("Get.Next.Network Error: model parameter must be prespecified options.") 
+      }    else stop("Get.Next.Network Error: invalid model choice. Model must be one of the prespecified options.")
     }else{
       #empty move, graphs unchanged
       trivial.move=TRUE
