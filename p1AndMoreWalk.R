@@ -425,7 +425,7 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
   }else if (model=="beta.SBM"){
     mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, maxiter,tol)    
   }else{
-    stop("Get.MLE Error: model parameter option must be one of the prespecified options.")
+    stop("Get.MLE Error: invalid model argument - model must be one of the prespecified options.")
   }
   return (mleMatr)
 }  
@@ -594,7 +594,7 @@ Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMa
     confMatr = Get.Configuration.Matrix.beta.SBM(gbidir,blocks=SBM.blocks)
   }
   else{
-    stop("Get.GoF.Statistic Error: model parameter must be one of the prespecified options.")
+    stop("Get.GoF.Statistic Error: invalid model argument - model must be one of the prespecified options.")
   }
   return (Chi.Square.Statistic(confMatr,mleMatr))
 }
@@ -921,7 +921,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), 
         
         #b minus bidirected.to.be.removed plus bidirected.to.be.added
         new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])      
-      }    else stop("Get.Next.Network Error: invalid model choice. Model must be one of the prespecified options.")
+      }    else stop("Get.Next.Network Error: invalid model argument - model must be one of the prespecified options.")
     }else{
       #empty move, graphs unchanged
       trivial.move=TRUE
@@ -982,7 +982,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), 
   } else if (model=="p1.recip.ed"){
     move = Get.Move.p1.ed(gdir,gbidir,ed.coin)   
   } else{
-    stop("Get.Move Error: model parameter option must be one of the prespecified options.")
+    stop("Get.Move Error: invalid model argument - model must be one of the prespecified options.")
   }
   return (move)
 } 
