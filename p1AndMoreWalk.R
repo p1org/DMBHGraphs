@@ -866,8 +866,6 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 # The move could be 		#
 #	only directed, or only bidirected, or a composite of the two.		#
 # Optional Input:
-#   ed.coin is optional input; by default it's "fair": 					#
-#	c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).#
 #    - model: a string signifying the appropriate model                  #
 #       + "p1.HLalg.recip.nzconst": for p1 model with constant reciprocation  #
 #       and the MLE calculated with Holland-Leinhardt's IPS algorithm   #
@@ -884,7 +882,6 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       using Fienberg-Wasserman's configuration matrix.                  #
 #       + "beta.SBM": for the beta SBM model                                 #
 #######################################################################
-Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -899,7 +896,6 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), 
     #    print(get.edgelist(new.bidirected.graph))          #for testing
   }else{
     #p1 model
-    markov.move = Get.Move.p1(d,b,model,ed.coin, nzconst.coin)
     trivial.move=FALSE
     if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
       if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
@@ -971,16 +967,12 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", ed.coin=c(1/3,1/3,1/3), 
 #           + undirected igraph object: the reciprocated only edges to remove (only if model is p1.recip.ed)
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
-Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
-      mixed.move = Get.Move.p1.ed(gdir, gbidir, ed.coin)
       move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
     }else
-      move = Get.Move.p1.zero.or.nzconst(gdir,gbidir)
   } else if (model=="p1.recip.ed"){
-    move = Get.Move.p1.ed(gdir,gbidir,ed.coin)   
   } else{
     stop("Get.Move Error: invalid model argument - model must be one of the prespecified options.")
   }
@@ -1005,7 +997,6 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",ed.coin=c(1/3,1/3,1/3), 
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
   # if the ed.coin options do not sum up to 1 exit.
   if (! sum(ed.coin)==1) { stop("invalid ed.coin") }
   #Generate a random real number between 0 and 1.
@@ -1013,17 +1004,14 @@ Get.Move.p1.ed <- function(d,b, ed.coin=c(1/3,1/3,1/3)){
   # Now just see where ed.coin.value is in relation to the ed.coin vector (a,b,c):
   # first ed.coin option is : ed.coin \in [0.0, a]:
   if (ed.coin.value <= ed.coin[1]) { 
-    dir.move = Get.Directed.Move.p1.ed(d,b)
     return(list(dir.move[[1]],dir.move[[2]], graph.empty(vcount(b),directed=FALSE), graph.empty(vcount(b),directed=FALSE)))
   }
   # second ed.coin option is: ed.coin \in (a,a+b]:
   else if (ed.coin[1]<ed.coin.value && ed.coin.value <= ed.coin[1]+ed.coin[2]) {
-    bidir.move = Get.Bidirected.Move(d,b)
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),bidir.move[[1]],bidir.move[[2]]))
   }
   # third ed.coin option is : ed.coin \in (a+b,a+b+c]:
   else if (ed.coin[2]<ed.coin.value) {
-    return(Get.Mixed.Move.p1.ed(d,b))
   }
 }
 #################################################################################
@@ -1238,7 +1226,6 @@ Get.Directed.Move.p1.const.or.zero <- function(d){
   }
 }
 #######################################################################
-# Get.Directed.Move.p1.ed                                                                   #
 # 	Given a mixed graph G=(d,b)                                                       #
 #		with d: directed graph, b: bidirected graph					                              #
 #	returns a random move removing directed edges from the graph only                   #
@@ -1254,12 +1241,10 @@ Get.Directed.Move.p1.const.or.zero <- function(d){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Directed.Move.p1.ed <- function(d,b){
   dir.piece=Get.Directed.Piece(d)
   if (is.null(dir.piece[[1]])){ 
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }else{
-    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ###
     g.remove = graph(dir.piece[[1]])
     g.add = graph(dir.piece[[2]])
     # Check that edges.to.add makes a simple graph, and has no bidirected edges.
@@ -1434,9 +1419,6 @@ Get.Bidirected.Piece <- function(b) {
 # connecting the endpoints of successive edges.							          #
 # This can be thought of as an operation on the parameter graph.      #
 #
-# The zeros=NULL argument option is there for the case of structural  #
-# zeros of the model. zeros can be specified to be a list of edges    #
-# that are forbidden. 
 # DEVELOPER NOTES:
 # This optional argumetn isn't passed from anywhere so nothing but    #
 # the default can happen. Maybe we'll read the zeros off from the     #
@@ -1470,7 +1452,6 @@ Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
   }
   if (!is.null(zeros)){
     # Ensure that edges.to.add isn't trying to add onto any structural zeros of the model
-    if (!ecount(graph.intersection(graph(zeros), edges.to.add)) == 0) 
       return(NULL)
   }
   # DEVELOPER NOTES [3/3/17]:
