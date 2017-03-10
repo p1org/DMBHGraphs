@@ -981,7 +981,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros=NULL, ed.coin=c(1/
 #           + undirected igraph object: the reciprocated only edges to remove (only if model is p1.recip.ed)
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
-Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
+Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
@@ -1018,7 +1018,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros ,ed.coin=c(1/3,1/3
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Move.p1.ed <- function(d,b, zeros, ed.coin=c(1/3,1/3,1/3)){
+Get.Move.p1.ed <- function(d,b, zeros=NULL, ed.coin=c(1/3,1/3,1/3)){
   # if the ed.coin options do not sum up to 1 exit.
   if (! sum(ed.coin)==1) { stop("invalid ed.coin") }
   #Generate a random real number between 0 and 1.
@@ -1056,7 +1056,7 @@ Get.Move.p1.ed <- function(d,b, zeros, ed.coin=c(1/3,1/3,1/3)){
 #           + directed igraph object: the directed edges to remove from the full graph d+b
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
-Get.Move.p1.zero.or.nzconst <- function(d,b,zeros){
+Get.Move.p1.zero.or.nzconst <- function(d,b,zeros=NULL){
   d = graph.union(d,as.directed(b,mode="mutual"))
   move = Get.Directed.Move.p1.const.or.zero(d,zeros)  
   return (move)
@@ -1237,7 +1237,7 @@ Get.Induced.Subgraph<-function(g,vertices){
 #         - zeros: structural zeros of the model, specified as a directed graph                     
 #       (an igraph object) whose edges are the forbidden edges in the graph. 
 #######################################################################
-Get.Directed.Move.p1.const.or.zero <- function(d,zeros){
+Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
   dir.piece=Get.Directed.Piece(d)   
   #
   # Developer notes: 
@@ -1292,7 +1292,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Directed.Move.p1.ed <- function(d,b,zeros){
+Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
   dir.piece=Get.Directed.Piece(d)
   #
   # Developer notes: 
@@ -1348,7 +1348,7 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros){
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Bidirected.Move <- function(d=NULL, b,zeros) {
+Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
   if (is.null(d)){
     d = graph.empty(vcount(b))
   }
@@ -1406,7 +1406,7 @@ Get.Bidirected.Move <- function(d=NULL, b,zeros) {
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Mixed.Move.p1.ed <- function(d, b,zeros) {
+Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
   dir.piece = Get.Directed.Piece(d)
   #
   # DEVELOPER NOTES:
