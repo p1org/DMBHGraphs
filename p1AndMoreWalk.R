@@ -1534,9 +1534,7 @@ Get.Bidirected.Piece <- function(b) {
 # edges are the forbidden edges in the model.                         #
 # DEVELOPER NOTES:
 # This optional argument isn't passed from anywhere so nothing but    #
-# the default can happen. Maybe we'll read the zeros off from the     #
-# parameter hypergraph specified in the model specification; or maybe #
-# we'll have user input VECTOR LIST OF EDGES that are forbidden. We don't know yet. 
+# the default can happen.
 #
 # The multiplicity.bound=1 argument option makes sure only            #
 # squarefree move are produced.                                       #
@@ -1568,13 +1566,6 @@ Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
     if (!ecount(graph.intersection(zeros, edges.to.add)) == 0) 
       return(NULL)
   }
-  # DEVELOPER NOTES [3/3/17]:
-  # The 3 checks above are just primitive checks, so we don't return moves we know for sure we'll reject later. 
-  # They DO NOT take care of all possible APPLICABILITY checks for the model - particularly because we don't know 
-  # what the model is, not at this level. 
-  # For example the first "if" will ask if edges.to.add is a simple graph. This is a necessary check. However, when
-  # the edges are actually added to the graph, the result may actually become non-simple.
-  # -- OK -- that is checked in Get.Bidirected.Move, for example; but not that not all "get.??.move.??" functions do such checks? thinking..
   return(edges.to.add)
 }
 #######################################################################
