@@ -1556,7 +1556,6 @@ Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
     # Ensure that edges.to.add form no loops or multiple edges
     if (!is.simple(graph(edges.to.add)))   
       return(NULL)
-  }else {
     # Ensure that none of the edges we are attempting to add appear with multiplicity larger than allowed 
     if(any(count.multiple(graph(edges.to.add))>multiplicity.bound)) 
       return(NULL)
