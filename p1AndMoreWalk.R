@@ -1238,10 +1238,11 @@ Get.Induced.Subgraph<-function(g,vertices){
 #       (an igraph object) whose edges are the forbidden edges in the graph. 
 #######################################################################
 Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
-  dir.piece=Get.Directed.Piece(d)   
+  dir.piece=Get.Directed.Piece(d,zeros)   
   #
   # Developer notes: 
-  # We are not passing the structural zeros argument further down the rabbit hole from here on. 
+  # 3/3/17:  We are not passing the structural zeros argument further down the rabbit hole from here on. 
+  # 3/13/17:  ^^^ which makes little sense if we are trying to optimize moves; so we just decided to pass the zeros down further after all. 
   # Here, Get.Directed.Piece is called to  construct a proposed move piece, and we do the 
   # conflicts /applicability checks within this method instead. 
   # But see also notes inside get.directed.piece!! 
@@ -1265,7 +1266,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
     if (!is.null(zeros)){
       # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
       if (! ecount(graph.intersection(zeros,g.add)) ==0 ){
-        print("found a zeros conflict! returning empty.")
+#        print("Get.Directed.Move.p1.const.or.zero found a zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
@@ -1293,10 +1294,11 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
 Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
-  dir.piece=Get.Directed.Piece(d)
+  dir.piece=Get.Directed.Piece(d,zeros)
   #
   # Developer notes: 
-  # We are not passing the structural zeros argument further down the rabbit hole from here on. 
+  # 3/3/17:  We are not passing the structural zeros argument further down the rabbit hole from here on. 
+  # 3/13/17:  ^^^ which makes little sense if we are trying to optimize moves; so we just decided to pass the zeros down further after all. 
   # Here, Get.Directed.Piece is called to  construct a proposed move piece, and we do the 
   # conflicts /applicability checks within this method instead. 
   # But see also notes inside get.directed.piece!! 
@@ -1323,7 +1325,7 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
     if (!is.null(zeros)){
       # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
       if (! ecount(graph.intersection(zeros,g.add)) ==0 ){
-        print("Get.Directed.Move.p1.ed found a zeros conflict! returning empty.")
+#        print("Get.Directed.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING 
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
@@ -1352,7 +1354,7 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
   if (is.null(d)){
     d = graph.empty(vcount(b))
   }
-  bidir.piece = Get.Bidirected.Piece(b)
+  bidir.piece = Get.Bidirected.Piece(b,zeros)
   #
   # DEVELOPER NOTES:
   # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.bidirected.piece.
@@ -1380,7 +1382,7 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
     if (!is.null(zeros)){
       # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
       if (!ecount(graph.intersection(zeros,as.directed(g.add,mode="mutual"))) ==0 ){
-        print("Get.Bidirected.Move.p1.ed found a zeros conflict! returning empty.")
+#        print("Get.Bidirected.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
@@ -1407,7 +1409,7 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
 Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
-  dir.piece = Get.Directed.Piece(d)
+  dir.piece = Get.Directed.Piece(d,zeros)
   #
   # DEVELOPER NOTES:
   # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.directed.piece.
@@ -1420,7 +1422,7 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
     g.add.dir = graph(dir.piece[[2]])
   }
   
-  bidir.piece=Get.Bidirected.Piece(b)
+  bidir.piece=Get.Bidirected.Piece(b,zeros)
   #
   # DEVELOPER NOTES:
   # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.bidirected.piece.
@@ -1456,7 +1458,7 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
   if (!is.null(zeros)){
     # we do not want g.add.dir nor g.add.bidir to intersect the zeros graph (and this is sensitive to edge  directions of course):
     if ( !ecount(graph.intersection(zeros,g.add.dir)) ==0  || !ecount(graph.intersection(zeros,as.directed(g.add.bidir,mode="mutual")))==0 ){
-      print("Get.Mixed.Move.p1.ed found a zeros conflict! returning empty.")
+#      print("Get.Mixed.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     }
   }
@@ -1465,13 +1467,10 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
 }
 #######################################################################
 #######################################################################
-Get.Directed.Piece <- function(d){
-  # 
-  # DEVELOPER NOTES:
-  # If we want to drop pieces of the moves that are not applicable, we have to pass both the multiplicity.bound and zeros arguments to this method,
-  # because this is the method that does the random partitioning of a random subset of the edges and calls bipartite.walk on each part. 
-  # HOWEVER it would be silly not to pass the structural zeros of the model to bipartite walk!! 
-  # I think I am going to go for it. --SP 3/6/2017.
+Get.Directed.Piece <- function(d,zeros=NULL){
+# Optional input:                                                                   
+#       - zeros: structural zeros of the model, specified as a directed graph (an igraph object) whose edges are the forbidden edges in the graph. 
+#       Note: zeros are a directed graph; in case str.zeros were undirected we have already made sure they are interpreted as mutual directed edges. 
   #
   # d = directed part of G.
   # pick a random subset E of edges of d and randomly shuffle it
@@ -1500,7 +1499,7 @@ Get.Directed.Piece <- function(d){
     if (num.edges.left==2) k=2 #avoid unwanted behaviour of sample function
     else k = sample(2:num.edges.left,1) #size of current part.
     if (num.edges.left-k == 1) k=k+1 #E's assumption on not leaving out that last edge hanging. 
-    more.edges=Bipartite.Walk(random.subset.of.d[s:(s+k-1),]) 
+    more.edges=Bipartite.Walk(random.subset.of.d[s:(s+k-1),],zeros) ## PASSING structural zeros down. Not sure if I love carrying an entire graph around but... what other option is there?!
     if (is.null(more.edges)) return(NULL)
     else edges.to.add = c(edges.to.add,more.edges ) 
     num.edges.left=num.edges.left-k
@@ -1512,15 +1511,22 @@ Get.Directed.Piece <- function(d){
 }
 #######################################################################
 #######################################################################
-Get.Bidirected.Piece <- function(b) {
+Get.Bidirected.Piece <- function(b,zeros=NULL) {
   ## THIS function computes bidirected move ONLY without checks for conflicts.
   # this calls Bipartite.Walk but first checks if edges are a matching?
   # Randomly direct the entire bidirected graph and call Get.Directed.Piece
-  
+# Optional input:                                                                   
+#       - zeros: structural zeros of the model, specified as a directed graph (an igraph object) whose edges are the forbidden edges in the graph. 
+#       Note: zeros are a directed graph; in case str.zeros were undirected we have already made sure they are interpreted as mutual directed edges. 
   if (ecount(b) < 2) 
     return(NULL)
   b.directed = as.arbitrary.directed(b)	
-  return(Get.Directed.Piece(b.directed))
+  return(Get.Directed.Piece(b.directed,zeros))
+  #
+  # DEVELOPER NOTES:
+  # We need to test this one. What happens in case of directed/undirected structural zeros, since in this step we are arbitrarily directing b ??
+  # 2017.03.13. : test completed on a 6-node network, undirected AND undirected structural zeros. It seems like everything is working as planned. 
+  #
 }
 #######################################################################
 # Bipartite.Walk														                          #
@@ -1532,19 +1538,22 @@ Get.Bidirected.Piece <- function(b) {
 # The zeros optional argument is there for the case of structural     #
 # zeros of the model. These are passed down as an igraph object whose #
 # edges are the forbidden edges in the model.                         #
-# DEVELOPER NOTES:
-# This optional argument isn't passed from anywhere so nothing but    #
-# the default can happen.
 #
-# The multiplicity.bound=1 argument option makes sure only            #
+# The multiplicity.bound optional argument option makes sure the      #
+# moves respect the maximum number of times each edge is allowed to   #
+# appear in the graph. The default value (1) ensures that only        # 
 # squarefree move are produced.                                       #
 # In general, multiplicity.bound is an integer denoting the maximum   #					                                  
 # number of times each edge in the graph can apper.                   #
+# In addition, the user can specify diffirent multiplicity bounds for #
+# each edge in the graph; in this case, the optional argument is of   #
+# type igraph, multiple (OR WEIGHTED?) graph.                         #
 # DEVELOPER NOTES: 
 # Currently, the optional argument isn't passed from anywhere, so     #
-# nothing but the default can happen.                                 #
+# nothing but the default can happen. AND I have not implemented the  #
+# more general version when multiplicity.bound is not a numeric value.#
 #######################################################################
-Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
+Bipartite.Walk <- function(edges.to.remove,zeros=NULL, multiplicity.bound=1) {
   #connect head of (i+1)st edge to tail of ith edge to complete a walk:
   num.edges = nrow(edges.to.remove)
   edges.to.add = c()
@@ -1553,16 +1562,31 @@ Bipartite.Walk <- function(edges.to.remove, multiplicity.bound=1,zeros=NULL) {
   }
   edges.to.add = c(edges.to.add, edges.to.remove[1, 1], edges.to.remove[num.edges,2])
   if (multiplicity.bound==1){
+    # In case of the default value, we are working with simple graphs. 
     # Ensure that edges.to.add form no loops or multiple edges
     if (!is.simple(graph(edges.to.add)))   
       return(NULL)
+  }else if(is.numeric(multiplicity.bound)) {
+    # There is a constant integer bound on the number of times each edge may appear. 
     # Ensure that none of the edges we are attempting to add appear with multiplicity larger than allowed 
     if(any(count.multiple(graph(edges.to.add))>multiplicity.bound)) 
       return(NULL)
+  }else  if(is.igraph(multiplicity.bound)) {
+    # Here the user seems to want to put varying multiplicity bounds on edges (think: generalized Beta-model). 
+    # So, first we need to check whether the user also passed structural zeros as optional input: 
+    # - if no, then interpret the multiplicity bound of 0 as a structural zero (obviously!) 
+    zeros.from.multiplicty = graph.complementer(multiplicity.bound)
+    # - if yes, then multiplicty.bound better not have any zero edges, or they must match the zeros graph!; else return an error.
+    print("Zeros from multiplicity.bound not yet checked/implemented.")
+  }else {
+    stop("Bipatite.Walk error: multiplicity.bound must be a numeric (i.e., integer) or an igraph object. 
+         (The latter is not fully functional yet; it is there to allow for more general models so that the user may input 
+         varying multiplicity bounds for individual edges of the graph - in form of a MULTIPLE/WEIGHTED(???) graph igraph object.")
   }
   if (!is.null(zeros)){
     # Ensure that edges.to.add isn't trying to add onto any structural zeros of the model
-    if (!ecount(graph.intersection(zeros, edges.to.add)) == 0) 
+#    print("Bipartite.Walk is now checking for conflict with structural zeros.") # FOR TESTING 
+    if (!ecount(graph.intersection(zeros, graph(edges.to.add))) == 0) 
       return(NULL)
   }
   return(edges.to.add)
