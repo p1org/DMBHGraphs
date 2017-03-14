@@ -69,6 +69,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
   
   if (is.null(mleMatr)){
+    # TO DO: PASS STRUCTURAL ZEROS TO THE NEXT LINE:
     mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
   }  
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
@@ -78,6 +79,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
+    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
@@ -131,6 +133,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   # if mleMatr was not given as argument use generate the MLE
   if (is.null(mleMatr)){
     print("Now estimating MLE.")
+    # TO DO: PASS STRUCTURAL ZEROS TO THE NEXT LINE:
     mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
     print("MLE estimate completed.")
   }
@@ -146,6 +149,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
   for(i in 1: steps.for.walk){
+    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
@@ -390,6 +394,8 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
+# Optional input: 
+#     - zeros: a matrix of structural zeros of the model ?or an igraph object??
 # Output: 
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
@@ -411,7 +417,8 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
   }  
-  
+
+  # TO DO: PASS STRUCTURAL ZEROS TO THE EACH OF THE FOLLOWING get.mle.... calls: 
   if (model=="p1.HLalg.recip.nzconst"){
     mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", maxiter,tol)  
   }else if(model=="p1.HLalg.recip.zero"){
@@ -753,6 +760,7 @@ Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=2
     write("Bidirected Graph", filename, append=TRUE)
     write(t(get.edgelist(network[[2]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")
     write("====================", filename, append=TRUE)
+# to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
     network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
   }
 }
@@ -784,6 +792,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
     Plot.Mixed.Graph(network[[1]],network[[2]])  
     dev.off()
     for (i in 1:steps){
+      # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
       network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       filename = sprintf("%s%d.png",filename,i)
       png(filename,width=800, height=600,bg="white")
@@ -796,6 +805,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
     par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
     Plot.Mixed.Graph(network[[1]],network[[2]])      
     for (i in 1:steps){
+      # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
       network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       if(network[[3]]){
         if(plot.trivial.moves){ 
@@ -817,6 +827,7 @@ Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20, ed.co
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
+    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
     network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     if (ignore.trivial.moves==FALSE || network[[3]]==FALSE)
       Plot.Mixed.Graph(network[[1]],network[[2]])	
@@ -1672,6 +1683,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps
     found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
+    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
     network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
