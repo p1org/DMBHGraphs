@@ -103,7 +103,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
