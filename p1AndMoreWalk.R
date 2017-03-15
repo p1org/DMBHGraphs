@@ -29,7 +29,9 @@ library(igraph)
 #       reciprocation with the MLE calculated using the loglin package. #
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
-#     + "beta.SBM"
+#     + "beta.SBM"                                                      #
+#   - zeros: igraph object, optional input to designate any             #
+#       structural zeros of the model                                   #
 #   - ignore.trivial.moves: if set to true do not use loops in p-value  #
 #     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
@@ -39,9 +41,9 @@ library(igraph)
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, beta.SBM.coin=c(1/2), SBM.blocks=NULL){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, beta.SBM.coin=c(1/2), SBM.blocks=NULL){ 
   if (model == "beta.SBM"){
-    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
+    if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
     else if (length(SBM.blocks)!=vcount(gdir))       
       stop("Estimate.p.Value error:\n beta.SBM model requires a vector SBM.blocks input of length equal to the number of vertices in the network." )
@@ -56,8 +58,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]  
   }
-  
-  
+    
   #Error Checking
   if(!is.simple(as.undirected(gdir,mode=c("each")))){stop("Reciprocated edges in directed graph or gdir not simple.")}
   if(!is.simple(gbidir)){stop("gbidir must be a simple graph.")}
@@ -69,9 +70,13 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   if (nd>nb){gbidir = add.vertices(gbidir,nd-nb)}  else if (nd<nb){gdir = add.vertices(gdir,nb-nd)}
   
   if (is.null(mleMatr)){
-    # TO DO: PASS STRUCTURAL ZEROS TO THE NEXT LINE:
-    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
-  }  
+    print("Estimate.p.Value log: Now estimating MLE.")
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
+    print("Estimate.p.Value log: MLE estimate completed.")  
+  }else
+  {
+    print("Estimate.p.Value log: Employing user-provided MLE.")
+  }
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
   obs.gf = round (obs.gf,digits=8)
   if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
@@ -132,17 +137,19 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   }
   # if mleMatr was not given as argument use generate the MLE
   if (is.null(mleMatr)){
-    print("Now estimating MLE.")
-    # TO DO: PASS STRUCTURAL ZEROS TO THE NEXT LINE:
-    mleMatr = Get.MLE(gdir,gbidir, model, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
-    print("MLE estimate completed.")
+    print("Estimate.p.Value.for.Testing log: Now estimating MLE.")
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
+    print("Estimate.p.Value.for.Testing log: MLE estimate completed.")
+  }else
+  {
+    print("Estimate.p.Value.for.Testing log: Employing user-provided MLE.")
   }
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
   obs.gf = round(obs.gf, digits=8)
   if (is.nan(obs.gf)){
-    print("NaN error in calculation of GF statistic.")
+    print("Estimate.p.Value log: NaN error in calculation of GF statistic.")
   }
-  if (obs.gf== Inf){print("Error: Infinite GF statistic for this network.")}
+  if (obs.gf== Inf){print("Estimate.p.Value Error: Infinite GF statistic for this network.")}
   next.network = list(gdir,gbidir)
   count = 1
   int.values=c() # To estimate convergence of count/i to p-value
@@ -395,12 +402,13 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
 # Optional input: 
-#     - zeros: a matrix of structural zeros of the model ?or an igraph object??
+#   - zeros: igraph object, optional input to designate any             #
+#       structural zeros of the model                                   #
 # Output: 
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
 #######################################################################
-Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
+Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -418,19 +426,25 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     gbidir = mixed.graph[[2]]  
   }  
 
-  # TO DO: PASS STRUCTURAL ZEROS TO THE EACH OF THE FOLLOWING get.mle.... calls: 
+  # Ensure Structural zeros graph has the right number of vertices
+  n = max(vcount(gdir), vcount(gbidir))
+  nzeros =vcount(zeros)
+  if (!is.null(zeros) && nzeros!=n)){
+    add.vertices(zeros,n-nzeros)
+  }
+  
   if (model=="p1.HLalg.recip.nzconst"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", maxiter,tol)  
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", zeros, maxiter,tol)  
   }else if(model=="p1.HLalg.recip.zero"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", maxiter,tol)
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", zeros, maxiter,tol)
   }else if (model=="p1.recip.zero"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", maxiter,tol)  
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", zeros, maxiter,tol)  
   }else if (model=="p1.recip.nzconst"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", maxiter,tol)      
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", zeros, maxiter,tol)      
   }else if (model=="p1.recip.ed"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", maxiter,tol)    
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", zeros, maxiter,tol)    
   }else if (model=="beta.SBM"){
-    mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, maxiter,tol)    
+    mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, zeros, maxiter,tol)    
   }else{
     stop("Get.MLE Error: invalid model argument - model must be one of the prespecified options.")
   }
@@ -448,8 +462,14 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
 #     - reciprocation: string. if "zero" the reciprocation parameter in the #
 #       model is assumed to be zero; if "nzconst" it is assumed to be a #
 #       non-zero constant.  
+# Optional input: 
+#   - zeros: igraph object, optional input to designate any             #
+#       structural zeros of the model    CURRENTLY NOT IMPLEMENTED      #
 #######################################################################
-Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", maxiter=3000, tol = 1e-03){
+Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=3000, tol = 1e-03){
+  if (!is.null(zeros){
+    print("Get.MLE.p1.HL: Caution: Structural Zeros functionality is not implemented in this method.")
+  }
   nd = vcount(gdir)
   nb = vcount(gbidir)
   if (nd>nb){	gbidir = add.vertices(gbidir,nd-nb)	}
@@ -460,14 +480,17 @@ Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", maxiter=3000, tol
   return (mleMatr)
 }
 #######################################################################
-# Get.MLE.p1.FW
+# Get.MLE.p1.FW                                                       #
 # Returns the MLE for the selected version of the p1 model            #
 # in the form of an n x n x 2 x 2 matrix where                        #
 # each cell i,j,k,l equals 1 if                                       #
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
 # i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #                                            #
+# Optional input:                                                     #
+#   - zeros: igraph object, directed, optional input to designate any #
+#       structural zeros of the model                                 #
 #######################################################################
-Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
   nd = vcount(gdir)
   nb = vcount(gbidir)
   n=max(nd,nb)
@@ -483,6 +506,17 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20
   for (i in 1:n){
     startM[i,i,,]=c(0,0,0,0)    
   }
+  
+  # Ensure user-specified structural zeros are set
+  if (!is.null(zeros)){
+    nzeros = vcount(zeros)
+    # Caution: since zeros is a directed graph, we have no way of separately forbidding reciprocated edges, or its directions only.
+    mixed.graph.zeros = split.Directed.Graph(zeros)
+    mzeros = 1-Get.Configuration.Matrix.p1.FW(zeros,mixed.graph.zeros[[2]]) 
+    mzeros[,,1,1] = 1    
+    startM[,,,] = startM * mzeros
+  }
+  
   if (reciprocation=="edge-dependent"){
     fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
   }  else if (reciprocation=="nzconst"){
@@ -511,7 +545,7 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", maxiter=20
 #       number of blocks;
 #       represents the mle estimate of the model.
 #######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.beta.SBM<-function(g, blocks, zeros, maxiter=20, tol=0.1, print.deviation=FALSE){
   n = vcount(g)
   k = max(blocks)
   m = Get.Configuration.Matrix.beta.SBM(g,blocks)
@@ -577,7 +611,7 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 #       with the MLE calculated using the loglin package.               #
 #     + "beta.SBM"
 ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr, SBM.blocks=NULL){
+Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", zeros, mleMatr, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
