@@ -429,7 +429,7 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
   # Ensure Structural zeros graph has the right number of vertices
   n = max(vcount(gdir), vcount(gbidir))
   nzeros =vcount(zeros)
-  if (!is.null(zeros) && nzeros!=n)){
+  if (!is.null(zeros) && nzeros!=n){
     add.vertices(zeros,n-nzeros)
   }
   
@@ -467,7 +467,7 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
 #       structural zeros of the model    CURRENTLY NOT IMPLEMENTED      #
 #######################################################################
 Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=3000, tol = 1e-03){
-  if (!is.null(zeros){
+  if (!is.null(zeros)){
     print("Get.MLE.p1.HL: Caution: Structural Zeros functionality is not implemented in this method.")
   }
   nd = vcount(gdir)
