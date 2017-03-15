@@ -84,8 +84,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
-    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)	
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
       new.gf=round(new.gf, digits=8)
@@ -156,8 +155,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
   for(i in 1: steps.for.walk){
-    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
       new.gf=round(new.gf, digits=8)
@@ -426,11 +424,13 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     gbidir = mixed.graph[[2]]  
   }  
 
-  # Ensure Structural zeros graph has the right number of vertices
-  n = max(vcount(gdir), vcount(gbidir))
-  nzeros =vcount(zeros)
-  if (!is.null(zeros) && nzeros!=n){
-    add.vertices(zeros,n-nzeros)
+  if (!is.null(zeros)){
+    # Ensure Structural zeros graph has the right number of vertices
+    n = max(vcount(gdir), vcount(gbidir))
+    nzeros =vcount(zeros)
+    if (!is.null(zeros) && nzeros!=n){
+      add.vertices(zeros,n-nzeros)
+    }    
   }
   
   if (model=="p1.HLalg.recip.nzconst"){
