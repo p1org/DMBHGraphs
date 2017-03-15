@@ -611,7 +611,7 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 #       with the MLE calculated using the loglin package.               #
 #     + "beta.SBM"
 ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", zeros, mleMatr, SBM.blocks=NULL){
+Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
