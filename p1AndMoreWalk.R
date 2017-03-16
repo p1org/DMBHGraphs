@@ -156,6 +156,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   steps.used=1
   for(i in 1: steps.for.walk){
     next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
+#    Plot.Mixed.Graph(next.network[[1]], next.network[[2]]) ## FOR TESTING PURPOSES 2017-03-15. 
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
       new.gf=round(new.gf, digits=8)
