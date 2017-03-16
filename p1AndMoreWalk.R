@@ -782,7 +782,7 @@ Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
 # sequence of integers separated by commas. First two integers 	   		#
 # signify first edge etc. 										    #
 #######################################################################
-Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   write("====================", filename)
   num.cols = 2*max(ecount(gdir),ecount(gbidir)) #to pass to the write function so that all entries are in one row.
   network = list(gdir,gbidir)
@@ -795,8 +795,7 @@ Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",steps=2
     write("Bidirected Graph", filename, append=TRUE)
     write(t(get.edgelist(network[[2]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")
     write("====================", filename, append=TRUE)
-# to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
   }
 }
 #######################################################################
@@ -820,15 +819,14 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # by an animation function sometime in the future.						#
 # ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
 #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   network = list(gdir,gbidir)
   if(!single.file){
     png(sprintf("%s0.png",filename),width=800, height=600,bg="white")
     Plot.Mixed.Graph(network[[1]],network[[2]])  
     dev.off()
     for (i in 1:steps){
-      # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+      network = Get.Next.Network(network[[1]],network[[2]], model,zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       filename = sprintf("%s%d.png",filename,i)
       png(filename,width=800, height=600,bg="white")
       Plot.Mixed.Graph(network[[1]],network[[2]])	
@@ -840,8 +838,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
     par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
     Plot.Mixed.Graph(network[[1]],network[[2]])      
     for (i in 1:steps){
-      # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-      network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+      network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       if(network[[3]]){
         if(plot.trivial.moves){ 
           Plot.Mixed.Graph(network[[1]],network[[2]])                  
@@ -858,12 +855,11 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20,
 # Performs a walk on the fiber and plots the consecutive networks. 		#
 # It does not store consecutive networks.								#
 #######################################################################
-Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){	
+Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){	
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
-    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     if (ignore.trivial.moves==FALSE || network[[3]]==FALSE)
       Plot.Mixed.Graph(network[[1]],network[[2]])	
   }
@@ -1698,7 +1694,7 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - the Total Variation Distance of the walk, and 
 #     - a count of all empty moves made in each graph. 
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   counts=c(1)
   current.network.index=1
   empty.move.counts=c(0)
@@ -1718,8 +1714,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", numsteps
     found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
-    # to do: NEED TO PASS STRUCTURAL ZEROS (AS A GRAPH WHOSE EDGES ARE ZEROS) TO THE NEXT LINE: 
-    network = Get.Next.Network(network[[1]],network[[2]], model, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
     #      empty.move.flag=TRUE
