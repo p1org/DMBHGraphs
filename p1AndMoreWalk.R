@@ -129,6 +129,8 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
     stop("gbidir must be an undirected graph.")
   }
   
+  
+  
   nd = vcount(gdir)
   nb = vcount(gbidir)
   if (nd>nb){
@@ -960,8 +962,10 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
   }else{
     #p1 model
     if( !is.null(zeros.dir) && !is.igraph(zeros.dir)  ) 
+      # TO DO: SHOULD PROBABLY CHECK THAT zeros.dir IS ACTUALLY DIRECTED AS WELL! 
       stop("Get.Next.Network error: zeros.dir, the optional argument for directed edge structural zeros, must be an igraph object.")
     if( !is.null(zeros.bidir) && !is.igraph(zeros.bidir)  ) 
+      # TO DO: SHOULD PROBABLY CHECK THAT zeros.bidir IS ACTUALLY UNDIRECTED AS WELL! 
       stop("Get.Next.Network error: zeros.bidir, the optional argument for undirected(bidirected) edge structural zeros, must be an igraph object.")
     markov.move = Get.Move.p1(d,b,model,zeros.dir,zeros.bidir,ed.coin, nzconst.coin)
     trivial.move=FALSE
@@ -1716,7 +1720,7 @@ Bipartite.Walk <- function(edges.to.remove,zeros=NULL, multiplicity.bound=1) {
     }else{
       # if !is.directed(zeros) then that means the graph edges.to.add should really be thought of as undirected (which is what will happen
       # once it gets passed back up the call tree), so undirect first, and then check if inersection with zeros is nonempty. 
-      if (!ecount(graph.intersection(zeros, graph(edges.to.add),directed=FALSE)) == 0) 
+      if (!ecount(graph.intersection(zeros, graph(edges.to.add,directed=FALSE))) == 0) 
         return(NULL)
     }
   }
