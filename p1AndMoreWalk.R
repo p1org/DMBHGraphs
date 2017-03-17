@@ -30,8 +30,11 @@ library(igraph)
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
 #     + "beta.SBM"                                                      #
-#   - zeros: igraph object, optional input to designate any             #
-#       structural zeros of the model                                   #
+#   - zeros.dir: igraph directed graph, optional input to designate any #
+#       directed edges that are structural zeros of the model           #
+#   - zeros.bidir: igraph undirected graph, optional input to designate #
+#       any undirected(or:bidirected) edges that are structural zeros   #
+#       of the model                                                    #
 #   - ignore.trivial.moves: if set to true do not use loops in p-value  #
 #     estimations
 #   - mleMatr: the mleMatr, in the format required by model specs       #
@@ -41,7 +44,7 @@ library(igraph)
 # Output:                                                               #
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
-Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, beta.SBM.coin=c(1/2), SBM.blocks=NULL){ 
+Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, beta.SBM.coin=c(1/2), SBM.blocks=NULL){ 
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -71,7 +74,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   
   if (is.null(mleMatr)){
     print("Estimate.p.Value log: Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, zeros, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir,  maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
     print("Estimate.p.Value log: MLE estimate completed.")  
   }else
   {
@@ -84,7 +87,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   count = 1
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)	
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)	
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
       new.gf=round(new.gf, digits=8)
@@ -103,7 +106,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -137,7 +140,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   # if mleMatr was not given as argument use generate the MLE
   if (is.null(mleMatr)){
     print("Estimate.p.Value.for.Testing log: Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, zeros, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
     print("Estimate.p.Value.for.Testing log: MLE estimate completed.")
   }else
   {
@@ -155,7 +158,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   gof.values=c(obs.gf) # To record the  goodness of fit statistics for all networks in walk
   steps.used=1
   for(i in 1: steps.for.walk){
-    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
+    next.network = Get.Next.Network(next.network[[1]],next.network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)  
 #    Plot.Mixed.Graph(next.network[[1]], next.network[[2]]) ## FOR TESTING PURPOSES 2017-03-15. 
     if (ignore.trivial.moves==FALSE || next.network[[3]]==FALSE){
       new.gf= Get.GoF.Statistic(next.network[[1]], next.network[[2]], model, mleMatr, SBM.blocks)
@@ -401,8 +404,11 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #     + "p1.recip.ed": for p1 model with edge-dependent reciprocation   #
 #       with the MLE calculated using the loglin package.               #
 # Optional input: 
-#   - zeros: igraph object, optional input to designate any             #
-#       structural zeros of the model                                   #
+#   - zeros.dir: igraph directed graph, optional input to designate any #
+#       directed edges that are structural zeros of the model           #
+#   - zeros.bidir: igraph undirected graph, optional input to designate #
+#       any undirected(or:bidirected) edges that are structural zeros   #
+#       of the model                                                    #
 # Output: 
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
@@ -464,8 +470,11 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
 #       model is assumed to be zero; if "nzconst" it is assumed to be a #
 #       non-zero constant.  
 # Optional input: 
-#   - zeros: igraph object, optional input to designate any             #
-#       structural zeros of the model    CURRENTLY NOT IMPLEMENTED      #
+#   - zeros.dir: igraph directed graph, optional input to designate any #
+#       directed edges that are structural zeros of the model           #
+#   - zeros.bidir: igraph directed graph, optional input to designate   #
+#       any undirected(or:bidirected) edges that are structural zeros   #
+#       of the model                                                    #
 #######################################################################
 Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=3000, tol = 1e-03){
   if (!is.null(zeros)){
@@ -488,8 +497,11 @@ Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=30
 # the dyad (i, j) in in state (k.l) where the states (k.l) are        #
 # i---j: (1,1), i-->j: (1,2), i<--j: (2,1), i<->j:(2,2)        		    #                                            #
 # Optional input:                                                     #
-#   - zeros: igraph object, directed, optional input to designate any #
-#       structural zeros of the model                                 #
+#   - zeros.dir: igraph directed graph, optional input to designate any #
+#       directed edges that are structural zeros of the model           #
+#   - zeros.bidir: igraph directed graph, optional input to designate   #
+#       any undirected(or:bidirected) edges that are structural zeros   #
+#       of the model                                                    #
 #######################################################################
 Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
   nd = vcount(gdir)
@@ -782,7 +794,7 @@ Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
 # sequence of integers separated by commas. First two integers 	   		#
 # signify first edge etc. 										    #
 #######################################################################
-Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",zeros.dir=NULL,zeros.bidir=NULL,  steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   write("====================", filename)
   num.cols = 2*max(ecount(gdir),ecount(gbidir)) #to pass to the write function so that all entries are in one row.
   network = list(gdir,gbidir)
@@ -795,7 +807,7 @@ Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",structu
     write("Bidirected Graph", filename, append=TRUE)
     write(t(get.edgelist(network[[2]])), filename, append=TRUE,ncolumns=num.cols, sep = ", ")
     write("====================", filename, append=TRUE)
-    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
   }
 }
 #######################################################################
@@ -819,14 +831,14 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # by an animation function sometime in the future.						#
 # ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
 #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   network = list(gdir,gbidir)
   if(!single.file){
     png(sprintf("%s0.png",filename),width=800, height=600,bg="white")
     Plot.Mixed.Graph(network[[1]],network[[2]])  
     dev.off()
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model,zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+      network = Get.Next.Network(network[[1]],network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       filename = sprintf("%s%d.png",filename,i)
       png(filename,width=800, height=600,bg="white")
       Plot.Mixed.Graph(network[[1]],network[[2]])	
@@ -838,7 +850,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structura
     par(mfrow = grid, mar=c(0,0,0,0)+0.1) # spacing; it goes c(bottom, left, top, right)
     Plot.Mixed.Graph(network[[1]],network[[2]])      
     for (i in 1:steps){
-      network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+      network = Get.Next.Network(network[[1]],network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
       if(network[[3]]){
         if(plot.trivial.moves){ 
           Plot.Mixed.Graph(network[[1]],network[[2]])                  
@@ -855,11 +867,11 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structura
 # Performs a walk on the fiber and plots the consecutive networks. 		#
 # It does not store consecutive networks.								#
 #######################################################################
-Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){	
+Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL){	
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
-    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros.dir, zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     if (ignore.trivial.moves==FALSE || network[[3]]==FALSE)
       Plot.Mixed.Graph(network[[1]],network[[2]])	
   }
@@ -892,8 +904,12 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #		- d: igraph object, directed                                                    #
 #		- b: igraph object, undirected                                                  #
 #	Optional input:                                                                   #
-#    - zeros: structural zeros of the model, specified as (directed or undirected)                    
-#       an igraph object whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
+#     [NOTE: zeros.dir may have both i->j and i<-j, while zeros.bidir does not have i<->j. Up to user to be clear on how they specify the zeros.]
 #		- ed.coin: vector of floats, length 3; to be used for p1.ed.recip model;
 #       a fair coin by default. 
 #       c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).
@@ -928,7 +944,7 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       using Fienberg-Wasserman's configuration matrix.                  #
 #       + "beta.SBM": for the beta SBM model                                 #
 #######################################################################
-Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -943,13 +959,11 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros=NULL, ed.coin=c(1/
     #    print(get.edgelist(new.bidirected.graph))          #for testing
   }else{
     #p1 model
-    if( !is.null(zeros) && !is.igraph(zeros)  ) 
-      stop("Get.Next.Network error: zeros, the optional argument for structural zeros, must be an igraph object.")
-    # If an undirected graph of structural zeros was specified, 
-    # then interpret each edge as reciprocated and work with this directed graph from now on:
-    if (!is.null(zeros) && !is.directed(zeros)) 
-      zeros=as.directed(zeros,mode="mutual")
-    markov.move = Get.Move.p1(d,b,model,zeros,ed.coin, nzconst.coin)
+    if( !is.null(zeros.dir) && !is.igraph(zeros.dir)  ) 
+      stop("Get.Next.Network error: zeros.dir, the optional argument for directed edge structural zeros, must be an igraph object.")
+    if( !is.null(zeros.bidir) && !is.igraph(zeros.bidir)  ) 
+      stop("Get.Next.Network error: zeros.bidir, the optional argument for undirected(bidirected) edge structural zeros, must be an igraph object.")
+    markov.move = Get.Move.p1(d,b,model,zeros.dir,zeros.bidir,ed.coin, nzconst.coin)
     trivial.move=FALSE
     if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
       if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
@@ -994,8 +1008,12 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros=NULL, ed.coin=c(1/
 #       - d: directed graph,   					                                      #
 #       - b: bidirected graph						                                      #
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
+#     [NOTE: zeros.dir may have both i->j and i<-j, while zeros.bidir does not have i<->j. Up to user to be clear on how they specify the zeros.]
 #    - ed.coin: by default it's "fair": 					                            #
 #	      c[1]=P(directed move); 	c[2]=P(bidirected move); c[3]=P(mixed move).  #
 #    - model: a string signifying the appropriate model                       #
@@ -1023,16 +1041,18 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros=NULL, ed.coin=c(1/
 #           + undirected igraph object: the reciprocated only edges to remove (only if model is p1.recip.ed)
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
-Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
+Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bidir=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir)))){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
-      mixed.move = Get.Move.p1.ed(gdir, gbidir, zeros, ed.coin)  
+      mixed.move = Get.Move.p1.ed(gdir, gbidir, zeros.dir,zeros.bidir, ed.coin)  
       move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
     }else
-      move = Get.Move.p1.zero.or.nzconst(gdir,gbidir,zeros)     
+      move = Get.Move.p1.zero.or.nzconst(gdir,gbidir,zeros.dir,zeros.bidir)     
+    # Developer notes (internal): 
+    # I hate R and the way it passes arguments of same type! Order determines everything for unnamed arguments. See slide 5 of https://www.stat.berkeley.edu/~statcur/Workshop2/Presentations/functions.pdf
   } else if (model=="p1.recip.ed"){
-    move = Get.Move.p1.ed(gdir,gbidir,zeros, ed.coin)   
+    move = Get.Move.p1.ed(gdir,gbidir,zeros.dir,zeros.bidir, ed.coin)   
   } else{
     stop("Get.Move Error: invalid model argument - model must be one of the prespecified options.")
   }
@@ -1051,8 +1071,11 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros=NULL ,ed.coin=c(1/
 #         -d: a directed graph, igraph object
 #         -b: an undirected graph, igraph object
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
 # Output:
 #         - A list of four igraph objects representing the move
 #           + directed igraph object: the directed only edges to remove
@@ -1060,7 +1083,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros=NULL ,ed.coin=c(1/
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Move.p1.ed <- function(d,b, zeros=NULL, ed.coin=c(1/3,1/3,1/3)){
+Get.Move.p1.ed <- function(d,b, zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3)){
   # if the ed.coin options do not sum up to 1 exit.
   if (! sum(ed.coin)==1) { stop("invalid ed.coin") }
   #Generate a random real number between 0 and 1.
@@ -1068,17 +1091,17 @@ Get.Move.p1.ed <- function(d,b, zeros=NULL, ed.coin=c(1/3,1/3,1/3)){
   # Now just see where ed.coin.value is in relation to the ed.coin vector (a,b,c):
   # first ed.coin option is : ed.coin \in [0.0, a]:
   if (ed.coin.value <= ed.coin[1]) { 
-    dir.move = Get.Directed.Move.p1.ed(d,b,zeros)      
+    dir.move = Get.Directed.Move.p1.ed(d,b,zeros.dir)     # no need to check conflict with bidirected zeros
     return(list(dir.move[[1]],dir.move[[2]], graph.empty(vcount(b),directed=FALSE), graph.empty(vcount(b),directed=FALSE)))
   }
   # second ed.coin option is: ed.coin \in (a,a+b]:
   else if (ed.coin[1]<ed.coin.value && ed.coin.value <= ed.coin[1]+ed.coin[2]) {
-    bidir.move = Get.Bidirected.Move(d,b,zeros)    
+    bidir.move = Get.Bidirected.Move(d,b,zeros.bidir)    # no need to check conflict with directed zeros
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),bidir.move[[1]],bidir.move[[2]]))
   }
   # third ed.coin option is : ed.coin \in (a+b,a+b+c]:
   else if (ed.coin[2]<ed.coin.value) {
-    return(Get.Mixed.Move.p1.ed(d,b,zeros))     
+    return(Get.Mixed.Move.p1.ed(d,b,zeros.dir,zeros.bidir))     
   }
 }
 #################################################################################
@@ -1091,16 +1114,19 @@ Get.Move.p1.ed <- function(d,b, zeros=NULL, ed.coin=c(1/3,1/3,1/3)){
 #         -d: a directed graph, igraph object
 #         -b: an undirected graph, igraph object
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
 # Output:
 #         - A list of two igraph objects representing the move
 #           + directed igraph object: the directed edges to remove from the full graph d+b
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
-Get.Move.p1.zero.or.nzconst <- function(d,b,zeros=NULL){
+Get.Move.p1.zero.or.nzconst <- function(d,b,zeros.dir=NULL,zeros.bidir=NULL){
   d = graph.union(d,as.directed(b,mode="mutual"))
-  move = Get.Directed.Move.p1.const.or.zero(d,zeros)  
+  move = Get.Directed.Move.p1.const.or.zero(d,zeros.dir,zeros.bidir)  
   return (move)
 } 
 ##############################################################################
@@ -1276,19 +1302,43 @@ Get.Induced.Subgraph<-function(g,vertices){
 #	to a network in the fiber, including itself. 						#
 # Structural zeros of the model are also preserved because of: 
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
 #######################################################################
-Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
-  dir.piece=Get.Directed.Piece(d,zeros)   
+Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL){
+  # see dilemma below as to why i'm not passing zeros down further from this point.
+  
+  dir.piece=Get.Directed.Piece(d,zeros=NULL)   
+  # 
+  # DEVELOPER'S NOTES: [dilemma]
+  # In summary, I do not know how to handle directed+undirected zeros in the zero-recirpocation p1 model. I have NOT resolved this yet: 
   #
-  # Developer notes: 
-  # 3/3/17:  We are not passing the structural zeros argument further down the rabbit hole from here on. 
-  # 3/13/17:  ^^^ which makes little sense if we are trying to optimize moves; so we just decided to pass the zeros down further after all. 
-  # Here, Get.Directed.Piece is called to  construct a proposed move piece, and we do the 
-  # conflicts /applicability checks within this method instead. 
-  # But see also notes inside get.directed.piece!! 
-  #  
+  # inside this method i'll de-couple the graph d back into (d,b) to see if dir.piece violated directed zeros OR bidirected zeros. 
+  # however, when i pass zeros.dir to get.directed piece, will i be screwed, i.e., will i reject moves i don't want to reject?
+  # for example if I end up constructing a move that adds an edge conflicting zeros.dir, but that edge is really part of a reciprocated edge.
+  # so does this ^^^ mean i just have to check -- if edge in dir.piece conflicts zeros.dir, only discard move IF 
+  #   that edge in dir.piece is, in fact, NOT reciprocated in the new graph g.add. 
+  # i think this ^^^ will solve the main problem i have. however: 
+  # i am concerned because d now contians edges of type i->j and i<-j , when called from this method.
+  # (and it's only a problem here; because when we call get.directed.piece from other methods (p1.recip.ed model), d has no reciprocated edges (they are all in b).)
+  # 
+  # so when we call get.directed.piece, which in turn calls bipartite.walk, <<< that method may accidentally throw away moves i actually want to keep.
+  # but once we go down to get.directed.piece, we have lost track of what the model is, so i have no way of telling the method 'hey don't throw out yet'.
+  #
+  # the best I can think of right now is to NOT pass ANY zeros below this point, risking getting many inapplicable moves, but at least then
+  # i'll be sure i'm not doing something wrong.
+  # if someone has a better idea how to handle this situation - great, let me know.
+  # 
+  # another troubling example: if original b contained i<->j, then this d contains edges i->j and i<-j. suppose now that 
+  # zeros.dir contains i->j, while zeros.bidir does not contain i<->j.
+  # the moment i interpret i<->j as the union of 2 directed edges (which we do for zero recip!), we have already
+  # violated zeros.dir.  so how do i deal with this? passing down  d and zeros.dir, which are already in conflict? 
+  # .... 
+  #
+  
   if (is.null(dir.piece[[1]])){ 
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }
@@ -1305,10 +1355,25 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
     if (!ecount(graph.intersection(graph.difference(d,g.remove),g.add))==0) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)))) 
     #(3) Check whether g.add conflicts with structural zeros of the model:
-    if (!is.null(zeros)){
-      # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
-      if (! ecount(graph.intersection(zeros,g.add)) ==0 ){
-#        print("Get.Directed.Move.p1.const.or.zero found a zeros conflict! returning empty.") # FOR TESTING
+    if (!is.null(zeros.dir)){
+      # we do not want g.add to intersect the zeros directed graph, but we only want to discard this move if the conflicting edge is not reciprocated!
+      # so we have to first split the g.add graph into directed and undirected parts and check each part separately.
+      # (recall that the reason for this is that "d" which was input to this function is actually the union of "d" and "b" interpreted as directed.)
+      mixed.graph.to.add = split.Directed.Graph(g.add)
+      g.add.dir = mixed.graph.to.add[[1]]
+      if (! ecount(graph.intersection(zeros.dir,g.add.dir)) ==0 ){
+        print("Get.Directed.Move.p1.const.or.zero found a directed zeros conflict! returning empty.") # FOR TESTING
+        return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
+      }
+    }
+    if (!is.null(zeros.bidir)){
+      # we do not want g.add to intersect the zeros undirected graph, but we only want to discard this move if the conflicting edge is actually reciprocated!
+      # so we have to first split the g.add graph into directed and undirected parts and check each part separately.
+      # (recall that the reason for this is that "d" which was input to this function is actually the union of "d" and "b" interpreted as directed.)
+      mixed.graph.to.add = split.Directed.Graph(g.add)
+      g.add.bidir = mixed.graph.to.add[[2]]  
+      if (! ecount(graph.intersection(zeros.bidir,g.add.bidir)) ==0 ){
+        print("Get.Directed.Move.p1.const.or.zero found an un directed zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
@@ -1322,12 +1387,13 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
 #	returns a random move removing directed edges from the graph only                   #
 #	applicable to the observed network G that is guaranteed to move		                  #
 #	to a network in the p1 fiber under the reciprocation parameter choice specified     #
+#         ... Q: which parameter choice specified? ... 
 # Input:
 #   - d: igraph directed object
 #   - b: igraph undirected object
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
 # Output:
 #         - A list of four igraph objects representing the move
 #           + directed igraph object: the directed only edges to remove
@@ -1336,15 +1402,9 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros=NULL){
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
 Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
+  #       (NOTE: the zeros optional argument is passed down from zeros.dir)
   dir.piece=Get.Directed.Piece(d,zeros)
-  #
-  # Developer notes: 
-  # 3/3/17:  We are not passing the structural zeros argument further down the rabbit hole from here on. 
-  # 3/13/17:  ^^^ which makes little sense if we are trying to optimize moves; so we just decided to pass the zeros down further after all. 
-  # Here, Get.Directed.Piece is called to  construct a proposed move piece, and we do the 
-  # conflicts /applicability checks within this method instead. 
-  # But see also notes inside get.directed.piece!! 
-  #
+  
   if (is.null(dir.piece[[1]])){ 
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }else{
@@ -1363,9 +1423,12 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
-    # Check whether anythiing conflicts with structural zeros of the model:
+    # Check whether anything conflicts with structural zeros of the model:
     if (!is.null(zeros)){
-      # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
+      #  if(!(is.directed(zeros))) 
+      #    stop("Get.Directed.Move.p1.ed: the zeros optional argument needs to be in form of a directed graph!")
+      #
+      # we do not want g.add to intersect the zeros graph (both are directed a this point!)
       if (! ecount(graph.intersection(zeros,g.add)) ==0 ){
 #        print("Get.Directed.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING 
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
@@ -1383,8 +1446,9 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
 # The move may be empty.
 #
 # Optional input:                                                                   
-#         - zeros: structural zeros of the model, specified as a directed graph                     
-#       (an igraph object) whose edges are the forbidden edges in the graph. 
+#   - zeros: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
 # Output:
 #         - A list of four igraph objects representing the move
 #           + directed igraph object: the directed only edges to remove
@@ -1393,14 +1457,12 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL){
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
 Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
+  #       (NOTE: the zeros optional argument is passed down from zeros.bidir)
   if (is.null(d)){
     d = graph.empty(vcount(b))
   }
   bidir.piece = Get.Bidirected.Piece(b,zeros)
-  #
-  # DEVELOPER NOTES:
-  # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.bidirected.piece.
-  #
+  
   if (is.null(bidir.piece[[1]])) 
     return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   else {
@@ -1422,8 +1484,12 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
     }
     #(4) check whether anything conflicts the strutural zeros of the model: 
     if (!is.null(zeros)){
-      # we do not want g.add to intersect the zeros graph (and this is sensitive to edge  directions of course):
-      if (!ecount(graph.intersection(zeros,as.directed(g.add,mode="mutual"))) ==0 ){
+      #  if(is.directed(zeros)) 
+      #    stop("Get.Bidirected.Move.p1.ed: the zeros optional argument needs to be in form of an undirected graph!")
+      #
+      # we do not want g.add to intersect the zeros graph: (both are undirected a this point!)
+#     if (!ecount(graph.intersection(zeros,as.directed(g.add,mode="mutual"))) ==0 ){
+      if (!ecount(graph.intersection(zeros,g.add)) ==0 ){
 #        print("Get.Bidirected.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
@@ -1441,8 +1507,11 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
 #   - d: igraph directed object
 #   - b: igraph undirected object
 # Optional input:                                                                   
-#    - zeros: structural zeros of the model, specified as                     
-#       an igraph object whose edges are the forbidden edges in the graph. 
+#   - zeros.dir: igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model           
+#   - zeros.bidir: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
 # Output:
 #         - A list of four igraph objects representing the move
 #           + directed igraph object: the directed only edges to remove
@@ -1450,12 +1519,8 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL) {
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
-  dir.piece = Get.Directed.Piece(d,zeros)
-  #
-  # DEVELOPER NOTES:
-  # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.directed.piece.
-  #
+Get.Mixed.Move.p1.ed <- function(d, b,zeros.dir=NULL, zeros.bidir=NULL) {
+  dir.piece = Get.Directed.Piece(d,zeros.dir)
   if (is.null(dir.piece[[1]])){
     g.remove.dir = graph.empty(vcount(d))
     g.add.dir = graph.empty(vcount(d))
@@ -1464,11 +1529,7 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
     g.add.dir = graph(dir.piece[[2]])
   }
   
-  bidir.piece=Get.Bidirected.Piece(b,zeros)
-  #
-  # DEVELOPER NOTES:
-  # see "developer note" above in Get.Directed.Move.p1.ed about passing zeros further down to get.bidirected.piece.
-  #
+  bidir.piece=Get.Bidirected.Piece(b,zeros.bidir)
   if (is.null(bidir.piece[[1]])){
     g.remove.bidir = graph.empty(vcount(b), directed=FALSE)   	
     g.add.bidir = graph.empty(vcount(b), directed=FALSE)
@@ -1476,6 +1537,7 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
     g.remove.bidir = graph(bidir.piece[[1]],directed=FALSE)
     g.add.bidir = graph(bidir.piece[[2]],directed=FALSE)	
   }
+  
   ### >>>> TAG - is.applicable(dir.piece, bidir.piece, model="p1.ed")  <<<< ###
   # Check that the move will be applicable
   #(1) edges.to.add makes a simple graph. This can happen if more than one partitions. 
@@ -1497,10 +1559,17 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
     if (!ecount(graph.intersection(as.undirected(g.add.dir), graph.difference(b,g.remove.bidir)))==0)
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   #(4) check whether anything conflicts the strutural zeros of the model: 
-  if (!is.null(zeros)){
-    # we do not want g.add.dir nor g.add.bidir to intersect the zeros graph (and this is sensitive to edge  directions of course):
-    if ( !ecount(graph.intersection(zeros,g.add.dir)) ==0  || !ecount(graph.intersection(zeros,as.directed(g.add.bidir,mode="mutual")))==0 ){
-#      print("Get.Mixed.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING
+  if (!is.null(zeros.dir)){
+    # we do not want g.add.dir to intersect the zeros directed graph 
+    if ( !ecount(graph.intersection(zeros.dir,g.add.dir)) ==0){
+      print("Get.Mixed.Move.p1.ed found a zeros conflict in the directed part! returning empty.") # FOR TESTING
+      return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
+    }
+  }
+  if (!is.null(zeros.bidir)){
+    # we do not want g.add.bidir to intersect the zeros undirected graph 
+    if ( !ecount(graph.intersection(zeros.bidir,g.add.bidir)) ==0){
+      print("Get.Mixed.Move.p1.ed found a zeros conflict in the undirected part! returning empty.") # FOR TESTING
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     }
   }
@@ -1511,8 +1580,15 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros=NULL) {
 #######################################################################
 Get.Directed.Piece <- function(d,zeros=NULL){
 # Optional input:                                                                   
-#       - zeros: structural zeros of the model, specified as a directed graph (an igraph object) whose edges are the forbidden edges in the graph. 
-#       Note: zeros are a directed graph; in case str.zeros were undirected we have already made sure they are interpreted as mutual directed edges. 
+#   - zeros: 
+#     *igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model       
+#       (NOTE: this was passed as zeros.dir from above, specifically, by the get.directed... and get.mixed... functions.)
+#     OR:
+#     *igraph undirected graph, optional input to designate any 
+#       bidirected edges that are structural zeros of the model.
+#       (NOTE: this was passed as zeros.bidir from Get.Bidirected.Piece below!)
+#     
   #
   # d = directed part of G.
   # pick a random subset E of edges of d and randomly shuffle it
@@ -1554,21 +1630,17 @@ Get.Directed.Piece <- function(d,zeros=NULL){
 #######################################################################
 #######################################################################
 Get.Bidirected.Piece <- function(b,zeros=NULL) {
-  ## THIS function computes bidirected move ONLY without checks for conflicts.
+  # computes bidirected move ONLY without checks for conflicts.
   # this calls Bipartite.Walk but first checks if edges are a matching?
   # Randomly direct the entire bidirected graph and call Get.Directed.Piece
 # Optional input:                                                                   
-#       - zeros: structural zeros of the model, specified as a directed graph (an igraph object) whose edges are the forbidden edges in the graph. 
-#       Note: zeros are a directed graph; in case str.zeros were undirected we have already made sure they are interpreted as mutual directed edges. 
+#   - zeros: igraph undirected graph, optional input to designate   
+#       any undirected(or:bidirected) edges that are structural zeros   
+#       of the model                                                    
   if (ecount(b) < 2) 
     return(NULL)
   b.directed = as.arbitrary.directed(b)	
   return(Get.Directed.Piece(b.directed,zeros))
-  #
-  # DEVELOPER NOTES:
-  # We need to test this one. What happens in case of directed/undirected structural zeros, since in this step we are arbitrarily directing b ??
-  # 2017.03.13. : test completed on a 6-node network, undirected AND undirected structural zeros. It seems like everything is working as planned. 
-  #
 }
 #######################################################################
 # Bipartite.Walk														                          #
@@ -1580,6 +1652,15 @@ Get.Bidirected.Piece <- function(b,zeros=NULL) {
 # The zeros optional argument is there for the case of structural     #
 # zeros of the model. These are passed down as an igraph object whose #
 # edges are the forbidden edges in the model.                         #
+# There are two scenarios: 
+#   - zeros: 
+#     *igraph directed graph, optional input to designate any 
+#       directed edges that are structural zeros of the model       
+#       (NOTE: this was passed from Get.Directed.Piece.)
+#     OR:
+#     *igraph undirected graph, optional input to designate any 
+#       bidirected edges that are structural zeros of the model.
+#       (NOTE: this was passed from Get.Bidirected.Piece.)
 #
 # The multiplicity.bound optional argument option makes sure the      #
 # moves respect the maximum number of times each edge is allowed to   #
@@ -1628,8 +1709,16 @@ Bipartite.Walk <- function(edges.to.remove,zeros=NULL, multiplicity.bound=1) {
   if (!is.null(zeros)){
     # Ensure that edges.to.add isn't trying to add onto any structural zeros of the model
 #    print("Bipartite.Walk is now checking for conflict with structural zeros.") # FOR TESTING 
-    if (!ecount(graph.intersection(zeros, graph(edges.to.add))) == 0) 
-      return(NULL)
+    # if  is.directed(zeros) then check if edges.to.add(directed) intersect zeros: 
+    if( is.directed(zeros)) {
+      if (!ecount(graph.intersection(zeros, graph(edges.to.add))) == 0) 
+        return(NULL)
+    }else{
+      # if !is.directed(zeros) then that means the graph edges.to.add should really be thought of as undirected (which is what will happen
+      # once it gets passed back up the call tree), so undirect first, and then check if inersection with zeros is nonempty. 
+      if (!ecount(graph.intersection(zeros, graph(edges.to.add),directed=FALSE)) == 0) 
+        return(NULL)
+    }
   }
   return(edges.to.add)
 }
@@ -1694,7 +1783,7 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - the Total Variation Distance of the walk, and 
 #     - a count of all empty moves made in each graph. 
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", structural.zeros=NULL, numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
   counts=c(1)
   current.network.index=1
   empty.move.counts=c(0)
@@ -1714,7 +1803,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", structur
     found.graph.flag = FALSE
     empty.move.flag=FALSE
     prev.network = network
-    network = Get.Next.Network(network[[1]],network[[2]], model, zeros=structural.zeros, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
+    network = Get.Next.Network(network[[1]],network[[2]], model, zeros.dir,zeros.bidir, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks)
     #    if (ecount(graph.difference(network[[1]],prev.network[[1]]))==0 && ecount(graph.difference(network[[2]],prev.network[[2]]))==0){
     # new network is same as previous network
     #      empty.move.flag=TRUE
