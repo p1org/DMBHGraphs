@@ -74,7 +74,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   
   if (is.null(mleMatr)){
     print("Estimate.p.Value log: Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir,  maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir, zeros.bidir,  maxiter = mle.maxiter, tol = mle.tol, SBM.blocks) 
     print("Estimate.p.Value log: MLE estimate completed.")  
   }else
   {
@@ -82,7 +82,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
   }
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
   obs.gf = round (obs.gf,digits=8)
-  if (is.nan(obs.gf)){    print("NaN error in calculation of GF statistic.")  }
+  if (is.nan(obs.gf)){    print("Estimate.p.Value log: NaN error in calculation of GF statistic.")  }
   next.network = list(gdir,gbidir)
   count = 1
   steps.used=1
@@ -142,7 +142,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
   # if mleMatr was not given as argument use generate the MLE
   if (is.null(mleMatr)){
     print("Estimate.p.Value.for.Testing log: Now estimating MLE.")
-    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
+    mleMatr = Get.MLE(gdir,gbidir, model, zeros.dir, zeros.bidir, maxiter = mle.maxiter, tol = mle.tol, SBM.blocks)
     print("Estimate.p.Value.for.Testing log: MLE estimate completed.")
   }else
   {
@@ -189,10 +189,17 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
 #             a reciprocated edge in D
 ########################################################################
 split.Directed.Graph<-function(D){
-  reciprocated = graph.empty(vcount(D), directed = FALSE)
-  #Separate reciprocated edges
-  reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")))
-  unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")))
+  if (!is.directed(D)){
+    print("split.Directed.Graph Warning: Caution, an undirected igraph object was used in place of a directed one. I will assume all edges are reciprocated.")
+    reciprocated = D
+    unreciprocated =  graph.empty(vcount(D), directed = TRUE)
+  }else
+  {
+    reciprocated = graph.empty(vcount(D), directed = FALSE)
+    #Separate reciprocated edges
+    reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")))
+    unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")))    
+  }
   return (list(unreciprocated, reciprocated))
 }
 ########################################################################
@@ -415,7 +422,7 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
 #######################################################################
-Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros=NULL, maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
+Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL,zeros.bidir=NULL, maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -433,27 +440,36 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     gbidir = mixed.graph[[2]]  
   }  
 
-  if (!is.null(zeros)){
+  if (!is.null(zeros.dir)){
     # Ensure Structural zeros graph has the right number of vertices
     n = max(vcount(gdir), vcount(gbidir))
-    nzeros =vcount(zeros)
-    if (!is.null(zeros) && nzeros!=n){
-      add.vertices(zeros,n-nzeros)
+    nzeros.dir =vcount(zeros.dir)
+    if (!is.null(zeros.dir) && nzeros.dir!=n){
+      add.vertices(zeros.dir,n-nzeros.dir)
+    }    
+  }
+
+  if (!is.null(zeros.bidir)){
+    # Ensure Structural zeros graph has the right number of vertices
+    n = max(vcount(gdir), vcount(gbidir))
+    nzeros.bidir =vcount(zeros.bidir)
+    if (!is.null(zeros.bidir) && nzeros.bidir!=n){
+      add.vertices(zeros.bidir,n-nzeros.bidir)
     }    
   }
   
   if (model=="p1.HLalg.recip.nzconst"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", zeros, maxiter,tol)  
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", zeros.dir, zeros.bidir, maxiter,tol)  
   }else if(model=="p1.HLalg.recip.zero"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", zeros, maxiter,tol)
+    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", zeros.dir, zeros.bidir, maxiter,tol)
   }else if (model=="p1.recip.zero"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", zeros, maxiter,tol)  
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", zeros.dir, zeros.bidir, maxiter,tol)  
   }else if (model=="p1.recip.nzconst"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", zeros, maxiter,tol)      
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", zeros.dir, zeros.bidir, maxiter,tol)      
   }else if (model=="p1.recip.ed"){
-    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", zeros, maxiter,tol)    
+    mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="edge-dependent", zeros.dir, zeros.bidir, maxiter,tol)    
   }else if (model=="beta.SBM"){
-    mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, zeros, maxiter,tol)    
+    mleMatr = Get.MLE.beta.SBM(gbidir, blocks=SBM.blocks, zeros.dir, zeros.bidir, maxiter,tol)    
   }else{
     stop("Get.MLE Error: invalid model argument - model must be one of the prespecified options.")
   }
@@ -478,8 +494,8 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
 #       any undirected(or:bidirected) edges that are structural zeros   #
 #       of the model                                                    #
 #######################################################################
-Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=3000, tol = 1e-03){
-  if (!is.null(zeros)){
+Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros.dir=NULL, zeros.bidir=NULL, maxiter=3000, tol = 1e-03){
+  if (!is.null(zeros.dir) || !is.null(zeros.bidir)){
     print("Get.MLE.p1.HL: Caution: Structural Zeros functionality is not implemented in this method.")
   }
   nd = vcount(gdir)
@@ -505,7 +521,7 @@ Get.MLE.p1.HL<-function(gdir, gbidir, reciprocation="nzconst", zeros, maxiter=30
 #       any undirected(or:bidirected) edges that are structural zeros   #
 #       of the model                                                    #
 #######################################################################
-Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
   nd = vcount(gdir)
   nb = vcount(gbidir)
   n=max(nd,nb)
@@ -523,11 +539,22 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros=NULL
   }
   
   # Ensure user-specified structural zeros are set
-  if (!is.null(zeros)){
-    nzeros = vcount(zeros)
-    # Caution: since zeros is a directed graph, we have no way of separately forbidding reciprocated edges, or its directions only.
-    mixed.graph.zeros = split.Directed.Graph(zeros)
-    mzeros = 1-Get.Configuration.Matrix.p1.FW(zeros,mixed.graph.zeros[[2]]) 
+  if (!is.null(zeros.dir) || !is.null(zeros.bidir)){
+    if (!is.null(zeros.dir)){
+      nzeros.dir = vcount(zeros.dir)
+      if (nzeros.dir < n) 
+        zeros.dir = add.vertices(zeros.dir, n-nzeros.dir)
+      else if (nzeros.dir > n)
+        print("The inputted structural zeros directed graph has more vertices than the inputted directed graph.")      
+    }else zeros.dir = graph.empty(n)
+    if (!is.null(zeros.bidir)){
+      nzeros.bidir = vcount(zeros.bidir)
+      if (nzeros.bidir < n) 
+        zeros.bidir = add.vertices(zeros.bidir, n-nzeros.bidir)
+      else if (nzeros.bidir > n)
+        print("The inputted structural zeros undirected graph has more vertices than the inputted undirected graph.")
+    }else zeros.bidir = graph.empty(n, directed=FALSE)
+    mzeros = 1-Get.Configuration.Matrix.p1.FW(zeros.dir, zeros.bidir) 
     mzeros[,,1,1] = 1    
     startM[,,,] = startM * mzeros
   }
@@ -560,7 +587,7 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros=NULL
 #       number of blocks;
 #       represents the mle estimate of the model.
 #######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, zeros, maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.beta.SBM<-function(g, blocks, zeros.dir, zeros.bidir, maxiter=20, tol=0.1, print.deviation=FALSE){
   n = vcount(g)
   k = max(blocks)
   m = Get.Configuration.Matrix.beta.SBM(g,blocks)
