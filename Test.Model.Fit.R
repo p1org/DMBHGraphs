@@ -27,7 +27,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
     }    
   }
   
-  if (is.null(mleMatr)) { mleMatr = Get.MLE(gdir, gbidir, model, zeros.dir, maxiter, tol,SBM.blocks=SBM.blocks) }
+  if (is.null(mleMatr)) { mleMatr = Get.MLE(gdir, gbidir, model, zeros.dir, zeros.bidir, maxiter, tol,SBM.blocks=SBM.blocks) }
   
   if (ignore.trivial.moves){
     trivs.label = "no trivial moves"
