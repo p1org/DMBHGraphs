@@ -582,36 +582,48 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
 #   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
 #   - tol: floate, the tolerance of the IPS algorithm.
 #   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
+#   - zeros.dir: igraph directed graph, optional input to designate any #
+#       directed edges that are structural zeros of the model   [not currently used]            #
+#   - zeros.bidir: igraph directed graph, optional input to designate   #
+#       any undirected(or:bidirected) edges that are structural zeros   #
+#       of the model  [not currently used]                              #
 # Output:
-#   - mleMatr, array of dimensions n x n x (k + k choose 2), for k is the
+#   - mleMatr, array of dimensions n x n x (k + k choose 2) x 2, for k is the
 #       number of blocks;
 #       represents the mle estimate of the model.
 #######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, zeros.dir, zeros.bidir, maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
   n = vcount(g)
   k = max(blocks)
   m = Get.Configuration.Matrix.beta.SBM(g,blocks)
   
   # Ensure structural zeros get preserved
-  startM =array(data=0, dim=c(n,n,k+choose(k,2)))
+  startM =array(data=0, dim=c(n,n,k+choose(k,2),2))
   n.block = rep(0,k)
   v.block = rep(list(),k)
   for (i in 1:k){
     v.block[[i]] = which(blocks==i)
     n.block[i] = length(v.block[[i]])
-    startM[v.block[[i]], v.block[[i]], i] = rep(1,n.block[i]^2)
-    for (j in 1:n)
-      startM[j,j,i]=0
+    startM[v.block[[i]], v.block[[i]], i,1] = rep(1,n.block[i]^2)
+    startM[v.block[[i]], v.block[[i]], i,2] = rep(1,n.block[i]^2)
+    
+    for (j in 1:n){
+      startM[j,j,i,1]=0
+      startM[j,j,i,2]=0
+    }
   }
   for (i in 1:(k-1)){
     for (j in (i+1):k){
       offset = k*(i-1)-(i-1)*(i)/2+j-i
-      startM[v.block[[i]], v.block[[j]],  k+offset] = rep(1,n.block[i]*n.block[j])
-      startM[v.block[[j]], v.block[[i]],  k+offset] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[i]], v.block[[j]],  k+offset,1] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
+      
+      startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(1,n.block[i]*n.block[j])
+      startM[v.blockf[[j]], v.block[[i]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
+      
     }
   }
-  
-  fm <- loglin(m, list(c(1), c(2),c(3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)  
+  fm <- loglin(m, list(c(3,4), c(1,4), c(1,2,3), c(2,4)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)  
   mleMatr = fm$fit
   return (mleMatr)
 }
@@ -791,27 +803,32 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
 #   - g, igraph undirected object, the graph
 #   - blocks, vector of integers, blocks[i] is the block that vertex i is assigned to
 # Output:
-#   - x, array n x n x (k + (k choose 2)) array representing the graph and its block structure.
-#     The first k slices [,,i] 1<=i<=k contains the adjacency matrix of the subgraph within each 
+#   - x, array n x n x (k + (k choose 2))x2 array representing the graph and its block structure.
+#     Each of the first k slices [,,i,1] 1<=i<=k contains the adjacency matrix of the subgraph within each 
 #     block i. The following k choose 2 slices represent the subgraphs between two blocks 1<=i<j<=n.
+#     The [,,,2] slice is the complement of the [,,,1] slice.
 #######################################################################
 Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
+  print("Updated beta.SBM method-Under Testing, though it will be eventually encompassed by the p1.SBM method.")
   n = vcount(g)
   k = max(blocks)
-  x = array(data=0, dim=c(n,n,choose(k,2)+k))
+  x = array(data=0, dim=c(n,n,choose(k,2)+k,2))
   adj = get.adjacency(g, sparse=FALSE) # would be better to find a way to represent x as a sparse array
   
   v.block=rep(list(),k)
   
   for (i in 1:k){
     v.block[[i]] = which(blocks==i)
-    x[v.block[[i]], v.block[[i]], i] = adj[v.block[[i]],v.block[[i]]]
+    x[v.block[[i]], v.block[[i]], i,1] = adj[v.block[[i]],v.block[[i]]]
+    x[v.block[[i]], v.block[[i]], i,2] = 1-adj[v.block[[i]],v.block[[i]]]
   }
   for (i in 1:(k-1)){
     for (j in (i+1):k){
       offset = k*(i-1)-(i-1)*(i)/2+j-i
-      x[v.block[[i]], v.block[[j]], k+offset] = adj[v.block[[i]],v.block[[j]]]  
-      x[v.block[[j]], v.block[[i]], k+offset] = adj[v.block[[j]],v.block[[i]]]  
+      x[v.block[[i]], v.block[[j]], k+offset,1] = adj[v.block[[i]],v.block[[j]]] 
+      x[v.block[[i]], v.block[[j]], k+offset,2] = 1-adj[v.block[[i]],v.block[[j]]] 
+      x[v.block[[j]], v.block[[i]], k+offset,1] = adj[v.block[[j]],v.block[[i]]]  
+      x[v.block[[j]], v.block[[i]], k+offset,2] = 1-adj[v.block[[j]],v.block[[i]]]  
     }
   }
   return(x)
