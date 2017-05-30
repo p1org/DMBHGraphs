@@ -619,7 +619,7 @@ Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=
       startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
       
       startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(1,n.block[i]*n.block[j])
-      startM[v.blockf[[j]], v.block[[i]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[j]], v.block[[i]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
       
     }
   }
