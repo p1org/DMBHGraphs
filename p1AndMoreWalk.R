@@ -809,7 +809,7 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
 #     The [,,,2] slice is the complement of the [,,,1] slice.
 #######################################################################
 Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
-  print("Updated beta.SBM method-Under Testing, though it will be eventually encompassed by the p1.SBM method.")
+#  print("Updated beta.SBM method-Under Testing, though it will be eventually encompassed by the p1.SBM method.")
   n = vcount(g)
   k = max(blocks)
   x = array(data=0, dim=c(n,n,choose(k,2)+k,2))
