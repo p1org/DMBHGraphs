@@ -604,8 +604,8 @@ Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=
   for (i in 1:k){
     v.block[[i]] = which(blocks==i)
     n.block[i] = length(v.block[[i]])
-    startM[v.block[[i]], v.block[[i]], i,1] = rep(1,n.block[i]^2)
-    startM[v.block[[i]], v.block[[i]], i,2] = rep(1,n.block[i]^2)
+    startM[v.block[[i]], v.block[[i]], i,1] = rep(.5,n.block[i]^2)
+    startM[v.block[[i]], v.block[[i]], i,2] = rep(.5,n.block[i]^2)
     
     for (j in 1:n){
       startM[j,j,i,1]=0
@@ -615,15 +615,15 @@ Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=
   for (i in 1:(k-1)){
     for (j in (i+1):k){
       offset = k*(i-1)-(i-1)*(i)/2+j-i
-      startM[v.block[[i]], v.block[[j]],  k+offset,1] = rep(1,n.block[i]*n.block[j])
-      startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[i]], v.block[[j]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
+      startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
       
-      startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(1,n.block[i]*n.block[j])
-      startM[v.block[[j]], v.block[[i]],  k+offset,2] = rep(1,n.block[i]*n.block[j])
+      startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
+      startM[v.block[[j]], v.block[[i]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
       
     }
   }
-  fm <- loglin(m, list(c(3,4), c(1,4), c(1,2,3), c(2,4)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)  
+  fm <- loglin(m, list(c(1,4), c(2,4), c(3,4), c(1,2,3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)  
   mleMatr = fm$fit
   return (mleMatr)
 }
@@ -707,7 +707,8 @@ Chi.Square.Statistic<- function(confMatr,mleMatr){
   }
   gofArr= (confMatr-mleMatr)^2./mleMatr
   indNAN = which(is.nan(gofArr))
-  gofArr[indNAN]=0
+  if (length(indNAN)>0) 
+    gofArr[indNAN]=0
   gf = sum(gofArr)
   return(gf)
 }
@@ -831,7 +832,10 @@ Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
       x[v.block[[j]], v.block[[i]], k+offset,2] = 1-adj[v.block[[j]],v.block[[i]]]  
     }
   }
-  return(x)
+  for (i in 1:n){
+    x[i,i,,]=c(0,0)
+  }
+    return(x)
 }
 #######################################################################
 # Write.Walk.To.File: 												#
