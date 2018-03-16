@@ -1092,9 +1092,9 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2)){
       indices = sample(1:k,2)
       i = indices[1]
       j = indices[2]
-      if (length(v.block[[i]]>=3) && length(v.block[[j]])>1)
+      if (length(v.block[[i]])>=3 && length(v.block[[j]])>1)
           v.included = c(sample(v.block[[i]],3), sample(v.block[[j]],1))
-        else if (length(v.block[[i]]>=3) && length(v.block[[j]]==1))
+        else if (length(v.block[[i]])>=3 && length(v.block[[j]]==1))
           v.included = c(sample(v.block[[i]],3), v.block[[j]])
         else return (move)
     }else{
