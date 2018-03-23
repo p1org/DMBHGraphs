@@ -1681,6 +1681,7 @@ Write.Graphs.to.File<-function(graphs, filename){
 Draw.Random.Graph.From.Model.beta<-function(betas){
   # Notes: Identifiability requires additional linear constraints on parameters, e.g. sum(betas)=0. 
   # This method leaves it up to the user to specify the parameters, and does not assume the additional constraints.
+  n = length(betas)
   blocks = rep(1,n)
   block.alphas = array(c(0.0), dim=c(1,1))
   return (Draw.Random.Graph.From.Model.beta.SBM(betas, block.alphas, blocks))
