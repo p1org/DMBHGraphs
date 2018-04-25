@@ -1993,3 +1993,40 @@ Write.Graphs.to.File<-function(graphs, filename){
 #   write(TV, paste(filename.extension, "tv.distance.txt", sep="."), append=FALSE, ncolumns=length(counts), sep = ", ")	
 #   return (numGraphs)
 # }
+
+############################################################################
+#Random Draw Methods
+############################################################################
+Draw.Random.Graph.From.Model.beta<-function(betas){
+  # Notes: Identifiability requires additional linear constraints on parameters, e.g. sum(betas)=0. 
+  # This method leaves it up to the user to specify the parameters, and does not assume the additional constraints.
+  blocks = rep(1,n)
+  block.alphas = array(c(0.0), dim=c(1,1))
+  return (Draw.Random.Graph.From.Model.beta.SBM(betas, block.alphas, blocks))
+}
+
+Draw.Random.Graph.From.Model.SBM<-function(n, block.alphas, blocks){
+  # Notes: Identifiability requires additional linear constraints on parameters, e.g. sum(block.alphas)=0. 
+  # This method leaves it up to the user to specify the parameters, and does not assume the additional constraints.
+  betas = rep(0.0, n)
+  return (Draw.Random.Graph.From.Model.beta.SBM(betas, block.alphas, blocks))
+}
+
+Draw.Random.Graph.From.Model.beta.SBM<-function(betas, block.alphas, blocks){
+  # Notes: Identifiability requires additional linear constraints on parameters, e.g. sum(betas)=0. 
+  # This method leaves it up to the user to specify the parameters, and does not assume the additional constraints.
+  n=length(betas)
+  k = dim(block.alphas)[1]
+  g = graph.empty(n, directed = FALSE)
+  for (i in 1:(n-1)){
+    for (j in (i+1):n){
+      exp.sum.betas=exp(betas[i]+betas[j] + block.alphas[blocks[i],blocks[j]])
+      prob.edge=(exp.sum.betas)/(1+ exp.sum.betas)
+      coin = sample(c(TRUE,FALSE), size=1,prob=c(prob.edge,1-prob.edge))
+      if (coin)
+        g = add.edges(g,c(i,j))
+    }
+  }
+  return(g)
+}
+
