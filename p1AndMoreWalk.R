@@ -1363,6 +1363,10 @@ Get.Induced.Subgraph<-function(g,vertices){
 Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL){
   # see dilemma below as to why i'm not passing zeros down further from this point.
   
+  # to do: put zeros.dir & zeros.bidir togetehr in one directed graph. 
+  # to do: tell user directed zero implies bidireted zero in these model variants.
+  # to do: pass zeros down! 
+  # note: above will take care of all issues in my dilemma. :) 
   dir.piece=Get.Directed.Piece(d,zeros=NULL)   
   # 
   # DEVELOPER'S NOTES: [dilemma]
