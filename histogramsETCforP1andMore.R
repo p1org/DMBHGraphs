@@ -4,25 +4,33 @@
 # MCMC diagnostics
 #
 # Input: 
-#   - list...
+#   - mcmcStatsList, a list of statistics for which we will run autocorrelation and trace plots.
+#     (This list is turned into an MCMC object inside of the function.)
+# Output:
+#   - a file with trace and autocorr. plots for the given mcmc statsitics. 
 # 
-Mcmc.Diagnostics <- function(mcmcStats, dataname="Set title w/ option 'dataname'", burn=0, filesave=FALSE,filename='GoF testing plots', grid=c(2,2)){
+Mcmc.Diagnostics <- function(mcmcStatsList, statsNamesList, dataname="Set title w/ option 'dataname'",filename='GoF testing plots'){  # }, grid=c(2,2)){
   require("coda"); #for mcmc diagnostics
   # ========================= # 
-  # CODE FROM VISHESH: 
-  mcmcStats = cbind(sampShellDist,sampDegreeDist,
-                    sampBetweeness,sampTri,
-                    sampEdge,sampCentrality);
-  colnames(mcmcStats) = c(paste('shell',seq(from=0,to=n-1),sep=""),
-                          paste('degree',seq(from=0,to=n-1),sep=""),
-                          paste('betweenness',seq(from=1,to=n),sep=""),
-                          "triangles",
-                          'edges',
-                          'centrality');
-  mcmcStats = as.mcmc(mcmcStats);
-  save.image(paste(name,".Rdata",sep=""));
+  #  # CODE FROM VISHESH k-core ergm: 
+  #  mcmcStats = cbind(sampShellDist,sampDegreeDist,
+  #                    sampBetweeness,sampTri,
+  #                    sampEdge,sampCentrality);
+  #  colnames(mcmcStats) = c(paste('shell',seq(from=0,to=n-1),sep=""),
+  #                          paste('degree',seq(from=0,to=n-1),sep=""),
+  #                          paste('betweenness',seq(from=1,to=n),sep=""),
+  #                          "triangles",
+  #                          'edges',
+  #                          'centrality');
+  #  mcmcStats = as.mcmc(mcmcStats);
+  # ========================= # 
+  mcmcStats=cbind(mcmcStatsList)
+  colnames(mcmcStats)=statsNamesList
+  mcmcStats=as.mcmc(mcmcStats)
+
+  save.image(paste(filename,"McmcDiag.Rdata",sep=""));
   #load(paste(name,".Rdata",sep=""));
-  pdf(paste(name,"Diagnostics.pdf"));
+  pdf(paste(filename,"MCMCdiagnostics.pdf"));
   #summary(mcmcStats);
   plot(mcmcStats);
   autocorr.plot(mcmcStats);
