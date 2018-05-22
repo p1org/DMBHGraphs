@@ -45,7 +45,6 @@ library(igraph)
 #   - estimated p-value between 0 and 1                                 #
 ########################################################################
 Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr=NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 0.001, beta.SBM.coin=c(1/2), SBM.blocks=NULL){ 
-  # tell user? if model == "p1.recip.nzconst" or "p1.recip.zero" then any directed structural zero implies a reciprocated structural zero.
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -108,7 +107,6 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
 ################################################################################################################
 ################################################################################################################
 Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL){
-  # tell user? if model == "p1.recip.nzconst" or "p1.recip.zero" then any directed structural zero implies a reciprocated structural zero.
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -148,7 +146,7 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
     print("Estimate.p.Value.for.Testing log: MLE estimate completed.")
   }else
   {
-    print("Estimate.p.Value.for.Testing log: Employing user-provided MLE.") #this got printed when i didn't provide an MLE. ?
+    print("Estimate.p.Value.for.Testing log: Employing user-provided MLE.")
   }
   obs.gf = Get.GoF.Statistic(gdir, gbidir, model, mleMatr, SBM.blocks)
   obs.gf = round(obs.gf, digits=8)
@@ -1103,6 +1101,8 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bid
       move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
     }else
       move = Get.Move.p1.zero.or.nzconst(gdir,gbidir,zeros.dir,zeros.bidir)     
+    # Developer notes (internal): 
+    # I hate R and the way it passes arguments of same type! Order determines everything for unnamed arguments. See slide 5 of https://www.stat.berkeley.edu/~statcur/Workshop2/Presentations/functions.pdf
   } else if (model=="p1.recip.ed"){
     move = Get.Move.p1.ed(gdir,gbidir,zeros.dir,zeros.bidir, ed.coin)   
   } else{
@@ -1361,24 +1361,45 @@ Get.Induced.Subgraph<-function(g,vertices){
 #       of the model                                                    
 #######################################################################
 Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL){
-
-  # In these two model variants, bidirected edges are decoupled as two directed edges, so
-  # we will put zeros.dir & zeros.bidir togetehr in one directed graph and pass them on:
-  if(!is.null(zeros.bidir) && is.null(zeros.dir)){
-    zeros.dir=graph.empty(vcount(d))
-    joint.zeros = graph.union(zeros.dir,as.directed(zeros.bidir,mode="mutual"))
-  } else 
-  if(is.null(zeros.bidir) && !is.null(zeros.dir)){
-    zeros.bidir=graph.empty(vcount(d),directed=FALSE)
-    joint.zeros = graph.union(zeros.dir,as.directed(zeros.bidir,mode="mutual"))
-  } 
-  dir.piece=Get.Directed.Piece(d,zeros=joint.zeros)   
+  # see dilemma below as to why i'm not passing zeros down further from this point.
+  
+  # to do: put zeros.dir & zeros.bidir togetehr in one directed graph. 
+  # to do: tell user directed zero implies bidireted zero in these model variants.
+  # to do: pass zeros down! 
+  # note: above will take care of all issues in my dilemma. :) 
+  dir.piece=Get.Directed.Piece(d,zeros=NULL)   
+  # 
+  # DEVELOPER'S NOTES: [dilemma]
+  # In summary, I do not know how to handle directed+undirected zeros in the zero-recirpocation p1 model. I have NOT resolved this yet: 
+  #
+  # inside this method i'll de-couple the graph d back into (d,b) to see if dir.piece violated directed zeros OR bidirected zeros. 
+  # however, when i pass zeros.dir to get.directed piece, will i be screwed, i.e., will i reject moves i don't want to reject?
+  # for example if I end up constructing a move that adds an edge conflicting zeros.dir, but that edge is really part of a reciprocated edge.
+  # so does this ^^^ mean i just have to check -- if edge in dir.piece conflicts zeros.dir, only discard move IF 
+  #   that edge in dir.piece is, in fact, NOT reciprocated in the new graph g.add. 
+  # i think this ^^^ will solve the main problem i have. however: 
+  # i am concerned because d now contians edges of type i->j and i<-j , when called from this method.
+  # (and it's only a problem here; because when we call get.directed.piece from other methods (p1.recip.ed model), d has no reciprocated edges (they are all in b).)
+  # 
+  # so when we call get.directed.piece, which in turn calls bipartite.walk, <<< that method may accidentally throw away moves i actually want to keep.
+  # but once we go down to get.directed.piece, we have lost track of what the model is, so i have no way of telling the method 'hey don't throw out yet'.
+  #
+  # the best I can think of right now is to NOT pass ANY zeros below this point, risking getting many inapplicable moves, but at least then
+  # i'll be sure i'm not doing something wrong.
+  # if someone has a better idea how to handle this situation - great, let me know.
+  # 
+  # another troubling example: if original b contained i<->j, then this d contains edges i->j and i<-j. suppose now that 
+  # zeros.dir contains i->j, while zeros.bidir does not contain i<->j.
+  # the moment i interpret i<->j as the union of 2 directed edges (which we do for zero recip!), we have already
+  # violated zeros.dir.  so how do i deal with this? passing down  d and zeros.dir, which are already in conflict? 
+  # .... 
+  #
   
   if (is.null(dir.piece[[1]])){ 
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
   }
   else{
-    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ### 
+    ### >>>> TAG - is.applicable(dir.piece, model???)  <<<< ###
     # Ensure move is applicable
     g.add = graph(dir.piece[[2]])
     g.remove = graph(dir.piece[[1]])
@@ -1707,7 +1728,6 @@ Get.Bidirected.Piece <- function(b,zeros=NULL) {
 # each edge in the graph; in this case, the optional argument is of   #
 # type igraph, multiple (OR WEIGHTED?) graph.                         #
 # DEVELOPER NOTES: 
-# This is a placeholder to handle non-simple graphs.                  #
 # Currently, the optional argument isn't passed from anywhere, so     #
 # nothing but the default can happen. AND I have not implemented the  #
 # more general version when multiplicity.bound is not a numeric value.#
@@ -2014,20 +2034,3 @@ Draw.Random.Graph.From.Model.beta.SBM<-function(betas, block.alphas, blocks){
   return(g)
 }
 
-Draw.Random.Graph.From.Model.p1.zero<-function(betas, block.alphas, blocks){
-  # Notes: Identifiability requires additional linear constraints on parameters, e.g. sum(betas)=0. 
-  # This method leaves it up to the user to specify the parameters, and does not assume the additional constraints.
-  n=length(betas)
-  k = dim(block.alphas)[1]
-  g = graph.empty(n, directed = FALSE)
-  for (i in 1:(n-1)){
-    for (j in (i+1):n){
-      exp.sum.betas=exp(betas[i]+betas[j] + block.alphas[blocks[i],blocks[j]])
-      prob.edge=(exp.sum.betas)/(1+ exp.sum.betas)
-      coin = sample(c(TRUE,FALSE), size=1,prob=c(prob.edge,1-prob.edge))
-      if (coin)
-        g = add.edges(g,c(i,j))
-    }
-  }
-  return(g)
-}
