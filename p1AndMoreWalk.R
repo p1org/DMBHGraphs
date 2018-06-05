@@ -193,6 +193,11 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
 split.Directed.Graph<-function(D){
   if (!is.directed(D)){
     print("split.Directed.Graph Warning: Caution, an undirected igraph object was used in place of a directed one. I will assume all edges are reciprocated.")
+    # DEVELOPER NOTES: 
+    # Question: what is the point of this warning message? If the input is undirected, it remains undirected, as 
+    # seen on the next line. So.... we are just telling the user we wish she put a directed graph? 
+    # But the message is confusing when we run the beta model via p1.recip.ed on an undirected graph.
+    # So I am not sure why we have this warning. What am I missing? 
     reciprocated = D
     unreciprocated =  graph.empty(vcount(D), directed = TRUE)
   }else
