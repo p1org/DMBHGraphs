@@ -996,13 +996,13 @@ Plot.Mixed.Graph<- function(gdir,gbidir, arrowmd=0){
 #       using Fienberg-Wasserman's configuration matrix.                  #
 #       + "beta.SBM": for the beta SBM model                                 #
 #######################################################################
-Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin = c(0)){
+Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(b)/(ecount(d)+ecount(b)), ecount(d)/(ecount(d)+ecount(b))), beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin = 0){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
     else if (length(SBM.blocks)!=vcount(b))
       stop("Get.Next.Network error: SBM.blocks must be same length as number of vertices in b.")
-    move = Get.Move.beta.SBM(b, blocks=SBM.blocks, coin = beta.SBM.coin)
+    move = Get.Move.beta.SBM(b, blocks=SBM.blocks, coin = beta.SBM.coin,small.moves.coin)
     trivial.move = move[[3]]
     #b minus bidirected.to.be.removed plus bidirected.to.be.added
     new.bidirected.graph = graph.union(graph.difference(b, move[[1]]), move[[2]])
@@ -1096,7 +1096,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
 #           + undirected igraph object: the reciprocated only edges to remove (only if model is p1.recip.ed)
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
-Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bidir=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), small.moves.coin = c(0)){
+Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bidir=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), small.moves.coin=0){
   if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
@@ -1139,7 +1139,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bid
 #           + undirected igraph object: the reciprocated only edges to remove
 #           + undirected igraph object: the reciprocated only edges to add
 #######################################################################
-Get.Move.p1.ed <- function(d,b, zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3),small.moves.coin = c(0)){
+Get.Move.p1.ed <- function(d,b, zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,1/3,1/3),small.moves.coin=0){
   # if the ed.coin options do not sum up to 1 exit.
   if (! sum(ed.coin)==1) { stop("invalid ed.coin") }
   #Generate a random real number between 0 and 1.
@@ -1235,9 +1235,9 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
       indices = sample(1:k,2)
       i = indices[1]
       j = indices[2]
-      if (length(v.block[[i]]>=3) && length(v.block[[j]])>1)
+      if (length(v.block[[i]])>=3 && length(v.block[[j]])>1)
           v.included = c(sample(v.block[[i]],3), sample(v.block[[j]],1))
-        else if (length(v.block[[i]]>=3) && length(v.block[[j]]==1))
+        else if (length(v.block[[i]])>=3 && length(v.block[[j]])==1)
           v.included = c(sample(v.block[[i]],3), v.block[[j]])
         else return (move)
     }else{
@@ -1253,7 +1253,7 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
     
     count=0
     while (ecount(proposed.move[[1]])==0 && count<50){
-      proposed.move = Get.Bidirected.Move(graph.empty(vcount(g.subgraph)),g.subgraph,small.moves.coin)
+      proposed.move = Get.Bidirected.Move(graph.empty(vcount(g.subgraph)),g.subgraph,zeros=NULL,small.moves.coin)
       count= count+1
     }
     # Error checking making sure we are removing same total number of edges as we are adding
@@ -1303,7 +1303,7 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
       if (i<k){
         for (j in (i+1):k){
           #Produce a move between block i and j
-          g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]),small.moves.coin)
+          g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]))
           g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]]))
           move.between.i.j = Get.Between.Blocks.Move.beta.SBM(g.between.i.j,small.moves.coin) 
           move[[1]] = graph.union(move.between.i.j[[1]],move[[1]])
@@ -1323,13 +1323,13 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
 Get.Between.Blocks.Move.beta.SBM<-function(g,small.moves.coin=0){
   d = as.directed(g, mode = c("arbitrary"))
   b = graph.empty(vcount(d), d=FALSE)
-  move = Get.Directed.Move.p1.ed(d,b,small.moves.coin)
+  move = Get.Directed.Move.p1.ed(d,b,zeros=NULL,small.moves.coin)
   move[[1]] = as.undirected(move[[1]])
   move[[2]] = as.undirected(move[[2]])
   return (move)
 }
 Get.Within.Blocks.Move.beta.SBM<-function(g,small.moves.coin=0){
-  return (Get.Bidirected.Move(graph.empty(vcount(g)),g,small.moves.coin))
+  return (Get.Bidirected.Move(graph.empty(vcount(g)),g,zeros=NULL,small.moves.coin))
 }
 ##############################################################################
 # Get.Induced.Subgraph
@@ -1666,6 +1666,7 @@ Get.Directed.Piece <- function(d,zeros=NULL,small.moves.coin=0){
       subset.size = sample(2:4 ,1)
     }
     else{subset.size = sample(2:ecount(d) ,1)}  #this is a random integer
+    print(subset.size)
     random.edge.indices = sample(1:(ecount(d)),subset.size)
     random.subset.of.d = get.edges(d,random.edge.indices)
   }
