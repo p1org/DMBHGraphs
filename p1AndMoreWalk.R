@@ -1666,7 +1666,6 @@ Get.Directed.Piece <- function(d,zeros=NULL,small.moves.coin=0){
       subset.size = sample(2:4 ,1)
     }
     else{subset.size = sample(2:ecount(d) ,1)}  #this is a random integer
-    print(subset.size)
     random.edge.indices = sample(1:(ecount(d)),subset.size)
     random.subset.of.d = get.edges(d,random.edge.indices)
   }
