@@ -6,7 +6,7 @@
 # - Calculates the quartiles from the progressive p-value estimates and plots these as well.  
 # - zeros are the structural zeros of the model. (We need better "input/optional input/output" documentation for this function!!)
 ########
-Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), zeros.dir=NULL, zeros.bidir=NULL, foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), zeros.dir=NULL, zeros.bidir=NULL, foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL,small.moves.coin=0){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -51,7 +51,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
   }
   for (i in 1:iterations){
     cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir,zeros.bidir, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks)
+    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir,zeros.bidir, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks,small.moves.coin)
     cat(sprintf("p.values[%d] = %f\n", i, tmp[[1]]))
     p.values[i] = tmp[[1]]
     if (length(tmp[[3]])<2){ stop("Please increase numSteps: The walk produced has less than two graphs; no results will be reported.")}
@@ -106,7 +106,7 @@ Test.Model.Fit<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), 
 # Test.Model.Fit.Parallel
 # - Same as Test.Model.Fit -- except it is set up to run iterations many parallel computations (for use on a cluster!)
 ########
-Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), zeros.dir=NULL, zeros.bidir=NULL, foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL){
+Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), zeros.dir=NULL, zeros.bidir=NULL, foldername, numSteps, iterations, mleMatr=NULL, model, ignore.trivial.moves=FALSE, tol=0.001, maxiter=100000, testname, plotlabel=NULL, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL,small.moves.coin){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))       
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )     
@@ -154,7 +154,7 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
   # =================================== for cluster =============================================# 
   result <- foreach(i=1:iterations) %dopar% {
     #cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir, zeros.bidir, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks)
+    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir, zeros.bidir, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks,small.moves.coin)
     tmp
   }
   # =================================== end for cluster =========================================# 
