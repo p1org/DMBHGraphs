@@ -198,8 +198,8 @@ split.Directed.Graph<-function(D){
   {
     reciprocated = graph.empty(vcount(D), directed = FALSE)
     #Separate reciprocated edges
-    reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")))
-    unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")))    
+    reciprocated  = graph.difference(as.undirected(D, mode=c("each")),as.undirected(D,mode=c("collapse")),byname="auto")
+    unreciprocated = graph.difference(D, as.directed(reciprocated, mode=c("mutual")),byname="auto")    
   }
   return (list(unreciprocated, reciprocated))
 }
@@ -786,7 +786,7 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
       x[j,i,2,2]=1        
     }
   }
-  gcompl.vector= as.vector(t(get.edgelist(graph.complementer(graph.union(as.undirected(gdir),gbidir)))))
+  gcompl.vector= as.vector(t(get.edgelist(graph.complementer(graph.union(as.undirected(gdir),gbidir, byname="auto")))))
   if(length(gcompl.vector)!=0){
     for(k in seq(1,length(gcompl.vector),2)){
       i=gcompl.vector[k]
@@ -1005,7 +1005,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
     move = Get.Move.beta.SBM(b, blocks=SBM.blocks, coin = beta.SBM.coin,small.moves.coin)
     trivial.move = move[[3]]
     #b minus bidirected.to.be.removed plus bidirected.to.be.added
-    new.bidirected.graph = graph.union(graph.difference(b, move[[1]]), move[[2]])
+    new.bidirected.graph = graph.union(graph.difference(b, move[[1]],byname="auto"), move[[2]], byname="auto")
     new.directed.graph = d
     #    print(paste("New Network"))                        #for testing
     #    print(get.edgelist(new.bidirected.graph))          #for testing
@@ -1021,7 +1021,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
     trivial.move=FALSE
     if (!ecount(markov.move[[1]])==0 || (model=="p1.recip.ed" && !ecount(markov.move[[3]])==0)){
       if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero" || model=="p1.recip.nzconst"){
-        g.as.directed = graph.union(graph.difference(graph.union(d,as.directed(b,mode="mutual")),markov.move[[1]]),markov.move[[2]])
+        g.as.directed = graph.union(graph.difference(graph.union(d,as.directed(b,mode="mutual"),byname="auto"),markov.move[[1]],byname="auto"),markov.move[[2]],byname="auto")
         g.as.mixed = split.Directed.Graph(g.as.directed)
         new.directed.graph = g.as.mixed[[1]]
         new.bidirected.graph = g.as.mixed[[2]]
@@ -1035,10 +1035,10 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
         }
       }else if (model == "p1.recip.ed"){
         #d minus directed.to.be.removed plus directed.to.be.added:
-        new.directed.graph = graph.union(graph.difference(d,markov.move[[1]]),markov.move[[2]])        
+        new.directed.graph = graph.union(graph.difference(d,markov.move[[1]],byname="auto"),markov.move[[2]],byname="auto")        
         
         #b minus bidirected.to.be.removed plus bidirected.to.be.added
-        new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]]),markov.move[[4]])      
+        new.bidirected.graph = graph.union(graph.difference(b,markov.move[[3]],byname="auto"),markov.move[[4]],byname="auto")      
       }    else stop("Get.Next.Network Error: invalid model argument - model must be one of the prespecified options.")
     }else{
       #empty move, graphs unchanged
@@ -1101,7 +1101,7 @@ Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bid
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
       mixed.move = Get.Move.p1.ed(gdir, gbidir, zeros.dir,zeros.bidir, ed.coin,small.moves.coin)  
-      move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual")), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual")))
+      move=list( graph.union(mixed.move[[1]], as.directed(mixed.move[[3]],mode="mutual"),byname="auto"), graph.union(mixed.move[[2]], as.directed(mixed.move[[4]], mode="mutual"),byname="auto"))
     }else
       move = Get.Move.p1.zero.or.nzconst(gdir,gbidir,zeros.dir,zeros.bidir,small.moves.coin)     
     # Developer notes (internal): 
@@ -1182,7 +1182,7 @@ Get.Move.p1.ed <- function(d,b, zeros.dir=NULL, zeros.bidir=NULL, ed.coin=c(1/3,
 #           + directed igraph object: the directed edges to add to full graph d+b
 #######################################################################
 Get.Move.p1.zero.or.nzconst <- function(d,b,zeros.dir=NULL,zeros.bidir=NULL,small.moves.coin=0){
-  d = graph.union(d,as.directed(b,mode="mutual"))
+  d = graph.union(d,as.directed(b,mode="mutual"),byname="auto")
   move = Get.Directed.Move.p1.const.or.zero(d,zeros.dir,zeros.bidir,small.moves.coin)  
   return (move)
 } 
@@ -1261,8 +1261,8 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
       return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
     }
     
-    graph.to.remove = graph.difference(proposed.move[[1]],proposed.move[[2]])
-    graph.to.add = graph.difference(proposed.move[[2]],proposed.move[[1]])
+    graph.to.remove = graph.difference(proposed.move[[1]],proposed.move[[2]],byname="auto")
+    graph.to.add = graph.difference(proposed.move[[2]],proposed.move[[1]],byname="auto")
     if (ecount(graph.to.remove)==0 && ecount(graph.to.add)==0)
       return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
     
@@ -1274,7 +1274,7 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
         for (j in (i+1):k){
           # Check that number of edges between block i and block j remain constant
           g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]))
-          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]]))
+          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]],byname="auto"),byname="auto")
           num.g.between.i.j.edges.to.remove = length(which(get.edge.ids(g.between.i.j, as.vector(t(get.edgelist(graph.to.remove))))>0))
           
           num.g.between.i.j.edges.to.add = 0
@@ -1292,22 +1292,22 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
     }
     move[[1]] = proposed.move[[1]] #graph.to.remove
     move[[2]] = proposed.move[[2]] #graph.to.add
-    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]], move[[2]]))>0 && ecount(graph.difference(move[[2]], move[[1]]))>0)
+    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]], move[[2]],byname="auto"))>0 && ecount(graph.difference(move[[2]], move[[1]],byname="auto"))>0)
       move[[3]]=FALSE
   }else{
     for (i in 1:k){
       # Produce a move within block i
       move.within.i = Get.Within.Blocks.Move.beta.SBM(g.block[[i]],small.moves.coin)
-      move[[1]] = graph.union(move.within.i[[1]],move[[1]])
-      move[[2]] = graph.union(move.within.i[[2]],move[[2]])
+      move[[1]] = graph.union(move.within.i[[1]],move[[1]],byname="auto")
+      move[[2]] = graph.union(move.within.i[[2]],move[[2]],byname="auto")
       if (i<k){
         for (j in (i+1):k){
           #Produce a move between block i and j
           g.full.i.j = Get.Induced.Subgraph(g,c(v.block[[1]],v.block[[2]]))
-          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]]))
+          g.between.i.j = graph.difference(g.full.i.j, graph.union(g.block[[i]], g.block[[j]],byname="auto"),byname="auto")
           move.between.i.j = Get.Between.Blocks.Move.beta.SBM(g.between.i.j,small.moves.coin) 
-          move[[1]] = graph.union(move.between.i.j[[1]],move[[1]])
-          move[[2]] = graph.union(move.between.i.j[[2]],move[[2]])
+          move[[1]] = graph.union(move.between.i.j[[1]],move[[1]],byname="auto")
+          move[[2]] = graph.union(move.between.i.j[[2]],move[[2]],byname="auto")
         }     
       }
     }
@@ -1315,7 +1315,7 @@ Get.Move.beta.SBM<-function(g, blocks, coin=c(1/2),small.moves.coin=0){
     if (ecount(move[[1]])!=ecount(move[[2]])){
       return(list(graph.empty(n, directed=FALSE),graph.empty(n, directed=FALSE), TRUE))
     }
-    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]],move[[2]]))>0 && ecount(graph.difference(move[[2]],move[[1]]))>0)
+    if (ecount(move[[1]])>0 && ecount(graph.difference(move[[1]],move[[2]],byname="auto"))>0 && ecount(graph.difference(move[[2]],move[[1]],byname="auto"))>0)
       move[[3]]=FALSE
   }
   return (move)
@@ -1412,7 +1412,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL
     if (!is.simple(g.add)) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
     #(2) edges.to.add does not intersect d - edges.to.remove in any direction [i.e. no conflicts created!]:
-    if (!ecount(graph.intersection(graph.difference(d,g.remove),g.add))==0) 
+    if (!ecount(graph.intersection(graph.difference(d,g.remove,byname="auto"),g.add,byname="auto"),byname="auto")==0) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)))) 
     #(3) Check whether g.add conflicts with structural zeros of the model:
     if (!is.null(zeros.dir)){
@@ -1421,7 +1421,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL
       # (recall that the reason for this is that "d" which was input to this function is actually the union of "d" and "b" interpreted as directed.)
       mixed.graph.to.add = split.Directed.Graph(g.add)
       g.add.dir = mixed.graph.to.add[[1]]
-      if (! ecount(graph.intersection(zeros.dir,g.add.dir)) ==0 ){
+      if (! ecount(graph.intersection(zeros.dir,g.add.dir,byname="auto")) ==0 ){
         print("Get.Directed.Move.p1.const.or.zero found a directed zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
@@ -1432,7 +1432,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL
       # (recall that the reason for this is that "d" which was input to this function is actually the union of "d" and "b" interpreted as directed.)
       mixed.graph.to.add = split.Directed.Graph(g.add)
       g.add.bidir = mixed.graph.to.add[[2]]  
-      if (! ecount(graph.intersection(zeros.bidir,g.add.bidir)) ==0 ){
+      if (! ecount(graph.intersection(zeros.bidir,g.add.bidir,byname="auto")) ==0 ){
         print("Get.Directed.Move.p1.const.or.zero found an un directed zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
@@ -1476,11 +1476,11 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL,small.moves.coin=0){
     if (!is.simple(as.undirected(g.add,mode="each")))
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
     # Check that edges.to.add does not conflict with d - edges.to.remove in any direction
-    if (!ecount(graph.intersection(as.undirected(graph.difference(d,g.remove)),as.undirected(g.add)))==0) 
+    if (!ecount(graph.intersection(as.undirected(graph.difference(d,g.remove,byname="auto")),as.undirected(g.add),byname="auto"))==0) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))   
     # Check that edges.to.add does not conflict with bidirected part of graph:    
     if (!is.null(b)) {
-      if (!ecount(graph.intersection(as.undirected(g.add),b))==0){
+      if (!ecount(graph.intersection(as.undirected(g.add),b,byname="auto"))==0){
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
     }
@@ -1490,7 +1490,7 @@ Get.Directed.Move.p1.ed <- function(d,b,zeros=NULL,small.moves.coin=0){
       #    stop("Get.Directed.Move.p1.ed: the zeros optional argument needs to be in form of a directed graph!")
       #
       # we do not want g.add to intersect the zeros graph (both are directed a this point!)
-      if (! ecount(graph.intersection(zeros,g.add)) ==0 ){
+      if (! ecount(graph.intersection(zeros,g.add,byname="auto")) ==0 ){
 #        print("Get.Directed.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING 
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
@@ -1537,11 +1537,11 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL,small.moves.coin=0) {
       return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     #(2) edges.to.add does not intersect b-edges.to.remove [i.e. no conflicts created!]:
     # and edges.to.add does not intersect d-edges.to.remove [i.e. no conflicts created!]:
-    if (!ecount(graph.intersection(graph.difference(b, g.remove), g.add)) == 0) 
+    if (!ecount(graph.intersection(graph.difference(b, g.remove,byname="auto"), g.add,byname="auto")) == 0) 
       return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     #(3) neither order of edges.to.add intersects D:
     if (!is.null(d)) {
-      if (!ecount(graph.intersection(as.directed(g.add), d)) == 0) 
+      if (!ecount(graph.intersection(as.directed(g.add), d,byname="auto")) == 0) 
         return(list(graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     }
     #(4) check whether anything conflicts the strutural zeros of the model: 
@@ -1551,7 +1551,7 @@ Get.Bidirected.Move <- function(d=NULL, b, zeros=NULL,small.moves.coin=0) {
       #
       # we do not want g.add to intersect the zeros graph: (both are undirected a this point!)
 #     if (!ecount(graph.intersection(zeros,as.directed(g.add,mode="mutual"))) ==0 ){
-      if (!ecount(graph.intersection(zeros,g.add)) ==0 ){
+      if (!ecount(graph.intersection(zeros,g.add,byname="auto")) ==0 ){
 #        print("Get.Bidirected.Move.p1.ed found a zeros conflict! returning empty.") # FOR TESTING
         return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
       }
@@ -1606,32 +1606,32 @@ Get.Mixed.Move.p1.ed <- function(d, b,zeros.dir=NULL, zeros.bidir=NULL,small.mov
   #(1) edges.to.add makes a simple graph. This can happen if more than one partitions. 
   # We also check that the directed edges to be added do not create new reciprocal edges
   if ( (!is.simple(as.undirected(g.add.dir,mode="each")))   ||  (!is.simple(g.add.bidir)) || 
-         (!ecount(graph.intersection(g.add.bidir,as.undirected(g.add.dir)))==0) )
+         (!ecount(graph.intersection(g.add.bidir,as.undirected(g.add.dir),byname="auto"))==0) )
     return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   #(2) edges.to.add does not intersect b-edges.to.remove [i.e. no conflicts created!]:
-  if ((!ecount(graph.intersection(graph.difference(b, g.remove.bidir), g.add.bidir)) == 0) || 
-        !ecount(graph.intersection(as.undirected(graph.difference(d,g.remove.dir)),as.undirected(g.add.dir)))==0)
+  if ((!ecount(graph.intersection(graph.difference(b, g.remove.bidir,byname="auto"), g.add.bidir,byname="auto")) == 0) || 
+        !ecount(graph.intersection(as.undirected(graph.difference(d,g.remove.dir,byname="auto")),as.undirected(g.add.dir),byname="auto"))==0)
     ######This line causing the bug!! will fix soon (?what bug)
     return( list(graph.empty(vcount(d)), graph.empty(vcount(d)), graph.empty(vcount(b),directed=FALSE),graph.empty(vcount(b), directed=FALSE)) )
   #(3i) neither order of g.add.bidir intersects d-g.remove.dir:
   if (!is.null(d))
-    if (!ecount(graph.intersection(as.directed(g.add.bidir), graph.difference(d,g.remove.dir))) == 0)
+    if (!ecount(graph.intersection(as.directed(g.add.bidir), graph.difference(d,g.remove.dir,byname="auto"),byname="auto")) == 0)
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   #(3ii) unordered g.add.dir does not intersect b-g.remove.bidir:
   if (!is.null(b))
-    if (!ecount(graph.intersection(as.undirected(g.add.dir), graph.difference(b,g.remove.bidir)))==0)
+    if (!ecount(graph.intersection(as.undirected(g.add.dir), graph.difference(b,g.remove.bidir,byname="auto"),byname="auto"))==0)
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
   #(4) check whether anything conflicts the strutural zeros of the model: 
   if (!is.null(zeros.dir)){
     # we do not want g.add.dir to intersect the zeros directed graph 
-    if ( !ecount(graph.intersection(zeros.dir,g.add.dir)) ==0){
+    if ( !ecount(graph.intersection(zeros.dir,g.add.dir,byname="auto")) ==0){
       print("Get.Mixed.Move.p1.ed found a zeros conflict in the directed part! returning empty.") # FOR TESTING
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     }
   }
   if (!is.null(zeros.bidir)){
     # we do not want g.add.bidir to intersect the zeros undirected graph 
-    if ( !ecount(graph.intersection(zeros.bidir,g.add.bidir)) ==0){
+    if ( !ecount(graph.intersection(zeros.bidir,g.add.bidir,byname="auto")) ==0){
       print("Get.Mixed.Move.p1.ed found a zeros conflict in the undirected part! returning empty.") # FOR TESTING
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)),graph.empty(vcount(b), directed=FALSE),graph.empty(vcount(b), directed=FALSE)))
     }
@@ -1779,12 +1779,12 @@ Bipartite.Walk <- function(edges.to.remove,zeros=NULL, multiplicity.bound=1) {
 #    print("Bipartite.Walk is now checking for conflict with structural zeros.") # FOR TESTING 
     # if  is.directed(zeros) then check if edges.to.add(directed) intersect zeros: 
     if( is.directed(zeros)) {
-      if (!ecount(graph.intersection(zeros, graph(edges.to.add))) == 0) 
+      if (!ecount(graph.intersection(zeros, graph(edges.to.add),byname="auto")) == 0) 
         return(NULL)
     }else{
       # if !is.directed(zeros) then that means the graph edges.to.add should really be thought of as undirected (which is what will happen
       # once it gets passed back up the call tree), so undirect first, and then check if inersection with zeros is nonempty. 
-      if (!ecount(graph.intersection(zeros, graph(edges.to.add,directed=FALSE))) == 0) 
+      if (!ecount(graph.intersection(zeros, graph(edges.to.add,directed=FALSE),byname="auto")) == 0) 
         return(NULL)
     }
   }
@@ -1811,7 +1811,7 @@ as.arbitrary.directed <- function(b) {
     b.subset.incr = graph(rbind(el[, 2], el[, 1]))
     # make the directed graph out of:
     # (reversed.edges.of.b being directed in the decreasing order) union (remaining edges in incr.order):    
-    b.directed = graph.union(graph.difference(b.decr, b.subset.decr), b.subset.incr)
+    b.directed = graph.union(graph.difference(b.decr, b.subset.decr,byname="auto"), b.subset.incr,byname="auto")
   }
   return(b.directed)
 }
@@ -1886,7 +1886,7 @@ Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", zeros.di
     }else{
       j=1
       while (!found.graph.flag && j<=numGraphs){
-        if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE)))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE)))==0){
+        if (ecount(graph.difference(network[[1]],graph(graphsD[[j]], n=vcount(gdir), directed=TRUE),byname="auto"))==0 && ecount(graph.difference(network[[2]],graph(graphsB[[j]], n=vcount(gbidir), directed=FALSE),byname="auto"))==0){
           # network is the jth graph encountered
           found.graph.flag = TRUE
           current.network.index=j
