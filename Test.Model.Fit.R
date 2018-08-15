@@ -154,7 +154,7 @@ Test.Model.Fit.Parallel<-function(gdir, gbidir=graph.empty(vcount(gdir),directed
   # =================================== for cluster =============================================# 
   result <- foreach(i=1:iterations) %dopar% {
     #cat(sprintf("iteration = %d\n",i))
-    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir, zeros.bidir, ignore.trivial.moves, mleMatr, SBM.blocks=SBM.blocks,small.moves.coin)
+    tmp = Estimate.p.Value.for.Testing(gdir, gbidir, steps=numSteps, model, zeros.dir, zeros.bidir, ignore.trivial.moves, mleMatr, ed.coin, nzconst.coin, beta.SBM.coin, SBM.blocks=SBM.blocks,small.moves.coin)
     tmp
   }
   # =================================== end for cluster =========================================# 
