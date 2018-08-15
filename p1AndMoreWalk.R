@@ -1412,7 +1412,7 @@ Get.Directed.Move.p1.const.or.zero <- function(d,zeros.dir=NULL,zeros.bidir=NULL
     if (!is.simple(g.add)) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d))))
     #(2) edges.to.add does not intersect d - edges.to.remove in any direction [i.e. no conflicts created!]:
-    if (!ecount(graph.intersection(graph.difference(d,g.remove,byname="auto"),g.add,byname="auto"),byname="auto")==0) 
+    if (!ecount(graph.intersection(graph.difference(d,g.remove,byname="auto"),g.add,byname="auto"))==0) 
       return(list(graph.empty(vcount(d)),graph.empty(vcount(d)))) 
     #(3) Check whether g.add conflicts with structural zeros of the model:
     if (!is.null(zeros.dir)){
