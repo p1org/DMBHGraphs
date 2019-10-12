@@ -1,0 +1,5 @@
+.Rproj.user
+kitematic
+docker-compose.yml
+dev_*
+.rstudio
