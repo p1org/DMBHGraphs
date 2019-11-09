@@ -112,7 +112,7 @@ Estimate.p.Value<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE)
 ################################################################################################################
 ################################################################################################################
 ################################################################################################################
-Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0,component.graphs = NULL){
+Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), directed=FALSE), model="p1.recip.zero", zeros.dir=NULL, zeros.bidir=NULL, ignore.trivial.moves=FALSE, mleMatr = NULL, steps.for.walk=100, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), mle.maxiter = 10000, mle.tol = 1e-03, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0,component.graphs = NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )
@@ -438,7 +438,7 @@ p1.ips.HL <- function(network, reciprocation="nzconst", maxiter = 3000, tol=1e-6
 #     - The estimated mle matrix with dimensions according to the model
 #         specifications
 #######################################################################
-Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.HLalg.recip.nzconst", zeros.dir=NULL,zeros.bidir=NULL, maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
+Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="p1.recip.zero", zeros.dir=NULL,zeros.bidir=NULL, maxiter=3000, tol = 1e-03, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )
@@ -474,11 +474,7 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
     }
   }
 
-  if (model=="p1.HLalg.recip.nzconst"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="nzconst", zeros.dir, zeros.bidir, maxiter,tol)
-  }else if(model=="p1.HLalg.recip.zero"){
-    mleMatr = Get.MLE.p1.HL(gdir,gbidir, reciprocation="zero", zeros.dir, zeros.bidir, maxiter,tol)
-  }else if (model=="p1.recip.zero"){
+  if (model=="p1.recip.zero"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="zero", zeros.dir, zeros.bidir, maxiter,tol)
   }else if (model=="p1.recip.nzconst"){
     mleMatr = Get.MLE.p1.FW(gdir,gbidir, reciprocation="nzconst", zeros.dir, zeros.bidir, maxiter,tol)
@@ -681,7 +677,7 @@ compare.p1.MLEs<-function(mleHL,mleFW){
 #       with the MLE calculated using the loglin package.               #
 #     + "beta.SBM"
 ########################################################################
-Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMatr, SBM.blocks=NULL){
+Get.GoF.Statistic<- function(gdir, gbidir, model="p1.recip.zero", mleMatr, SBM.blocks=NULL){
   if (model == "beta.SBM"){
     if (is.null(SBM.blocks) || !is.vector(SBM.blocks))
       stop("beta.SBM model requires a non-empty vector SBM.blocks input." )
@@ -697,9 +693,7 @@ Get.GoF.Statistic<- function(gdir, gbidir, model="p1.HLalg.recip.nzconst", mleMa
 
   if (!is.igraph(gdir)||!is.igraph(gbidir)){stop("Get.GoF.Statistic Error: objects passed must be igraph objects.")}
 
-  if (model=="p1.HLalg.recip.nzconst" || model=="p1.HLalg.recip.zero"){
-    confMatr = Get.Configuration.Matrix.p1.HL(gdir,gbidir)
-  }else if (model=="p1.recip.nzconst" || model=="p1.recip.zero" || model=="p1.recip.ed"){
+  if (model=="p1.recip.nzconst" || model=="p1.recip.zero" || model=="p1.recip.ed"){
     confMatr = Get.Configuration.Matrix.p1.FW(gdir,gbidir)
   }else if (model=="beta.SBM"){
     confMatr = Get.Configuration.Matrix.beta.SBM(gbidir,blocks=SBM.blocks)
@@ -860,7 +854,7 @@ Get.Configuration.Matrix.beta.SBM<-function(g, blocks){
 # sequence of integers separated by commas. First two integers 	   		#
 # signify first edge etc. 										    #
 #######################################################################
-Write.Walk.To.File<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst",zeros.dir=NULL,zeros.bidir=NULL,  steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0,component.graphs = NULL){
+Write.Walk.To.File<-function(gdir,gbidir, model="p1.recip.zero",zeros.dir=NULL,zeros.bidir=NULL,  steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename = "walk.txt", beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0,component.graphs = NULL){
   write("====================", filename)
   num.cols = 2*max(ecount(gdir),ecount(gbidir)) #to pass to the write function so that all entries are in one row.
   network = list(gdir,gbidir)
@@ -897,7 +891,7 @@ Write.Network.To.File<-function(gdir,gbidir, filename = "walk.txt"){
 # by an animation function sometime in the future.						#
 # ADDED OPTIONAL INPUTS: to save as single file, to plot next ntwk if move=0
 #######################################################################
-Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0, component.graphs = NULL) {
+Save.Walk.Plots<-function(gdir,gbidir, model="p1.recip.zero", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3),nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), filename="FiberWalk", single.file=FALSE,grid=c(4,4),plot.trivial.moves=TRUE, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0, component.graphs = NULL) {
   network = list(gdir,gbidir)
   if(!single.file){
     png(sprintf("%s0.png",filename),width=800, height=600,bg="white")
@@ -933,7 +927,7 @@ Save.Walk.Plots<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", zeros.dir
 # Performs a walk on the fiber and plots the consecutive networks. 		#
 # It does not store consecutive networks.								#
 #######################################################################
-Plot.Walk<-function(gdir,gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0, component.graphs = NULL){
+Plot.Walk<-function(gdir,gbidir, model="p1.recip.zero", zeros.dir=NULL, zeros.bidir=NULL, steps=20, ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), ignore.trivial.moves=FALSE, beta.SBM.coin=c(1/2), SBM.blocks=NULL, small.moves.coin=0, component.graphs = NULL){
   network = list(gdir,gbidir)
   # Should be replaced by an animation function sometime in the future.
   for (i in 1:steps){
@@ -1112,7 +1106,7 @@ Get.Next.Network <- function(d, b, model="p1.recip.ed", zeros.dir=NULL, zeros.bi
 #           + undirected igraph object: the reciprocated only edges to add (only if model is p1.recip.ed)
 #######################################################################
 Get.Move.p1<-function(gdir, gbidir, model="p1.recip.ed",zeros.dir=NULL,zeros.bidir=NULL ,ed.coin=c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), small.moves.coin=0, component.graphs = NULL){
-  if (model=="p1.HLalg.recip.nzconst" || model=="p1.recip.nzconst" || model=="p1.HLalg.recip.zero" || model=="p1.recip.zero"){
+  if (model=="p1.recip.nzconst" || model=="p1.recip.zero"){
     coin.value = runif(1)
     if (coin.value<=nzconst.coin[1]){
       mixed.move = Get.Move.p1.ed(gdir, gbidir, zeros.dir,zeros.bidir, ed.coin,small.moves.coin, component.graphs)
@@ -1893,7 +1887,7 @@ Estimate.p.Value.From.GoFs<-function(gofs, burnsteps){
 #     - the Total Variation Distance of the walk, and
 #     - a count of all empty moves made in each graph.
 ###############################################################################################
-Enumerate.Fiber<-function(gdir, gbidir, model="p1.HLalg.recip.nzconst", zeros.dir=NULL, zeros.bidir=NULL, numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL,small.moves.coin=0,component.graphs = NULL){
+Enumerate.Fiber<-function(gdir, gbidir, model="p1.recip.zero", zeros.dir=NULL, zeros.bidir=NULL, numsteps=1000, ed.coin = c(1/3,1/3,1/3), nzconst.coin=c(ecount(gbidir)/(ecount(gdir)+ecount(gbidir)), ecount(gdir)/(ecount(gdir)+ecount(gbidir))), beta.SBM.coin=c(1/2), SBM.blocks=NULL,small.moves.coin=0,component.graphs = NULL){
   counts=c(1)
   current.network.index=1
   empty.move.counts=c(0)
