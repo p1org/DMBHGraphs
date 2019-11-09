@@ -5,6 +5,8 @@ library(igraph)
 expect_array_equal <- function(object, expected){
 
   format_indices <- function(x){
+    # helper function that formats matrix indices for printing,
+    # indices contained along rows of matrix
     formatted_indices <- list()
     for (i in 1:dim(x)[1]){
       formatted_indices[[i]] <- paste0("(", paste(x[i,], collapse=","), ")")
@@ -50,17 +52,49 @@ testthat::test_that(
       c(4,2,2,1), # 4 -> 2
       c(1,3,2,2), # 1 <-> 3
       c(3,1,2,2), # 3 <-> 1
-      c(1,4,1,1), # 1 -x- 4
-      c(4,1,1,1), # 4 -x- 1
-      c(2,3,1,1), # 2 -x- 3
-      c(3,2,1,1), # 3 -x- 2
-      c(3,4,1,1), # 3 -x- 4
-      c(4,3,1,1)  # 4 -x- 3
+      c(1,4,1,1), # 1 -/- 4
+      c(4,1,1,1), # 4 -/- 1
+      c(2,3,1,1), # 2 -/- 3
+      c(3,2,1,1), # 3 -/- 2
+      c(3,4,1,1), # 3 -/- 4
+      c(4,3,1,1)  # 4 -/- 3
     )
     for (c in cells){
       expected_result[c[1],c[2],c[3],c[4]] <- 1
     }
 
     expect_array_equal(Get.Configuration.Matrix.p1.FW(gdir, gbidir), expected_result)
+  }
+)
+
+testthat::test_that(
+  "Test that Get.Configuration.Matrix.beta.SBM returns correct matrix on toy example", {
+
+    ## Create test graph for basic test case ##
+    E <- matrix(c(1,2,2,4,1,3), nc=2, byrow=TRUE)
+    G <- igraph::graph_from_edgelist(E, directed=FALSE)
+    blocks <- c(1,1,2,2)
+
+    ## Create expected result for basic test case ##
+    expected_result <- array(data=0, dim=c(4,4,choose(2,2)+2,2))
+    cells <- list(
+      c(1,2,1,1),  # 1--2 in block 1
+      c(2,1,1,1),  # 2--1 in block 1
+      c(1,3,3,1),  # 1--3 between blocks 1 and 2
+      c(3,1,3,1),  # 3--1 between blocks 1 and 2
+      c(1,4,3,2),  # 1-/-4 between blocks 1 and 2
+      c(4,1,3,2),  # 4-/-1 between blocks 1 and 2
+      c(2,3,3,2),  # 2-/-3 between blocks 1 and 2
+      c(3,2,3,2),  # 3-/-2 between blocks 1 and 2
+      c(2,4,3,1),  # 2--4 between blocks 1 and 2
+      c(4,2,3,1),  # 4--2 between blocks 1 and 2
+      c(3,4,2,2),  # 3-/-4 in block 2
+      c(4,3,2,2)   # 4-/-3 in block 2
+    )
+    for (c in cells){
+      expected_result[c[1],c[2],c[3],c[4]] <- 1
+    }
+
+    expect_array_equal(Get.Configuration.Matrix.beta.SBM(G, blocks), expected_result)
   }
 )
