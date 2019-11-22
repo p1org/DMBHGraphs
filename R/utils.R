@@ -9,6 +9,15 @@ validate_directed <- function(g, type){
   }
 }
 
+# check if graph is undirected
+validate_undirected <- function(g, type){
+  if (is.directed(g)){
+    stop(
+      sub("graphtype", type, "graphtype must be undirected")
+    )
+  }
+}
+
 # check if graph is simple
 validate_simple <- function(g, type){
   if (!is.simple(g)){
@@ -34,4 +43,15 @@ validate_simple_directed <- function(g, type){
       sub("graphtype", type, "Directed graph graphtype is not simple")
     )
   }
+}
+
+validate_directed_graph_part <- function(g, type){
+  validate_directed(g, type)              # check if graph is directed
+  validate_no_recip(g, type)              # check for reciprocated edges
+  validate_simple_directed(g, type)       # check that undirected skeleton is simple (covers multiple edges in same direction)
+}
+
+validate_bidirected_graph_part <- function(g, type){
+  validate_undirected(g, type)            # check if graph is undirected
+  validate_simple(g, type)                # check if graph is simple
 }

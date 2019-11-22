@@ -24,6 +24,27 @@ testthat::test_that(
 )
 
 testthat::test_that(
+  "Test that validate_undirected() throws error when passed directed graph and returns NULL when passed undirected graph", {
+    
+    el <- matrix(
+      c(
+        c(1,2),
+        c(2,3),
+        c(3,1)
+      ), 
+      nc=2,
+      byrow=TRUE
+    )
+    G_undirected <- igraph::graph_from_edgelist(el=el, directed=FALSE)
+    G_directed <- igraph::graph_from_edgelist(el=el, directed=TRUE)
+    
+    testthat::expect_error(validate_undirected(G_directed, type="test_graph"))
+    testthat::expect_null(validate_undirected(G_undirected, type="test_graph"))
+    
+  }
+)
+
+testthat::test_that(
   "Test that validate_simple() throws error for non-simple graphs and returns NULL when passed simple graph", {
     
     el_no_simple <- matrix(
