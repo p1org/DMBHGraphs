@@ -35,11 +35,16 @@ testthat::test_that(
       nc=2,
       byrow=TRUE
     )
+    G_empty_dir <- graph.empty(3, directed=TRUE)
+    G_empty_udir <- graph.empty(3, directed=FALSE)
     G_undirected <- igraph::graph_from_edgelist(el=el, directed=FALSE)
     G_directed <- igraph::graph_from_edgelist(el=el, directed=TRUE)
     
     testthat::expect_error(validate_undirected(G_directed, type="test_graph"))
     testthat::expect_null(validate_undirected(G_undirected, type="test_graph"))
+    testthat::expect_error(validate_undirected(G_empty_dir, type="empty_test_graph"))
+    testthat::expect_null(validate_undirected(G_empty_udir, type="empty_test_graph"))
+    
     
   }
 )
@@ -70,11 +75,13 @@ testthat::test_that(
     G_no_simple_udir <- igraph::graph_from_edgelist(el_no_simple, directed=FALSE)
     G_simple_dir <- igraph::graph_from_edgelist(el_simple, directed=TRUE)
     G_simple_udir <- igraph::graph_from_edgelist(el_simple, directed=FALSE)
+    G_empty_udir <- graph.empty(3, directed=FALSE)
     
     testthat::expect_error(validate_simple(G_no_simple_dir, "test_graph"))
     testthat::expect_error(validate_simple(G_no_simple_udir, "test_graph"))
     testthat::expect_null(validate_simple(G_simple_dir), "test_graph")
     testthat::expect_null(validate_simple(G_simple_udir), "test_graph")
+    testthat::expect_null(validate_simple(G_empty_udir), "test_empty_graph")
     
   }
 )
