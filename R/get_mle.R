@@ -1,7 +1,7 @@
 library(igraph)
 
 
-balance_vertices <- function(g1, g2, message){
+balance_vertices <- function(g1, g2, message="Warning! Vertex sets unbalanced. Adding vertices to compensate."){
   
   n1 <- igraph::vcount(g1)
   n2 <- igraph::vcount(g2)
