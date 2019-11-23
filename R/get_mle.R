@@ -1,11 +1,14 @@
 library(igraph)
 
 
-balance_vertices <- function(g1, g2){
+balance_vertices <- function(g1, g2, message){
   
   n1 <- igraph::vcount(g1)
   n2 <- igraph::vcount(g2)
-
+  
+  if (n1 != n2){
+    warning(message)
+  }
   if (n1 > n2){
     g2 <- igraph::add_vertices(g2, n1-n2)
   }
@@ -44,7 +47,7 @@ validate_structural_zeros_graph <- function(g, n, type){
 #######################################################################
 Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
 
-  balanced_graphs <- balance_vertices(gdir, gbidir)
+  balanced_graphs <- balance_vertices(gdir, gbidir, "Warning! gbdir and gbidir have different vertex counts. Adding singleton vertices to balance counts.")
   gdir <- balanced_graphs[[1]]
   gbidir <- balanced_graphs[[1]]
   

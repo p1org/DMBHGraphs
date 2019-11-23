@@ -7,8 +7,7 @@ testthat::test_that(
     g1 <- igraph::make_full_graph(3)
     g2 <- igraph::make_full_graph(4)
     
-    output <- balance_vertices(g1, g2)
-    
+    testthat::expect_warning(output<-balance_vertices(g1, g2, "warning"))
     testthat::expect_equal(igraph::vcount(output[[1]]), 4)
     testthat::expect_equal(igraph::vcount(output[[2]]), 4)
     
