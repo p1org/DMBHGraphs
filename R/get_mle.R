@@ -1,5 +1,6 @@
 library(igraph)
 
+
 balance_vertices <- function(g1, g2){
   
   n1 <- igraph::vcount(g1)
@@ -14,9 +15,6 @@ balance_vertices <- function(g1, g2){
   
   return(list(g1, g2))
 }
-
-
-
 
 #######################################################################
 # Get.MLE.p1.FW                                                       #
@@ -33,15 +31,11 @@ balance_vertices <- function(g1, g2){
 #       of the model                                                    #
 #######################################################################
 Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
-  nd = vcount(gdir)
-  nb = vcount(gbidir)
-  n=max(nd,nb)
-  if (nd>nb){
-    gbidir = add.vertices(gbidir,nd-nb)
-  }
-  else if (nd<nb){
-    gdir = add.vertices(gdir,nb-nd)
-  }
+
+  balanced_graphs <- balance_vertices(gdir, gbidir)
+  gdir <- balanced_graphs[[1]]
+  gbidir <- balanced_graphs[[1]]
+  
   m = Get.Configuration.Matrix.p1.FW(gdir,gbidir)
   # ensure structural zeros at diagonals
   startM =array(data=0.25, dim=c(n,n,2,2))
