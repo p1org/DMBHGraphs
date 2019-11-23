@@ -14,3 +14,17 @@ testthat::test_that(
     
   }
 )
+
+testthat::test_that(
+  "Test that validate_structural_zeros_graph() function works as expected", {
+    
+    n <- 5
+    g1 <- igraph::make_full_graph(n-1)
+    g2 <- igraph::make_full_graph(n+1)
+    
+    testthat::expect_equal(igraph::vcount(validate_structural_zeros_graph(g1, n, "test_graph")), 5)
+    testthat::expect_error(validate_structural_zeros_graph(g2, n, "test_graph"))
+    
+    
+  }
+)

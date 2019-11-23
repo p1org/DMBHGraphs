@@ -16,6 +16,18 @@ balance_vertices <- function(g1, g2){
   return(list(g1, g2))
 }
 
+validate_structural_zeros_graph <- function(g, n, type){
+  nsz <- igraph::vcount(g)
+  
+  if (nsz < n){
+    g <- igraph::add_vertices(g, n-nsz)
+  } else if (nsz > n){
+    stop(sub("graphtype", type, "The inputted structural zeros graphtype graph has more vertices than the inputted graphtype graph."))
+  }
+  
+  return(g)
+}
+
 #######################################################################
 # Get.MLE.p1.FW                                                       #
 # Returns the MLE for the selected version of the p1 model            #
