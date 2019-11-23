@@ -48,6 +48,8 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
   gdir <- balanced_graphs[[1]]
   gbidir <- balanced_graphs[[1]]
   
+  n <- igraph::vcount(gdir)
+  
   m = Get.Configuration.Matrix.p1.FW(gdir,gbidir)
   # ensure structural zeros at diagonals
   startM =array(data=0.25, dim=c(n,n,2,2))
@@ -56,25 +58,24 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
   }
   
   # Ensure user-specified structural zeros are set
-  if (!is.null(zeros.dir) || !is.null(zeros.bidir)){
-    if (!is.null(zeros.dir)){
-      nzeros.dir = vcount(zeros.dir)
-      if (nzeros.dir < n)
-        zeros.dir = add.vertices(zeros.dir, n-nzeros.dir)
-      else if (nzeros.dir > n)
-        print("The inputted structural zeros directed graph has more vertices than the inputted directed graph.")
-    }else zeros.dir = graph.empty(n)
-    if (!is.null(zeros.bidir)){
-      nzeros.bidir = vcount(zeros.bidir)
-      if (nzeros.bidir < n)
-        zeros.bidir = add.vertices(zeros.bidir, n-nzeros.bidir)
-      else if (nzeros.bidir > n)
-        print("The inputted structural zeros undirected graph has more vertices than the inputted undirected graph.")
-    }else zeros.bidir = graph.empty(n, directed=FALSE)
+  if (!is.null(zeros.dir)){
+    zeros.dir <- validate_structural_zeros_graph(zeros.dir, n, "directed")
+  } else {
+    zeros.dir <- igraph::graph.empty(n)
+  }
+  
+  if (!is.null(zeros.bidir)){
+    zeros.bidir <- validate_structural_zeros_graph(zeros.bidir, n, "undirected")
+  } else {
+    zeros.bidir <- igraph::graph.empty(n, directed=FALSE)
+  }
+  
+  if (!is.null(zeros.bidir) || !is.null(zeros.dir)){
     mzeros = 1-Get.Configuration.Matrix.p1.FW(zeros.dir, zeros.bidir)
     mzeros[,,1,1] = 1
     startM[,,,] = startM * mzeros
   }
+  
   
   if (reciprocation=="edge-dependent"){
     fm <- loglin(m, list(c(1,2), c(1,3,4),c(2,3,4)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
