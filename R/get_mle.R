@@ -1,3 +1,23 @@
+library(igraph)
+
+balance_vertices <- function(g1, g2){
+  
+  n1 <- igraph::vcount(g1)
+  n2 <- igraph::vcount(g2)
+
+  if (n1 > n2){
+    g2 <- igraph::add_vertices(g2, n1-n2)
+  }
+  if (n2 > n1){
+    g1 <- igraph::add.vertices(g1, n2-n1)
+  }
+  
+  return(list(g1, g2))
+}
+
+
+
+
 #######################################################################
 # Get.MLE.p1.FW                                                       #
 # Returns the MLE for the selected version of the p1 model            #
