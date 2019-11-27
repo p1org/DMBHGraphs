@@ -127,14 +127,16 @@ Estimate.p.Value.for.Testing<-function(gdir, gbidir=graph.empty(vcount(gdir), di
     gdir = mixed.graph[[1]]
     gbidir = mixed.graph[[2]]
   }
+  
   #Error Checking
-  if(!is.simple(as.undirected(gdir,mode=c("each")))){ stop("Reciprocated edges in directed graph or gdir not simple.") }
-  if(!is.simple(gbidir)){ stop("gbidir must be a simple graph.") }
-  if(!is.directed(gdir)){  stop("gdir must be a directed graph.") }
-  if(is.directed(gbidir)){
-    stop("gbidir must be an undirected graph.")
+  validate_bidirected_graph_part(gbidir, "gbidir")
+  validate_directed_graph_part(gdir, "gdir")
+  if (!is.null(zeros.dir)){
+    validate_directed_graph_part(zeros.dir, "zeros.dir")
   }
-
+  if (!is.null(zeros.bidir)){
+    validate_bidirected_graph_part(zeros.bidir, "zeros.bidir")
+  }
 
 
   nd = vcount(gdir)
