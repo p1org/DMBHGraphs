@@ -46,10 +46,10 @@ testthat::test_that(
     ## Create expected result for basic test case ##
     expected_result <- array(data=0, dim=c(4,4,2,2))
     cells <- list(
-      c(1,2,2,1), # 1 -> 2
-      c(2,1,1,2), # 2 <- 1
-      c(2,4,1,2), # 2 <- 4
-      c(4,2,2,1), # 4 -> 2
+      c(1,2,1,2), # 1 -> 2
+      c(2,1,2,1), # 2 <- 1
+      c(2,4,2,1), # 2 <- 4
+      c(4,2,1,2), # 4 -> 2
       c(1,3,2,2), # 1 <-> 3
       c(3,1,2,2), # 3 <-> 1
       c(1,4,1,1), # 1 -/- 4

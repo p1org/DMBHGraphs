@@ -56,8 +56,8 @@ Get.Configuration.Matrix.p1.FW<-function(gdir,gbidir){
     for(k in seq(1,length(gdir.vector),2)){
       i=gdir.vector[k]
       j=gdir.vector[k+1]
-      x[i,j,2,1]=1
-      x[j,i,1,2]=1
+      x[i,j,1,2]=1
+      x[j,i,2,1]=1
     }
   }
   if(ecount(gbidir)!=0){
