@@ -40,7 +40,7 @@ structural_zeros_matrix <- function(zeros.dir, zeros.bidir){
   
   n <- igraph::vcount(zeros.dir)
   
-  mzeros <- 1-Get.Configuration.Matrix.p1.FW(zeros.dir, zeros.bidir)
+  mzeros <- array(data=1, dim=c(n,n,2,2))
   
   for (i in 1:n){
     for (j in 1:n){
