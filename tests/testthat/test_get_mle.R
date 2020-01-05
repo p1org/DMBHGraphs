@@ -69,3 +69,42 @@ testthat::test_that(
     expect_array_equal(result, expected_result)
   }
 )
+
+testthat::test_that(
+  "Test thatdefault_beta_sbm_zeros() is working correctly", {
+    
+    n <- 4
+    blocks <- c(1,1,2,2)
+    k <- 2
+    # insert test code here
+    
+    ## Create expected result for basic test case ##
+    expected_result <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+    
+    for (i in 1:n){
+      expected_result[i,i, ,c(1,2)] <- 0
+    }
+    
+    expected_result[1,2, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
+    expected_result[2,1, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
+    
+    
+    expected_result[3,4, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
+    expected_result[4,3, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
+    
+
+    result <- default_beta_sbm_zeros(n, blocks)
+    expect_array_equal(result, expected_result)
+
+  }
+  
+)
+
+testthat::test_that(
+  "Test that input checking in default_beta_sbm_zeros() function is working", {
+    
+    testthat::expect_error(default_beta_sbm_zeros(3, c(1,2)))
+    testthat::expect_error(default_beta_sbm_zeros(4, c(1,1,2,4)))
+    
+  }
+)

@@ -63,6 +63,8 @@ structural_zeros_matrix <- function(zeros.dir, zeros.bidir){
   return(mzeros)
 }
 
+
+
 #######################################################################
 # Get.MLE.p1.FW                                                       #
 # Returns the MLE for the selected version of the p1 model            #
@@ -124,6 +126,38 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
   mleMatr = fm$fit
   return (mleMatr)
 }
+
+
+# function for making structural zeros that are enforced by the block structure of the graph
+default_beta_sbm_zeros <- function(n, blocks){
+  
+  if (length(blocks) != n){
+    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
+  }
+  
+  if (!all(seq(1, length(unique(blocks))) == order(unique(blocks), deacreasing=TRUE))){
+    stop("The indices of the block IDs must be consecutive integers starting with 1.")
+  }
+  
+  k <- max(blocks)
+  
+  zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+  
+  # ensure diagonals are structural zeros
+  for (i in 1:n){
+    zeros_graph[i,i, , c(1,2)] <- 0
+  }
+  
+  # ensure that any configuration of an edge that connects two vertices inside the 
+  # same block that samples from outside that block is a structural zero
+  for (i in 1:k){
+    members <- which(blocks == i)
+    zeros_graph[members, members, setdiff(seq(1,k+choose(k,2)), i), c(1,2)] <- 0
+  }
+  
+  return(zeros_graph)
+}
+
 
 
 #######################################################################
