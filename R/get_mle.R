@@ -135,7 +135,7 @@ default_beta_sbm_zeros <- function(n, blocks){
     stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
   }
   
-  if (!all(seq(1, length(unique(blocks))) == order(unique(blocks), deacreasing=TRUE))){
+  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
     stop("The indices of the block IDs must be consecutive integers starting with 1.")
   }
   
@@ -158,6 +158,41 @@ default_beta_sbm_zeros <- function(n, blocks){
   return(zeros_graph)
 }
 
+
+user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
+  
+  n <- igraph::vcount(g.zeros)
+  
+  if (length(blocks) != n){
+    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
+  }
+  
+  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
+    stop("The indices of the block IDs must be consecutive integers starting with 1.")
+  }
+  
+  k <- max(blocks)
+  
+  zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+  
+  edgelist <- igraph::get.edgelist(g.zeros, names=FALSE)
+  
+  for (q in 1:dim(edgelist)[1]){
+    
+    u <- edgelist[q, 1]
+    v <- edgelist[q, 2]
+    
+    if (blocks[u] == blocks[v]){
+      zeros_graph[u,v,blocks[u], c(1,2)] <- 0
+      zeros_graph[v,u,blocks[u], c(1,2)] <- 0
+    } else{
+      print("asf")
+      zeros_graph[u,v,,c(1,2)] <- 0
+      zeros_graph[v,u,,c(1,2)] <- 0
+    }
+  }
+  return(zeros_graph)
+}
 
 
 #######################################################################

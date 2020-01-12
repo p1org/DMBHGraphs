@@ -108,3 +108,28 @@ testthat::test_that(
     
   }
 )
+
+testthat::test_that(
+  "Test that function for user-defined structural zeros for beta model is working", {
+    
+    g <- igraph::graph.empty(n=4, directed=FALSE)
+    g <- igraph::add.edges(graph=g, edges=c(1,2,1,3))
+    
+    n <- 4
+    k <- 2
+    blocks <- c(1,1,2,2)
+    
+    expected_result <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+    
+    expected_result[1,2,1,c(1,2)] <- 0
+    expected_result[2,1,1,c(1,2)] <- 0
+    
+    expected_result[1,3,,c(1,2)] <- 0
+    expected_result[3,1,,c(1,2)] <- 0
+    
+    result <- user_defined_beta_sbm_zeros(g, blocks)
+    expect_array_equal(result, expected_result)
+    
+    
+  }
+)
