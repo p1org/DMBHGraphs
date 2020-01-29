@@ -19,6 +19,7 @@ balance_vertices <- function(g1, g2, message="Warning! Vertex sets unbalanced. A
   return(list(g1, g2))
 }
 
+# TODO: rename this function to clarify what its validating
 validate_structural_zeros_graph <- function(g, n, type){
   nsz <- igraph::vcount(g)
   
@@ -29,6 +30,37 @@ validate_structural_zeros_graph <- function(g, n, type){
   }
   
   return(g)
+}
+
+
+structural_zeros_matrix <- function(zeros.dir, zeros.bidir){
+  
+  adj.dir <- igraph::get.adjacency(zeros.dir, sparse=FALSE)
+  adj.bidir <- igraph::get.adjacency(zeros.bidir, sparse=FALSE)
+  
+  n <- igraph::vcount(zeros.dir)
+  
+  mzeros <- array(data=1, dim=c(n,n,2,2))
+  
+  for (i in 1:n){
+    for (j in 1:n){
+      # directed zeros
+      mzeros[i,j,1,2] <- 1 - adj.dir[i,j]
+      mzeros[j,i,2,1] <- 1 - adj.dir[i,j]
+      # undirected zeros
+      mzeros[i,j,2,2] <- 1 - adj.bidir[i,j]
+      mzeros[j,i,2,2] <- 1 - adj.bidir[i,j]
+      # both
+      mzeros[i,j,1,1] <- 1 - adj.dir[i,j]*adj.dir[j,i]*adj.bidir[i,j]
+      mzeros[j,i,1,1] <- 1 - adj.dir[i,j]*adj.dir[j,i]*adj.bidir[i,j]
+    }
+  }
+  
+  for (i in 1:n){
+    mzeros[i,i,,] <- c(0,0,0,0)
+  }
+
+  return(mzeros)
 }
 
 #######################################################################
