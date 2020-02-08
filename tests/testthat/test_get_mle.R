@@ -71,7 +71,7 @@ testthat::test_that(
 )
 
 testthat::test_that(
-  "Test thatdefault_beta_sbm_zeros() is working correctly", {
+  "Test that default_beta_sbm_zeros() is working correctly", {
     
     n <- 4
     blocks <- c(1,1,2,2)
@@ -85,14 +85,25 @@ testthat::test_that(
       expected_result[i,i, ,c(1,2)] <- 0
     }
     
+    # inside block 1
     expected_result[1,2, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
     expected_result[2,1, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
     
-    
+    # inside block 2
     expected_result[3,4, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
     expected_result[4,3, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
     
-
+    # between 1 and 2
+    expected_result[1,3, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[3,1, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[1,4, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[4,1, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[2,3, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[3,2, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[2,4, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[4,2, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    
+    
     result <- default_beta_sbm_zeros(n, blocks)
     expect_array_equal(result, expected_result)
 

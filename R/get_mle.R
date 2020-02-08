@@ -155,6 +155,16 @@ default_beta_sbm_zeros <- function(n, blocks){
     zeros_graph[members, members, setdiff(seq(1,k+choose(k,2)), i), c(1,2)] <- 0
   }
   
+  for (i in 1:(k-1)){
+    for (j in (i+1):k){
+      members_i <- which(blocks == i)
+      members_j <- which(blocks == j)
+      offset = k*(i-1)-(i-1)*(i)/2+j-i
+      zeros_graph[members_i, members_j, setdiff(seq(1,k+choose(k,2)), k+offset), c(1,2)] <- 0
+      zeros_graph[members_j, members_i, setdiff(seq(1,k+choose(k,2)), k+offset), c(1,2)] <- 0
+    }
+  }
+  
   return(zeros_graph)
 }
 
