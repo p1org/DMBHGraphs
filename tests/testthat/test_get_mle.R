@@ -70,6 +70,7 @@ testthat::test_that(
   }
 )
 
+
 testthat::test_that(
   "Test that default_beta_sbm_zeros() is working correctly", {
     
@@ -108,17 +109,8 @@ testthat::test_that(
     expect_array_equal(result, expected_result)
 
   }
-  
 )
 
-testthat::test_that(
-  "Test that input checking in default_beta_sbm_zeros() function is working", {
-    
-    testthat::expect_error(default_beta_sbm_zeros(3, c(1,2)))
-    testthat::expect_error(default_beta_sbm_zeros(4, c(1,1,2,4)))
-    
-  }
-)
 
 testthat::test_that(
   "Test that function for user-defined structural zeros for beta model is working", {
@@ -141,6 +133,46 @@ testthat::test_that(
     result <- user_defined_beta_sbm_zeros(g, blocks)
     expect_array_equal(result, expected_result)
     
+  }
+)
+
+
+testthat::test_that(
+  "Test that error checking in Get.MLE.beta.SBM() function is working correctly", {
+    
+    # set up test fixtures
+    gdir <- igraph::graph.empty(n=4, directed=TRUE)
+    g<- igraph::graph.empty(n=4)
+
+    # test that error is raised when directed graph is passed
+    testthat::expect_error(Get.MLE.beta.SBM(gdir, c(1,2,3,4)))
+    
+    # test that error is raised when non-consecutive block sequence is passed
+    testthat::expect_error(Get.MLE.beta.SBM(g, c(1,3,4,5)))
+    
+    # test that error is raised when block sequence isn't the same length as the number of vertices
+    testthat::expect_error(Get.MLE.beta.SBM(g, c(1,2,3)))
     
   }
 )
+
+
+testthat::test_that(
+  "Test that Get.MLE.beta.SBM() executes a complete run successfully on legitimate data.", {
+    
+    E <- matrix(c(1,2,3,1,4,2), nc=2, byrow=TRUE)
+    g <- igraph::graph_from_edgelist(E, directed=FALSE)
+    blocks <- c(1,1,2,2)
+    k <- 2
+    
+    user_defined_zeros <- igraph::graph.empty(n=4, directed=FALSE)
+    user_defined_zeros <- igraph::add_edges(user_defined_zeros, c(3,4))
+    
+    output <- Get.MLE.beta.SBM(g, blocks, user_defined_zeros)
+    
+    # test that the output dimensions are equal to the dimensions of the configuration matrix
+    testthat::expect_equal(dim(output), c(n,n,k+choose(k,2),2))
+    
+  }
+)
+
