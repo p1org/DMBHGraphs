@@ -131,14 +131,6 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
 # function for making structural zeros that are enforced by the block structure of the graph
 default_beta_sbm_zeros <- function(n, blocks){
   
-  if (length(blocks) != n){
-    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
-  }
-  
-  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
-    stop("The indices of the block IDs must be consecutive integers starting with 1.")
-  }
-  
   k <- max(blocks)
   
   zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
@@ -171,16 +163,12 @@ default_beta_sbm_zeros <- function(n, blocks){
 
 user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
   
+  
+  if (igraph::is.directed(g.zeros)){
+    stop("The user defined structural zeros graph must be undirected.")
+  }
+  
   n <- igraph::vcount(g.zeros)
-  
-  if (length(blocks) != n){
-    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
-  }
-  
-  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
-    stop("The indices of the block IDs must be consecutive integers starting with 1.")
-  }
-  
   k <- max(blocks)
   
   zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
@@ -196,7 +184,6 @@ user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
       zeros_graph[u,v,blocks[u], c(1,2)] <- 0
       zeros_graph[v,u,blocks[u], c(1,2)] <- 0
     } else{
-      print("asf")
       zeros_graph[u,v,,c(1,2)] <- 0
       zeros_graph[v,u,,c(1,2)] <- 0
     }
@@ -216,9 +203,7 @@ user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
 #   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
 #   - tol: floate, the tolerance of the IPS algorithm.
 #   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
-#   - zeros.dir: igraph directed graph, optional input to designate any #
-#       directed edges that are structural zeros of the model   [not currently used]            #
-#   - zeros.bidir: igraph directed graph, optional input to designate   #
+#   - zeros.g: igraph undirected graph, optional input to designate     #
 #       any undirected(or:bidirected) edges that are structural zeros   #
 #       of the model  [not currently used]                              #
 # Output:
@@ -226,38 +211,33 @@ user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
 #       number of blocks;
 #       represents the mle estimate of the model.
 #######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
-  n = vcount(g)
-  k = max(blocks)
-  m = Get.Configuration.Matrix.beta.SBM(g,blocks)
+Get.MLE.beta.SBM<-function(g, blocks, zeros.g=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
   
-  # Ensure structural zeros get preserved
-  startM =array(data=0, dim=c(n,n,k+choose(k,2),2))
-  n.block = rep(0,k)
-  v.block = rep(list(),k)
-  for (i in 1:k){
-    v.block[[i]] = which(blocks==i)
-    n.block[i] = length(v.block[[i]])
-    startM[v.block[[i]], v.block[[i]], i,1] = rep(.5,n.block[i]^2)
-    startM[v.block[[i]], v.block[[i]], i,2] = rep(.5,n.block[i]^2)
-    
-    for (j in 1:n){
-      startM[j,j,i,1]=0
-      startM[j,j,i,2]=0
-    }
+  if (igraph::is.directed(g)){
+    stop("The input graph must be undirected.")
   }
-  for (i in 1:(k-1)){
-    for (j in (i+1):k){
-      offset = k*(i-1)-(i-1)*(i)/2+j-i
-      startM[v.block[[i]], v.block[[j]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
-      startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
-      
-      startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
-      startM[v.block[[j]], v.block[[i]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
-      
-    }
+
+  n <- vcount(g)
+  
+  if (length(blocks) != n){
+    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
   }
+  
+  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
+    stop("The indices of the block IDs must be consecutive integers starting with 1.")
+  }
+  
+  m = Get.Configuration.Matrix.beta.SBM(g, blocks)
+  startM <- default_beta_sbm_zeros(n, blocks)
+  
+  if (!is.null(zeros.g)){
+    user_defined_zeros <- user_defined_beta_sbm_zeros(zeros.g, blocks)
+    startM <- startM + user_defined_zeros
+  }
+  
+ 
   fm <- loglin(m, list(c(1,4), c(2,4), c(3,4), c(1,2,3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
-  mleMatr = fm$fit
+  mleMatr <- fm$fit
+  
   return (mleMatr)
 }
