@@ -140,13 +140,15 @@ default_beta_sbm_zeros <- function(n, blocks){
     zeros_graph[i,i, , c(1,2)] <- 0
   }
   
-  # ensure that any configuration of an edge that connects two vertices inside the 
-  # same block that samples from outside that block is a structural zero
+  # for all vertices in the same block, make sure any other edge configuration that places
+  # the edges in different blocks are structural zeros
   for (i in 1:k){
     members <- which(blocks == i)
     zeros_graph[members, members, setdiff(seq(1,k+choose(k,2)), i), c(1,2)] <- 0
   }
   
+  # for all edges between two distinct blocks, make sure any other edge configuration that 
+  # places them between different blocks or the same block are structural zeros
   for (i in 1:(k-1)){
     for (j in (i+1):k){
       members_i <- which(blocks == i)
