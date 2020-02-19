@@ -234,7 +234,7 @@ Get.MLE.beta.SBM<-function(g, blocks, zeros.g=NULL, maxiter=20, tol=0.1, print.d
   
   if (!is.null(zeros.g)){
     user_defined_zeros <- user_defined_beta_sbm_zeros(zeros.g, blocks)
-    startM <- startM + user_defined_zeros
+    startM <- startM * user_defined_zeros
   }
   
  
