@@ -171,7 +171,7 @@ testthat::test_that(
     output <- Get.MLE.beta.SBM(g, blocks, user_defined_zeros)
     
     # test that the output dimensions are equal to the dimensions of the configuration matrix
-    testthat::expect_equal(dim(output), c(n,n,k+choose(k,2),2))
+    testthat::expect_equal(dim(output), c(4,4,k+choose(k,2),2))
     
   }
 )
