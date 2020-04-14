@@ -166,9 +166,8 @@ testthat::test_that(
     k <- 2
     
     user_defined_zeros <- igraph::graph.empty(n=4, directed=FALSE)
-    user_defined_zeros <- igraph::add_edges(user_defined_zeros, c(3,4))
-    
-    output <- Get.MLE.beta.SBM(g, blocks, user_defined_zeros)
+
+    output <- Get.MLE.beta.SBM(g, blocks)
     
     # test that the output dimensions are equal to the dimensions of the configuration matrix
     testthat::expect_equal(dim(output), c(4,4,k+choose(k,2),2))

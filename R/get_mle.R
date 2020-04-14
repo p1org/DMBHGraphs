@@ -205,15 +205,12 @@ user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
 #   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
 #   - tol: floate, the tolerance of the IPS algorithm.
 #   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
-#   - zeros.g: igraph undirected graph, optional input to designate     #
-#       any undirected(or:bidirected) edges that are structural zeros   #
-#       of the model  [not currently used]                              #
 # Output:
 #   - mleMatr, array of dimensions n x n x (k + k choose 2) x 2, for k is the
 #       number of blocks;
 #       represents the mle estimate of the model.
 #######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, zeros.g=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
+Get.MLE.beta.SBM<-function(g, blocks, maxiter=20, tol=0.1, print.deviation=FALSE){
   
   if (igraph::is.directed(g)){
     stop("The input graph must be undirected.")
@@ -232,12 +229,6 @@ Get.MLE.beta.SBM<-function(g, blocks, zeros.g=NULL, maxiter=20, tol=0.1, print.d
   m = Get.Configuration.Matrix.beta.SBM(g, blocks)
   startM <- default_beta_sbm_zeros(n, blocks)
   
-  if (!is.null(zeros.g)){
-    user_defined_zeros <- user_defined_beta_sbm_zeros(zeros.g, blocks)
-    startM <- startM * user_defined_zeros
-  }
-  
- 
   fm <- loglin(m, list(c(1,4), c(2,4), c(3,4), c(1,2,3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
   mleMatr <- fm$fit
   
