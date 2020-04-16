@@ -298,62 +298,7 @@ Get.MLE<-function(gdir, gbidir=graph.empty(vcount(gdir),directed=FALSE), model="
 }
 
 
-#######################################################################
-# Get.MLE.beta.SBM
-# Computes the MLE for the beta-SBM model through an iterative proportional fitting algorithm.
-# Input:
-#   - g, igraph, undirected object
-#   - blocks, integer vector of length n (the number of vertices in g);
-#       blocks[i] is the block that vertex i of g is assigned to.
-# Optional Input:
-#   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
-#   - tol: floate, the tolerance of the IPS algorithm.
-#   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
-#   - zeros.dir: igraph directed graph, optional input to designate any #
-#       directed edges that are structural zeros of the model   [not currently used]            #
-#   - zeros.bidir: igraph directed graph, optional input to designate   #
-#       any undirected(or:bidirected) edges that are structural zeros   #
-#       of the model  [not currently used]                              #
-# Output:
-#   - mleMatr, array of dimensions n x n x (k + k choose 2) x 2, for k is the
-#       number of blocks;
-#       represents the mle estimate of the model.
-#######################################################################
-Get.MLE.beta.SBM<-function(g, blocks, zeros.dir=NULL, zeros.bidir=NULL, maxiter=20, tol=0.1, print.deviation=FALSE){
-  n = vcount(g)
-  k = max(blocks)
-  m = Get.Configuration.Matrix.beta.SBM(g,blocks)
 
-  # Ensure structural zeros get preserved
-  startM =array(data=0, dim=c(n,n,k+choose(k,2),2))
-  n.block = rep(0,k)
-  v.block = rep(list(),k)
-  for (i in 1:k){
-    v.block[[i]] = which(blocks==i)
-    n.block[i] = length(v.block[[i]])
-    startM[v.block[[i]], v.block[[i]], i,1] = rep(.5,n.block[i]^2)
-    startM[v.block[[i]], v.block[[i]], i,2] = rep(.5,n.block[i]^2)
-
-    for (j in 1:n){
-      startM[j,j,i,1]=0
-      startM[j,j,i,2]=0
-    }
-  }
-  for (i in 1:(k-1)){
-    for (j in (i+1):k){
-      offset = k*(i-1)-(i-1)*(i)/2+j-i
-      startM[v.block[[i]], v.block[[j]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
-      startM[v.block[[i]], v.block[[j]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
-
-      startM[v.block[[j]], v.block[[i]],  k+offset,1] = rep(.5,n.block[i]*n.block[j])
-      startM[v.block[[j]], v.block[[i]],  k+offset,2] = rep(.5,n.block[i]*n.block[j])
-
-    }
-  }
-  fm <- loglin(m, list(c(1,4), c(2,4), c(3,4), c(1,2,3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
-  mleMatr = fm$fit
-  return (mleMatr)
-}
 #########################################################################################################
 #########################################################################################################
 compare.p1.MLEs<-function(mleHL,mleFW){

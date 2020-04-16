@@ -63,6 +63,8 @@ structural_zeros_matrix <- function(zeros.dir, zeros.bidir){
   return(mzeros)
 }
 
+
+
 #######################################################################
 # Get.MLE.p1.FW                                                       #
 # Returns the MLE for the selected version of the p1 model            #
@@ -122,5 +124,113 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
     stop("Get.MLE.p1.FW error: reciprocation parameter option must be one of the prespecified options.")
   }
   mleMatr = fm$fit
+  return (mleMatr)
+}
+
+
+# function for making structural zeros that are enforced by the block structure of the graph
+default_beta_sbm_zeros <- function(n, blocks){
+  
+  k <- max(blocks)
+  
+  zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+  
+  # ensure diagonals are structural zeros
+  for (i in 1:n){
+    zeros_graph[i,i, , c(1,2)] <- 0
+  }
+  
+  # for all vertices in the same block, make sure any other edge configuration that places
+  # the edges in different blocks are structural zeros
+  for (i in 1:k){
+    members <- which(blocks == i)
+    zeros_graph[members, members, setdiff(seq(1,k+choose(k,2)), i), c(1,2)] <- 0
+  }
+  
+  # for all edges between two distinct blocks, make sure any other edge configuration that 
+  # places them between different blocks or the same block are structural zeros
+  for (i in 1:(k-1)){
+    for (j in (i+1):k){
+      members_i <- which(blocks == i)
+      members_j <- which(blocks == j)
+      offset = k*(i-1)-(i-1)*(i)/2+j-i
+      zeros_graph[members_i, members_j, setdiff(seq(1,k+choose(k,2)), k+offset), c(1,2)] <- 0
+      zeros_graph[members_j, members_i, setdiff(seq(1,k+choose(k,2)), k+offset), c(1,2)] <- 0
+    }
+  }
+  
+  return(zeros_graph)
+}
+
+
+user_defined_beta_sbm_zeros <- function(g.zeros, blocks){
+  
+  
+  if (igraph::is.directed(g.zeros)){
+    stop("The user defined structural zeros graph must be undirected.")
+  }
+  
+  n <- igraph::vcount(g.zeros)
+  k <- max(blocks)
+  
+  zeros_graph <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+  
+  edgelist <- igraph::get.edgelist(g.zeros, names=FALSE)
+  
+  for (q in 1:dim(edgelist)[1]){
+    
+    u <- edgelist[q, 1]
+    v <- edgelist[q, 2]
+    
+    if (blocks[u] == blocks[v]){
+      zeros_graph[u,v,blocks[u], c(1,2)] <- 0
+      zeros_graph[v,u,blocks[u], c(1,2)] <- 0
+    } else{
+      zeros_graph[u,v,,c(1,2)] <- 0
+      zeros_graph[v,u,,c(1,2)] <- 0
+    }
+  }
+  return(zeros_graph)
+}
+
+
+#######################################################################
+# Get.MLE.beta.SBM
+# Computes the MLE for the beta-SBM model through an iterative proportional fitting algorithm.
+# Input:
+#   - g, igraph, undirected object
+#   - blocks, integer vector of length n (the number of vertices in g);
+#       blocks[i] is the block that vertex i of g is assigned to.
+# Optional Input:
+#   - maxiter: integer, the maximum number of iterations to be performed in the IPS algorithm.
+#   - tol: floate, the tolerance of the IPS algorithm.
+#   - print.deviation, boolean, whether the IPS algorithm should print the deviation on the terminal.
+# Output:
+#   - mleMatr, array of dimensions n x n x (k + k choose 2) x 2, for k is the
+#       number of blocks;
+#       represents the mle estimate of the model.
+#######################################################################
+Get.MLE.beta.SBM<-function(g, blocks, maxiter=20, tol=0.1, print.deviation=FALSE){
+  
+  if (igraph::is.directed(g)){
+    stop("The input graph must be undirected.")
+  }
+
+  n <- vcount(g)
+  
+  if (length(blocks) != n){
+    stop("The length of the block assignment vector must be the same as the number of vertices in the graph")
+  }
+  
+  if (!all(seq(1, length(unique(blocks))) == sort(unique(blocks), decreasing=FALSE))){
+    stop("The indices of the block IDs must be consecutive integers starting with 1.")
+  }
+  
+  m = Get.Configuration.Matrix.beta.SBM(g, blocks)
+  startM <- default_beta_sbm_zeros(n, blocks)
+  
+  fm <- loglin(m, list(c(1,4), c(2,4), c(3,4), c(1,2,3)), fit=TRUE, start=startM, iter=maxiter, eps=tol, print=print.deviation)
+  mleMatr <- fm$fit
+  
   return (mleMatr)
 }

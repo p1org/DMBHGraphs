@@ -69,3 +69,109 @@ testthat::test_that(
     expect_array_equal(result, expected_result)
   }
 )
+
+
+testthat::test_that(
+  "Test that default_beta_sbm_zeros() is working correctly", {
+    
+    n <- 4
+    blocks <- c(1,1,2,2)
+    k <- 2
+    # insert test code here
+    
+    ## Create expected result for basic test case ##
+    expected_result <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+    
+    for (i in 1:n){
+      expected_result[i,i, ,c(1,2)] <- 0
+    }
+    
+    # inside block 1
+    expected_result[1,2, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
+    expected_result[2,1, setdiff(seq(1, k+choose(k,2)), 1), c(1,2)] <- 0
+    
+    # inside block 2
+    expected_result[3,4, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
+    expected_result[4,3, setdiff(seq(1, k+choose(k,2)), 2), c(1,2)] <- 0
+    
+    # between 1 and 2
+    expected_result[1,3, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[3,1, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[1,4, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[4,1, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[2,3, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[3,2, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[2,4, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    expected_result[4,2, setdiff(seq(1, k+choose(k,2)), 3), c(1,2)] <- 0
+    
+    
+    result <- default_beta_sbm_zeros(n, blocks)
+    expect_array_equal(result, expected_result)
+
+  }
+)
+
+
+testthat::test_that(
+  "Test that function for user-defined structural zeros for beta model is working", {
+    
+    g <- igraph::graph.empty(n=4, directed=FALSE)
+    g <- igraph::add.edges(graph=g, edges=c(1,2,1,3))
+    
+    n <- 4
+    k <- 2
+    blocks <- c(1,1,2,2)
+    
+    expected_result <- array(data=1, dim=c(n,n,k+choose(k,2),2))
+    
+    expected_result[1,2,1,c(1,2)] <- 0
+    expected_result[2,1,1,c(1,2)] <- 0
+    
+    expected_result[1,3,,c(1,2)] <- 0
+    expected_result[3,1,,c(1,2)] <- 0
+    
+    result <- user_defined_beta_sbm_zeros(g, blocks)
+    expect_array_equal(result, expected_result)
+    
+  }
+)
+
+
+testthat::test_that(
+  "Test that error checking in Get.MLE.beta.SBM() function is working correctly", {
+    
+    # set up test fixtures
+    gdir <- igraph::graph.empty(n=4, directed=TRUE)
+    g<- igraph::graph.empty(n=4)
+
+    # test that error is raised when directed graph is passed
+    testthat::expect_error(Get.MLE.beta.SBM(gdir, c(1,2,3,4)))
+    
+    # test that error is raised when non-consecutive block sequence is passed
+    testthat::expect_error(Get.MLE.beta.SBM(g, c(1,3,4,5)))
+    
+    # test that error is raised when block sequence isn't the same length as the number of vertices
+    testthat::expect_error(Get.MLE.beta.SBM(g, c(1,2,3)))
+    
+  }
+)
+
+
+testthat::test_that(
+  "Test that Get.MLE.beta.SBM() executes a complete run successfully on legitimate data.", {
+    
+    E <- matrix(c(1,2,3,1,4,2), nc=2, byrow=TRUE)
+    g <- igraph::graph_from_edgelist(E, directed=FALSE)
+    blocks <- c(1,1,2,2)
+    k <- 2
+    
+    user_defined_zeros <- igraph::graph.empty(n=4, directed=FALSE)
+
+    output <- Get.MLE.beta.SBM(g, blocks)
+    
+    # test that the output dimensions are equal to the dimensions of the configuration matrix
+    testthat::expect_equal(dim(output), c(4,4,k+choose(k,2),2))
+    
+  }
+)
+
