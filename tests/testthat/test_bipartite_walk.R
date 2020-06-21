@@ -72,3 +72,20 @@ testthat::test_that(
     testthat::expect_null(result)
   }
 )
+
+testthat::test_that(
+  "Test that bipartite_walk returns NULL when resulting subgraph is not simple",
+  {
+    edges <- matrix(c(
+      c(1,3),
+      c(2,4),
+      c(4,2),
+      c(3,5),
+      c(4,6)
+    ), nrow=5, byrow=TRUE)
+
+    result <- bipartite_walk(edges)
+
+    testthat::expect_null(result)
+  }
+)
