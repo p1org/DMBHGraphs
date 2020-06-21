@@ -24,3 +24,26 @@ reverse_walk <- function(edges) {
 
   return(new_edges)
 }
+
+bipartite_walk <- function(edges, zeros.graph=NULL) {
+
+  edges_to_add <- reverse_walk(edges)
+  subgraph_to_add <- igraph::graph_from_edgelist(edges_to_add)
+
+  if (!igraph::is.simple(subgraph_to_add)) {
+    return(NULL)
+  }
+
+  # if move to using igragh edge sequences, see "graph.es" object and "intersection" method
+  if (!is.null(zeros.graph)) {
+    n_common_edges <- igraph::ecount(
+      igraph::intersection(subgraph_to_add, zeros.graph)
+    )
+
+    if (n_common_edges > 0) {
+      return(NULL)
+    }
+  }
+
+  return(edges_to_add)
+}
