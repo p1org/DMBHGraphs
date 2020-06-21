@@ -1,4 +1,4 @@
-#' reverse a walk in a graph
+#' reverses the direction of an edge list
 #' 
 #' Takes a list of edges and connects connects the head of each to the
 #' head of the previous edge.
@@ -25,6 +25,16 @@ reverse_walk <- function(edges) {
   return(new_edges)
 }
 
+#' wrapper for reverse_walk
+#' 
+#' Takes a list of edges and calls `reverse_walk`. If the subgraph induced by
+#' the resulting edges contains loops or multi-edges, this function returns NULL.
+#' If the resulting contain a structural zero, this function returns NULL.
+#' 
+#' @param edges list
+#' @param zeros.graph igraph graph or NULL
+#' 
+#' @return list or NULL
 bipartite_walk <- function(edges, zeros.graph=NULL) {
 
   edges_to_add <- reverse_walk(edges)
