@@ -1,4 +1,4 @@
-testthat::context("Test Bipartite.Walk function family")
+testthat::context("Test bipartite_walk function family")
 library(igraph)
 
 
