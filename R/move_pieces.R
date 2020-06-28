@@ -27,7 +27,7 @@ recursive_partition <- function(edges) {
         e1 <- edges[1:2]
         e2 <- edges[3:4]
 
-        return(list(list(e1), list(e2))
+        return(list(list(e1), list(e2)))
     } else {
         
         j <- sample(3:(n - 1))
