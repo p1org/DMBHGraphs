@@ -64,6 +64,29 @@ get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
       FUN = igraph::graph_from_edgelist,
       directed = TRUE)
 
-  return(new_edges)
+  return(do.call(igraph::union, new_edges))
 }
 
+# TODO: validate
+check_mutual_edges <- function(gdir, r, b){
+    mutual_edge_graph <- igraph::intersection(b, igraph::difference(gdir, r))
+    if (igraph::ecount(mutual_edge_graph) > 0){
+        return(FALSE)
+    } else {
+        return(TRUE)
+    }
+}
+
+
+validate_new_edges <- function(gdir, gudir, r, b){
+
+    if (!igraph::is.simple(b)){
+        return(FALSE)
+    }
+
+    if (isFALSE(check_mutual_edges(gdir, r, b)){
+        return(FALSE)
+    }
+    
+    # TODO: add intersection check on undirected component, need algorithm clarification
+}
