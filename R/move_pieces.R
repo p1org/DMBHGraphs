@@ -84,7 +84,7 @@ validate_new_edges <- function(gdir, gudir, r, b){
         return(FALSE)
     }
 
-    if (isFALSE(check_mutual_edges(gdir, r, b)){
+    if (isFALSE(check_mutual_edges(gdir, r, b))) {
         return(FALSE)
     }
     
