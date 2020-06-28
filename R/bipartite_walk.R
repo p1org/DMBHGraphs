@@ -6,7 +6,8 @@
 #' This set of edges is obtained by joining the head of e[i+1] with the tail 
 #' of e[i] for i through m-1 and joining the tail of e[1] with the head of e[m]
 #' 
-#' @param edges list
+#' @param g igraph graph object from where the edges came from
+#' @param edges graph.es object, edge sequence from g
 #' 
 #' @return list
 reverse_walk <- function(g, edges) {
@@ -32,7 +33,8 @@ reverse_walk <- function(g, edges) {
 #' the resulting edges contains loops or multi-edges, this function returns NULL.
 #' If the resulting contain a structural zero, this function returns NULL.
 #' 
-#' @param edges list
+#' @param g igraph graph
+#' @param edges graph.es object, edge sequence from g
 #' @param zeros.graph igraph graph or NULL
 #' 
 #' @return list or NULL
