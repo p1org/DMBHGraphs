@@ -15,7 +15,7 @@ sample_edges <- function(g, small.moves.coin = NULL) {
     return(edge_sample)
 }
 
-
+# TODO: find bug in null graph
 recursive_partition <- function(edges) {
 
     n <- length(edges)
@@ -49,4 +49,21 @@ flatten_list <- function(x) {
   y
 }
 
+
+get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
+  # TODO: do something about memory copy
+  # TODO: consider using ... instead of zeros.graph passing
+  new_edgelists <- lapply(
+      X = partitions,
+      FUN = bipartite_walk,
+      g = g,
+      zeros.graph = zeros.graph)
+
+  new_edges <- lapply(
+      X = new_edgelists,
+      FUN = igraph::graph_from_edgelist,
+      directed = TRUE)
+
+  return(new_edges)
+}
 
