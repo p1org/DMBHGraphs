@@ -23,7 +23,7 @@ recursive_partition <- function(edges) {
     if (n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
-        
+
         edges <- sample(edges, size = length(edges))
         e1 <- edges[1:2]
         e2 <- edges[3:4]
@@ -54,16 +54,24 @@ flatten_list <- function(x) {
 get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
   # TODO: do something about memory copy
   # TODO: consider using ... instead of zeros.graph passing
-  new_edgelists <- lapply(
-      X = partitions,
-      FUN = bipartite_walk,
-      g = g,
-      zeros.graph = zeros.graph)
+    new_edgelists <- lapply(
+        X = partitions,
+        FUN = bipartite_walk,
+        g = g,
+        zeros.graph = zeros.graph)
 
-  new_edges <- lapply(
-      X = new_edgelists,
-      FUN = igraph::graph_from_edgelist,
-      directed = TRUE)
+    # filter out NULLs 
+    new_edgelists <- new_edgelists[!unlist(lapply(new_edgelists, is.null))]
+    # if there are no edge sets left, return NULL
+    if (length(new_edgelists) == 0) {
+        return(NULL)
+    }
+
+    # convert edgelists to graphs
+    new_edges <- lapply(
+        X = new_edgelists,
+        FUN = igraph::graph_from_edgelist,
+        directed = TRUE)
 
   return(do.call(igraph::union, new_edges))
 }
@@ -78,18 +86,37 @@ check_mutual_edges <- function(gdir, r, b){
     }
 }
 
+check_intersection <- function(gudir, b) {
+
+    intersection_graph <- igraph::intersection(
+        gudir,
+        igraph::as.undirected(b, mode = "collapse")
+    )
+
+    if (igraph::ecount(intersection_graph) > 0) {
+        return(FALSE)
+    } else {
+        return(TRUE)
+    }
+}
+
 
 validate_new_edges <- function(gdir, gudir, r, b){
 
-    if (!igraph::is.simple(b)){
+    if (!igraph::is.simple(b)) {
         return(FALSE)
     }
 
     if (isFALSE(check_mutual_edges(gdir, r, b))) {
         return(FALSE)
     }
-    
-    # TODO: add intersection check on undirected component, need algorithm clarification
+
+    # TODO: need algorithm clarification
+    if (isFALSE(check_intersection(gudir, b))) {
+        return(FALSE)
+    }
+
+    return(TRUE)
 }
 
 
