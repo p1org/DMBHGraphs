@@ -109,3 +109,24 @@ testthat::test_that(
         testthat::expect_true(!check_intersection(G1, G2))
     }
 )
+
+
+testthat::test_that(
+    "Test that check_intersection returns FALSE when expected", 
+    {
+        G1 <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        G2 <- graph_from_edgelist(matrix(c(
+            c(3, 2),
+            c(3, 4)
+        ), ncol = 2, byrow = TRUE))
+
+        testthat::expect_true(check_intersection(G1, G2))
+    }
+)
