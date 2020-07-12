@@ -120,12 +120,18 @@ validate_new_edges <- function(gdir, gudir, r, b){
 }
 
 
-get_directed_piece <- function(gdir, zeros.graph=NULL, small.moves.coin=0){
+get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = 0) {
 
-    # 1. choose random subset of edges from gdir
-    # 2. choose random ordering of the sample
-    # 3. choose random composition of the sample
-    # 4. run bipartite_walk() on each composition
-    # 5. take the union of the edges returned by bipartite_walk()
-    # 6. apply rejection / trivial move checks, otherwise return the union as the edges to add
+    r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
+    partitions <- flatten_list(recursive_partition(r))
+    b <- get_edges_to_add(gdir, partitions, zeros.graph = zeros.graph)
+
+    if (is.null(b)) {
+        return(NULL)
+    }
+    if (isFALSE(validate_new_edges(gdir, gudir, r, b)) {
+        return(NULL) # TODO: what to return for trivial move? 
+    } else {
+        return(list(r=r, b=b))
+    }
 }
