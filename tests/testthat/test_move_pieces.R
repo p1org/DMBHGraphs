@@ -60,3 +60,31 @@ testthat::test_that(
         testthat::expect_true(check_mutual_edges(G, r, b))
     }
 )
+
+
+testthat::test_that(
+    "check_mutual_edges returns FALSE when expected", 
+    {
+
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(4, 2),
+        c(1, 4)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        testthat::expect_true(!check_mutual_edges(G, r, b))
+    }
+)
