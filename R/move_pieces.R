@@ -23,14 +23,15 @@ recursive_partition <- function(edges) {
     if (n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
-
+        
+        edges <- sample(edges, size = length(edges))
         e1 <- edges[1:2]
         e2 <- edges[3:4]
 
         return(list(list(e1), list(e2)))
     } else {
         
-        j <- sample(3:(n - 1))
+        j <- sample(3:(n - 1), size = 1)
         e1 <- edges[1:(j - 1)]
         e2 <- edges[j:n]
 
@@ -89,4 +90,15 @@ validate_new_edges <- function(gdir, gudir, r, b){
     }
     
     # TODO: add intersection check on undirected component, need algorithm clarification
+}
+
+
+get_directed_piece <- function(gdir, zeros.graph=NULL, small.moves.coin=0){
+
+    # 1. choose random subset of edges from gdir
+    # 2. choose random ordering of the sample
+    # 3. choose random composition of the sample
+    # 4. run bipartite_walk() on each composition
+    # 5. take the union of the edges returned by bipartite_walk()
+    # 6. apply rejection / trivial move checks, otherwise return the union as the edges to add
 }
