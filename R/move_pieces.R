@@ -129,7 +129,7 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
     if (is.null(b)) {
         return(NULL)
     }
-    if (isFALSE(validate_new_edges(gdir, gudir, r, b)) {
+    if (isFALSE(validate_new_edges(gdir, gudir, r, b))) {
         return(NULL) # TODO: what to return for trivial move? 
     } else {
         return(list(r=r, b=b))
