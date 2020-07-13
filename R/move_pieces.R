@@ -1,4 +1,4 @@
-
+# TODO: add test case for when small.moves.coin is set
 sample_edges <- function(g, small.moves.coin = NULL) {
 
     edges <- igraph::E(g)
@@ -16,6 +16,7 @@ sample_edges <- function(g, small.moves.coin = NULL) {
 }
 
 # TODO: find bug in null graph
+# TODO: find some test case for when n > 4
 recursive_partition <- function(edges) {
 
     n <- length(edges)
@@ -129,9 +130,9 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
     if (is.null(b)) {
         return(NULL)
     }
-    if (isFALSE(validate_new_edges(gdir, gudir, r, b))) {
+    if (isFALSE(validate_new_edges(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
         return(NULL) # TODO: what to return for trivial move? 
     } else {
-        return(list(r=r, b=b))
+        return(list(r = r, b = igraph::E(b)))
     }
 }
