@@ -27,6 +27,7 @@ testthat::test_that(
 
         testthat::expect_length(edges2, 1)
         testthat::expect_length(edges3, 1)
+        testthat::expect_true(length(edges4) == 2 || length(edges4) == 1)
         testthat::expect_length(edges2[[1]], 2)
         testthat::expect_length(edges3[[1]], 3)
     }
