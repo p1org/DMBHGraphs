@@ -24,12 +24,17 @@ recursive_partition <- function(edges) {
     if (n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
-
+        
         edges <- sample(edges, size = length(edges))
-        e1 <- edges[1:2]
-        e2 <- edges[3:4]
 
-        return(list(list(e1), list(e2)))
+        if (runif(n = 1) < 0.5) {
+            return(list(edges))
+        } else {
+            e1 <- edges[1:2]
+            e2 <- edges[3:4]
+            return(list(list(e1), list(e2)))
+        }
+
     } else {
         
         j <- sample(3:(n - 1), size = 1)
