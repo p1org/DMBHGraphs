@@ -61,10 +61,8 @@ get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
         g = g,
         zeros.graph = zeros.graph)
 
-    # filter out NULLs 
-    new_edgelists <- new_edgelists[!unlist(lapply(new_edgelists, is.null))]
-    # if there are no edge sets left, return NULL
-    if (length(new_edgelists) == 0) {
+    # if any of the results of bipartite_walk are NULL, return NULL
+    if (sum(unlist(lapply(new_edgelists, is.null))) > 0) {
         return(NULL)
     }
 
