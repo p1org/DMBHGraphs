@@ -20,13 +20,12 @@ sample_edges <- function(g, small.moves.coin = NULL) {
 recursive_partition <- function(edges) {
 
     n <- length(edges)
+    edges <- sample(edges, size = length(edges))
 
     if (n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
         
-        edges <- sample(edges, size = length(edges))
-
         if (runif(n = 1) < 0.5) {
             return(list(edges))
         } else {

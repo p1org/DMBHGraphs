@@ -27,11 +27,8 @@ testthat::test_that(
 
         testthat::expect_length(edges2, 1)
         testthat::expect_length(edges3, 1)
-        testthat::expect_length(edges4, 2)
         testthat::expect_length(edges2[[1]], 2)
         testthat::expect_length(edges3[[1]], 3)
-        testthat::expect_length(edges4[[1]][[1]], 2)
-        testthat::expect_length(edges4[[2]][[1]], 2)
     }
 )
 
