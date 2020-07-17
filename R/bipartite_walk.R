@@ -27,9 +27,18 @@ reverse_walk <- function(edges) {
 
 #' wrapper for reverse_walk
 #' 
-#' Takes a list of edges and calls `reverse_walk`. If the subgraph induced by
+#' Takes a list of edges and calls \code{reverse_walk}. If the subgraph induced by
 #' the resulting edges contains loops or multi-edges, this function returns NULL.
-#' If the resulting contain a structural zero, this function returns NULL.
+#' If the resulting subgraph contains a structural zero, this function returns NULL.
+#' 
+#' @section Details
+#' 
+#' The edgelist passed to this function is always directed. However the graph representing
+#' the structural zeros graph (\code{zeros.graph} argument) can be directed or undirected. 
+#' When this graph is undirected, the edges in the graph represent bidirected edges in the 
+#' main graph. The logic for determining which case is applicable is determined by the calling
+#' function. 
+#' 
 #' 
 #' @param edges list
 #' @param zeros.graph igraph graph or NULL
