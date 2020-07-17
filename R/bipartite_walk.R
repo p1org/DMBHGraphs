@@ -46,6 +46,11 @@ bipartite_walk <- function(edges, zeros.graph=NULL) {
 
   # if move to using igragh edge sequences, see "graph.es" object and "intersection" method
   if (!is.null(zeros.graph)) {
+
+    if (!igraph::is.directed(zeros.graph)) {
+      subgraph_to_add <- igraph::as.undirected(subgraph_to_add, mode = "collapse")
+    }
+
     n_common_edges <- igraph::ecount(
       igraph::intersection(subgraph_to_add, zeros.graph)
     )
