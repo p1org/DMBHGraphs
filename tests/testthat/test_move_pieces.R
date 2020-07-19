@@ -110,7 +110,7 @@ testthat::test_that(
 
 
 testthat::test_that(
-    "Test that check_intersection returns FALSE when expected", 
+    "Test that check_intersection returns TRUE when expected", 
     {
         G1 <- igraph::graph_from_edgelist(
             matrix(c(
@@ -126,5 +126,24 @@ testthat::test_that(
         ), ncol = 2, byrow = TRUE))
 
         testthat::expect_true(check_intersection(G1, G2))
+    }
+)
+
+
+testthat::test_that(
+    "Check validate_new_edges() returns FALSE when b is not simple",
+    {
+        G1 <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 1),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_new_edges(NULL, NULL, NULL, G1)
+
+        testthat::expect_true(!result)
     }
 )

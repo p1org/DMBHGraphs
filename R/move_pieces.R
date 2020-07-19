@@ -79,10 +79,10 @@ get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
   return(do.call(igraph::union, new_edges))
 }
 
-# TODO: validate
-check_mutual_edges <- function(gdir, r, b){
+
+check_mutual_edges <- function(gdir, r, b) {
     mutual_edge_graph <- igraph::intersection(b, igraph::difference(gdir, r))
-    if (igraph::ecount(mutual_edge_graph) > 0){
+    if (igraph::ecount(mutual_edge_graph) > 0) {
         return(FALSE)
     } else {
         return(TRUE)
