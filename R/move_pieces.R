@@ -1,4 +1,4 @@
-# TODO: add test case for when small.moves.coin is set
+
 sample_edges <- function(g, small.moves.coin = NULL) {
 
     edges <- igraph::E(g)
@@ -7,7 +7,7 @@ sample_edges <- function(g, small.moves.coin = NULL) {
 
     if (!is.null(small.moves.coin)) {
         if (runif(1) < small.moves.coin) {
-            subset_size <- sample(2:4, 1) # is 4 a hard-coded parameter? 
+            subset_size <- sample(2:4, 1)
         }
     }
 
@@ -15,7 +15,7 @@ sample_edges <- function(g, small.moves.coin = NULL) {
     return(edge_sample)
 }
 
-# TODO: find bug in null graph
+
 # TODO: find some test case for when n > 4
 recursive_partition <- function(edges) {
 
@@ -57,8 +57,7 @@ flatten_list <- function(x) {
 
 
 get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
-  # TODO: do something about memory copy
-  # TODO: consider using ... instead of zeros.graph passing
+
     new_edgelists <- lapply(
         X = partitions,
         FUN = bipartite_walk,

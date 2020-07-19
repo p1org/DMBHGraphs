@@ -14,6 +14,18 @@ testthat::test_that(
     }
 )
 
+
+testthat::test_that(
+    "Test that sample_edges returns an igraph.es object when small.moves.coin is set", 
+    {
+        G <- igraph::erdos.renyi.game(n = 10, p.or.m = 15, directed = TRUE, type = "gnm")
+        edge_sample <- sample_edges(G, small.moves.coin = 0.99)
+
+        testthat::expect_s3_class(edge_sample, "igraph.es")
+    }
+)
+
+
 testthat::test_that(
     "Test that recursive_partition returns correct output lengths for n=2,3,4",
     {
