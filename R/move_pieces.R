@@ -1,4 +1,17 @@
-
+#' samples edge set of a graph
+#' 
+#' Takes a random sample of edges from a graph. Also has an 
+#' optional parameter to favor small samples with a specified
+#' probability.
+#' 
+#' This parameter is the small.moves.coin which is a numeric
+#' between (0, 1) representing the probability of returning
+#' a small sample, of size between 2 and 4. 
+#' 
+#' @param g igraph graph object
+#' @param small.moves.coin numeric in the interval (0, 1)
+#' 
+#' @return igraph.es
 sample_edges <- function(g, small.moves.coin = NULL) {
 
     edges <- igraph::E(g)
@@ -15,9 +28,13 @@ sample_edges <- function(g, small.moves.coin = NULL) {
     return(edge_sample)
 }
 
+#' randomly partition list of edges
+#' 
+#' @param edges igraph.es object
+#' @return list
+recursive_partition <- function(edges) {
 
 # TODO: find some test case for when n > 4
-recursive_partition <- function(edges) {
 
     n <- length(edges)
     edges <- sample(edges, size = length(edges))
@@ -55,7 +72,22 @@ flatten_list <- function(x) {
   y
 }
 
-
+#' returns graph containing new edges to add
+#' 
+#' This is effectively a wrapper around bipartite_walk()
+#' 
+#' Takes a list of edge partitions taken from a graph 
+#' along with the graph itself and applies the \code{bipartite_walk}
+#' function over each set of edges. 
+#' 
+#' If none of the results are NULL, the graph whose edges are 
+#' the union of all the bipartite walks is returned.
+#' 
+#' @param g igraph graph
+#' @param partitions list of igraph.es objects
+#' @param zeros.graph optional, igraph graph object
+#' 
+#' @return igraph object or NULL
 get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
 
     new_edgelists <- lapply(
@@ -78,7 +110,16 @@ get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
   return(do.call(igraph::union, new_edges))
 }
 
-
+#' check that only new edges are added to graph
+#' 
+#' Check that none of the edges being added are already
+#' contained in the graph. 
+#' 
+#' @param gdir igraph directed graph
+#' @param r igraph directed graph containing edges to remove
+#' @param b igraph directed graph containing edges to add
+#' 
+#' @return boolean
 check_mutual_edges <- function(gdir, r, b) {
     mutual_edge_graph <- igraph::intersection(b, igraph::difference(gdir, r))
     if (igraph::ecount(mutual_edge_graph) > 0) {
@@ -88,6 +129,17 @@ check_mutual_edges <- function(gdir, r, b) {
     }
 }
 
+#' check the intersection of undirected component and edges to add
+#' 
+#' Checks that that the intersection between the undirected component 
+#' graph and the graph representing the edges to add is empty. The 
+#' graph representing these edges is converted to an undirected graph
+#' before the intersection is taken. 
+#' 
+#' @param gudir igraph undirected graph
+#' @param b igraph directed graph
+#' 
+#' @return boolean
 check_intersection <- function(gudir, b) {
 
     intersection_graph <- igraph::intersection(
@@ -102,7 +154,16 @@ check_intersection <- function(gudir, b) {
     }
 }
 
-
+#' run validation checks 
+#' 
+#' Runs validations in Algorithm 4 (TODO: reference paper)
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param r igraph directed graph
+#' @param b igraph undirected graph
+#' 
+#' @return boolean
 validate_new_edges <- function(gdir, gudir, r, b){
 
     if (!igraph::is.simple(b)) {
@@ -121,8 +182,15 @@ validate_new_edges <- function(gdir, gudir, r, b){
     return(TRUE)
 }
 
-
-get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = 0) {
+#' generate a Type 2 move
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param zeros.graph optional, igraph graph (directed or undirected)
+#' @param small.moves.coin optional, numeric between (0, 1)
+#' 
+#' @return list or NULL
+get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
@@ -132,7 +200,7 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
         return(NULL)
     }
     if (isFALSE(validate_new_edges(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
-        return(NULL) # TODO: what to return for trivial move? 
+        return(NULL)
     } else {
         return(list(r = r, b = igraph::E(b)))
     }
