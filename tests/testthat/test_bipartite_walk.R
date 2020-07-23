@@ -12,6 +12,8 @@ testthat::test_that(
       c(3, 5),
       c(4, 6)
     ), nrow = 4, byrow = TRUE)
+
+    g <- igraph::graph_from_edgelist(edges, directed = TRUE)
     
     expected_result <- matrix(c(
       c(2, 3),
@@ -20,6 +22,7 @@ testthat::test_that(
       c(1, 6)
     ), nrow = 4, byrow = TRUE)
     
+
     result <- bipartite_walk(edges)
     expect_array_equal(expected_result, result)
   }
@@ -59,6 +62,8 @@ testthat::test_that(
       c(4, 6)
     ), nrow = 4, byrow = TRUE)
 
+    g <- igraph::graph_from_edgelist(edges, directed = TRUE)
+
     zeros.graph <- igraph::graph_from_edgelist(
      matrix(c(
       c(2, 3),
@@ -67,7 +72,7 @@ testthat::test_that(
       c(1, 6)), nrow = 4, byrow = TRUE)
     )
 
-    result <- bipartite_walk(edges, zeros.graph = zeros.graph)
+    result <- bipartite_walk(g, igraph::E(g), zeros.graph = zeros.graph)
     testthat::expect_null(result)
   }
 )
@@ -84,7 +89,9 @@ testthat::test_that(
       c(4, 6)
     ), nrow = 5, byrow = TRUE)
 
-    result <- bipartite_walk(edges)
+    g <- igraph::graph_from_edgelist(edges, directed = TRUE)
+
+    result <- bipartite_walk(g, igraph::E(g))
     testthat::expect_null(result)
   }
 )
