@@ -29,9 +29,18 @@ reverse_walk <- function(g, edges) {
 
 #' wrapper for reverse_walk
 #' 
-#' Takes a list of edges and calls `reverse_walk`. If the subgraph induced by
+#' Takes a list of edges and calls \code{reverse_walk}. If the subgraph induced by
 #' the resulting edges contains loops or multi-edges, this function returns NULL.
-#' If the resulting contain a structural zero, this function returns NULL.
+#' If the resulting subgraph contains a structural zero, this function returns NULL.
+#' 
+#' @section Details
+#' 
+#' The edgelist passed to this function is always directed. However the graph representing
+#' the structural zeros graph (\code{zeros.graph} argument) can be directed or undirected. 
+#' When this graph is undirected, the edges in the graph represent bidirected edges in the 
+#' main graph. The logic for determining which case is applicable is determined by the calling
+#' function. 
+#' 
 #' 
 #' @param g igraph graph
 #' @param edges graph.es object, edge sequence from g
@@ -49,6 +58,11 @@ bipartite_walk <- function(g, edges, zeros.graph = NULL) {
 
   # if move to using igragh edge sequences, see "graph.es" object and "intersection" method
   if (!is.null(zeros.graph)) {
+
+    if (!igraph::is.directed(zeros.graph)) {
+      subgraph_to_add <- igraph::as.undirected(subgraph_to_add, mode = "collapse")
+    }
+
     n_common_edges <- igraph::ecount(
       igraph::intersection(subgraph_to_add, zeros.graph)
     )
