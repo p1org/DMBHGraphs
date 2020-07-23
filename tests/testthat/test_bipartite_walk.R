@@ -47,7 +47,7 @@ testthat::test_that(
 )
 
 testthat::test_that(
-  "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is directed",
+  "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is undirected",
   {
     edges <- matrix(c(
       c(1, 3),
@@ -71,7 +71,7 @@ testthat::test_that(
 
 
 testthat::test_that(
-  "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is undirected",
+  "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is directed",
   {
     edges <- matrix(c(
       c(1, 3),
