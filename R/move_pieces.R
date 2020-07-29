@@ -164,7 +164,7 @@ check_intersection <- function(gudir, b) {
 #' @param b igraph undirected graph
 #' 
 #' @return boolean
-validate_new_edges <- function(gdir, gudir, r, b){
+validate_type_2_move <- function(gdir, gudir, r, b){
 
     if (!igraph::is.simple(b)) {
         return(FALSE)
@@ -199,7 +199,7 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
     if (is.null(b)) {
         return(NULL)
     }
-    if (isFALSE(validate_new_edges(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
+    if (isFALSE(validate_type_2_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
         return(NULL)
     } else {
         return(list(r = r, b = igraph::E(b)))

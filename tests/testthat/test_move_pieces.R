@@ -143,7 +143,7 @@ testthat::test_that(
 
 
 testthat::test_that(
-    "Check validate_new_edges() returns FALSE when b is not simple",
+    "Check validate_type_2_move() returns FALSE when b is not simple",
     {
         G1 <- igraph::graph_from_edgelist(
             matrix(c(
@@ -154,7 +154,7 @@ testthat::test_that(
             c(1, 3)
         ), ncol = 2, byrow = TRUE), directed = FALSE)
 
-        result <- validate_new_edges(NULL, NULL, NULL, G1)
+        result <- validate_type_2_move(NULL, NULL, NULL, G1)
 
         testthat::expect_true(!result)
     }
