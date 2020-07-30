@@ -173,9 +173,6 @@ testthat::test_that(
             c(3, 1)), ncol = 2, byrow = TRUE), directed = TRUE)
 
         result <- check_bidirected(g)
-
-        testthat::expect_false(result)
-
-
+        testthat::expect_true(result)
     }
 )

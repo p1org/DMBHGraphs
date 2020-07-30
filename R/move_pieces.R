@@ -154,9 +154,18 @@ check_intersection <- function(gudir, b) {
     }
 }
 
-
+#' check for bidirected edges
+#' 
+#' Checks if a directed graph contains bidirected edges. Note
+#' that this function will also return true if it contains 
+#' multi-edges. 
+#' 
+#' 
+#' @param g igraph directed graph
+#'
+#' @return boolean
 check_bidirected <- function(g) {
-    status <- igraph::is.simple(
+    status <- !igraph::is.simple(
         igraph::as.undirected(g, mode = "each")
     )
     return(status)
