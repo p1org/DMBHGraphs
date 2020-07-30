@@ -154,6 +154,15 @@ check_intersection <- function(gudir, b) {
     }
 }
 
+
+check_bidirected <- function(g) {
+    status <- igraph::is.simple(
+        igraph::as.undirected(g, mode = "each")
+    )
+    return(status)
+}
+
+
 #' run validation checks 
 #' 
 #' Runs validations in Algorithm 4 (TODO: reference paper)
@@ -161,7 +170,7 @@ check_intersection <- function(gudir, b) {
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param r igraph directed graph
-#' @param b igraph undirected graph
+#' @param b igraph directed graph
 #' 
 #' @return boolean
 validate_type_2_move <- function(gdir, gudir, r, b){

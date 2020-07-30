@@ -159,3 +159,23 @@ testthat::test_that(
         testthat::expect_true(!result)
     }
 )
+
+
+testthat::test_that(
+    "Test that check_bidirected returns FALSE when directed graph contains bidirected edges",
+    {
+        g <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3),
+            c(3, 1)), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- check_bidirected(g)
+
+        testthat::expect_false(result)
+
+
+    }
+)
