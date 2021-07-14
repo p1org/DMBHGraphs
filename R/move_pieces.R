@@ -196,8 +196,8 @@ validate_type_2_move <- function(gdir, gudir, r, b){
     if (isTRUE(check_bidirected(igraph::union(gdir, b)))) {
         return(FALSE)
     }
-
-    # TODO: need algorithm clarification
+    # checks that no edges that are in the undirected graph representing the reciprocated edges
+    # are added again during the move (this would create a multiedge in union(gudir, gdir))
     if (isFALSE(check_intersection(gudir, b))) {
         return(FALSE)
     }
