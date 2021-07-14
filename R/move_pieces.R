@@ -192,6 +192,10 @@ validate_type_2_move <- function(gdir, gudir, r, b){
         return(FALSE)
     }
 
+    if (isTRUE(check_bidirected(igraph::union(gdir, b)))) {
+        return(FALSE)
+    }
+
     # TODO: need algorithm clarification
     if (isFALSE(check_intersection(gudir, b))) {
         return(FALSE)

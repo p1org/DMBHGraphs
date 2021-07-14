@@ -162,6 +162,35 @@ testthat::test_that(
 
 
 testthat::test_that(
+    "Test that validate_type_2_move() returns FALSE when b adds a bidirected edge to G-r",
+    {
+        # example graphs taken from check_mutual_edges() test case where TRUE is expected to make sure 
+        # the relevant part of the code in validate_type_2_move() is executed
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(2, 4)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- validate_type_2_move(G, NULL, r, b)
+        testthat::expect_false(result)
+    }
+)
+
+
+testthat::test_that(
     "Test that check_bidirected returns FALSE when directed graph contains bidirected edges",
     {
         g <- igraph::graph_from_edgelist(
