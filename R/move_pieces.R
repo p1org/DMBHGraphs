@@ -213,7 +213,7 @@ validate_type_2_move <- function(gdir, gudir, r, b){
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
 #' @return list or NULL
-get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
+generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
