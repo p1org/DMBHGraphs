@@ -2,7 +2,9 @@ testthat::context("Test functions used in the move_pieces.R file")
 library(igraph)
 
 
-
+######################################
+########### sample_edges() ###########
+######################################
 
 testthat::test_that(
     "Test that sample_edges returns an igraph.es object", 
@@ -26,6 +28,10 @@ testthat::test_that(
 )
 
 
+######################################
+####### recursive_partition() ########
+######################################
+
 testthat::test_that(
     "Test that recursive_partition returns correct output lengths for n=2,3,4",
     {
@@ -44,6 +50,11 @@ testthat::test_that(
         testthat::expect_length(edges3[[1]], 3)
     }
 )
+
+
+######################################
+####### check_mutual_edges() #########
+######################################
 
 testthat::test_that(
     "check_mutual_edges returns TRUE when expected", 
@@ -100,6 +111,10 @@ testthat::test_that(
 )
 
 
+######################################
+####### check_intersection() #########
+######################################
+
 testthat::test_that(
     "Test that check_intersection returns FALSE when expected", 
     {
@@ -141,6 +156,31 @@ testthat::test_that(
     }
 )
 
+
+######################################
+######## check_bidirected() ##########
+######################################
+
+testthat::test_that(
+    "Test that check_bidirected returns FALSE when directed graph contains bidirected edges",
+    {
+        g <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3),
+            c(3, 1)), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- check_bidirected(g)
+        testthat::expect_true(result)
+    }
+)
+
+
+######################################
+###### validate_type_2_move() ########
+######################################
 
 testthat::test_that(
     "Check validate_type_2_move() returns FALSE when b is not simple",
@@ -186,22 +226,5 @@ testthat::test_that(
 
         result <- validate_type_2_move(G, NULL, r, b)
         testthat::expect_false(result)
-    }
-)
-
-
-testthat::test_that(
-    "Test that check_bidirected returns FALSE when directed graph contains bidirected edges",
-    {
-        g <- igraph::graph_from_edgelist(
-            matrix(c(
-            c(1, 4),
-            c(4, 2),
-            c(2, 1),
-            c(1, 3),
-            c(3, 1)), ncol = 2, byrow = TRUE), directed = TRUE)
-
-        result <- check_bidirected(g)
-        testthat::expect_true(result)
     }
 )
