@@ -184,14 +184,15 @@ check_bidirected <- function(g) {
 #' @return boolean
 validate_type_2_move <- function(gdir, gudir, r, b){
 
+    # checks that no multiedges will be added in the move
     if (!igraph::is.simple(b)) {
         return(FALSE)
     }
-
+    # checks that only new edges will be added in the move
     if (isFALSE(check_mutual_edges(gdir, r, b))) {
         return(FALSE)
     }
-
+    # checks that no bidirected edges will be created in the move
     if (isTRUE(check_bidirected(igraph::union(gdir, b)))) {
         return(FALSE)
     }
