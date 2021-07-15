@@ -85,10 +85,11 @@ flatten_list <- function(x) {
 #' 
 #' @param g igraph graph
 #' @param partitions list of igraph.es objects
+#' @param directed should the new edges be directed
 #' @param zeros.graph optional, igraph graph object
 #' 
 #' @return igraph object or NULL
-get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
+get_edges_to_add <- function(g, partitions, directed, zeros.graph = NULL) {
 
     new_edgelists <- lapply(
         X = partitions,
@@ -105,7 +106,7 @@ get_edges_to_add <- function(g, partitions, zeros.graph = NULL) {
     new_edges <- lapply(
         X = new_edgelists,
         FUN = igraph::graph_from_edgelist,
-        directed = TRUE)
+        directed = directed)
 
   return(do.call(igraph::union, new_edges))
 }
@@ -194,7 +195,7 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
-    b <- get_edges_to_add(gdir, partitions, zeros.graph = zeros.graph)
+    b <- get_edges_to_add(gdir, partitions, directed = TRUE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {
         return(NULL)
