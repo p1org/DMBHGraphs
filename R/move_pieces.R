@@ -205,3 +205,31 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
         return(list(r = r, b = igraph::E(b)))
     }
 }
+
+
+#' validate_type_1_move
+#' 
+#' Runs validations in Algorithm 3 (TODO: reference paper)
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param r igraph undirected graph
+#' @param b igraph undirected graph
+#' 
+#' @return boolean
+validate_type_1_move <- function(gdir, gudir, r, b) {
+
+    if (!igraph::is_simple(b)) {
+        return(FALSE)
+    }
+
+    if (isFALSE(check_mutual_edges(gudir, r, b))) {
+        return(FALSE)
+    }
+
+    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), b))) {
+        return(FALSE)
+    }
+
+    return(TRUE)
+}
