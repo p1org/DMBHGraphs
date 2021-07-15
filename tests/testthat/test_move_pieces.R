@@ -46,11 +46,11 @@ testthat::test_that(
 )
 
 testthat::test_that(
-    "check_mutual_edges returns TRUE when expected", 
+    "check_mutual_edges returns TRUE when expected with directed graphs.", 
     {
 
         G <- igraph::graph_from_edgelist(
-            matrix(c(
+            matrix(c(2.67
             c(1, 4),
             c(4, 2),
             c(2, 1),
@@ -73,7 +73,7 @@ testthat::test_that(
 
 
 testthat::test_that(
-    "check_mutual_edges returns FALSE when expected", 
+    "check_mutual_edges returns FALSE when expected with directed graphs.", 
     {
 
         G <- igraph::graph_from_edgelist(
