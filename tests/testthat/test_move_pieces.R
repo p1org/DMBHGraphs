@@ -169,7 +169,7 @@ testthat::test_that(
         G2 <- graph_from_edgelist(matrix(c(
             c(2, 1),
             c(4, 2)
-        ), ncol = 2, byrow = TRUE))
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         testthat::expect_true(!check_intersection(G1, G2))
     }
@@ -190,7 +190,7 @@ testthat::test_that(
         G2 <- graph_from_edgelist(matrix(c(
             c(3, 2),
             c(3, 4)
-        ), ncol = 2, byrow = TRUE))
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         testthat::expect_true(check_intersection(G1, G2))
     }
