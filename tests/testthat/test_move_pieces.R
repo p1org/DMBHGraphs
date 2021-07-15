@@ -50,7 +50,7 @@ testthat::test_that(
     {
 
         G <- igraph::graph_from_edgelist(
-            matrix(c(2.67
+            matrix(c(
             c(1, 4),
             c(4, 2),
             c(2, 1),
