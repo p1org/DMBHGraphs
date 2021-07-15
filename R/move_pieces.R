@@ -234,3 +234,28 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
 
     return(TRUE)
 }
+
+
+#' generate a Type 1 move
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param zeros.graph optional, igraph graph (directed or undirected)
+#' @param small.moves.coin optional, numeric between (0, 1)
+#' 
+#' @return list or NULL
+generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
+
+    r <- sample_edges(igraph::as.directed(gudir, mode = "arbitrary"), small.moves.coin = small.moves.coin)
+    partitions <- flatten_list(recursive_partition(r))
+    b <- get_edges_to_add(gudir, partitions, directed = FALSE, zeros.graph = zeros.graph)
+
+    if (is.null(b)) {
+        return(NULL)
+    }
+    if (isFALSE(validate_type_1_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gudir, r), directed=FALSE), b))) {
+        return(NULL)
+    } else {
+        return(list(r = r, b = igraph::E(b)))
+    }
+}
