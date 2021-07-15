@@ -101,6 +101,61 @@ testthat::test_that(
 
 
 testthat::test_that(
+    "check_mutual_edges returns TRUE when expected on an undirected graph", 
+    {
+
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        testthat::expect_true(check_mutual_edges(G, r, b))
+    }
+)
+
+
+testthat::test_that(
+    "check_mutual_edges returns FALSE when expected on undirected graphs", 
+    {
+
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(4, 2),
+        c(1, 4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        testthat::expect_true(!check_mutual_edges(G, r, b))
+    }
+)
+
+
+testthat::test_that(
     "Test that check_intersection returns FALSE when expected", 
     {
         G1 <- igraph::graph_from_edgelist(
