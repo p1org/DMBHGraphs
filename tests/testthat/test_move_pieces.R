@@ -221,7 +221,7 @@ testthat::test_that(
 
         b <- igraph::graph_from_edgelist(matrix(c(
         c(2, 3),
-        c(2, 4)
+        c(4, 1)
         ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         result <- validate_type_2_move(G, NULL, r, b)

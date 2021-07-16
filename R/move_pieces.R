@@ -193,7 +193,7 @@ validate_type_2_move <- function(gdir, gudir, r, b){
         return(FALSE)
     }
     # checks that no bidirected edges will be created in the move
-    if (isTRUE(check_bidirected(igraph::union(gdir, b)))) {
+    if (isTRUE(check_bidirected(igraph::union(igraph::difference(gdir, r), b)))) {
         return(FALSE)
     }
     # checks that no edges that are in the undirected graph representing the reciprocated edges
@@ -221,7 +221,7 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
 
     if (is.null(b)) {
         return(NULL)
-    }
+    }# should not remove this edge
     if (isFALSE(validate_type_2_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
         return(NULL)
     } else {
