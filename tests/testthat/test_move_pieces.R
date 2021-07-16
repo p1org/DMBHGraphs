@@ -214,3 +214,51 @@ testthat::test_that(
         testthat::expect_true(!result)
     }
 )
+
+
+testthat::test_that(
+    "Check validate_type_1_move() returns FALSE when b is not simple",
+    {
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(NULL, NULL, NULL, b)
+
+        testthat::expect_false(result)
+    }
+)
+
+
+testthat::test_that(
+    "Check validate_type_1_move() returns TRUE on valid example",
+    {
+        Gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(4,2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        Gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,4),
+            c(2,3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- Gudir
+        
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,2),
+            c(3,4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(Gdir, Gudir, r, b)
+
+        testthat::expect_true(result)
+    }
+)
