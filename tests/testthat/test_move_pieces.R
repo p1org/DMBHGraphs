@@ -228,3 +228,35 @@ testthat::test_that(
         testthat::expect_false(result)
     }
 )
+
+
+testthat::test_that(
+    "Test that validate_type_2_move returns TRUE for valid inputs",
+    {
+        G_dir <- igraph::graph_from_edgelist(matrix(c(
+                c(1,4),
+                c(3,2)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        G_udir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,4)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,4),
+                c(3,2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,2),
+                c(4,3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- validate_type_2_move(G_dir, G_udir, r, b)
+        testthat::expect_true(result)
+
+        }
+)
