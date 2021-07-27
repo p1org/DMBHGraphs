@@ -325,3 +325,38 @@ testthat::test_that(
         testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)
     }
 )
+
+
+testthat::test_that(
+    "Test that apply_type_1_move() works as expected",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4, 1),
+                c(1, 3),
+                c(2, 3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4,1),
+                c(2,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3),
+                c(1,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- apply_type_1_move(gudir, r, b)
+        testthat::expect_true(igraph::isomorphic(expected, result)) 
+    }
+)

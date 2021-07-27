@@ -264,3 +264,17 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
         return(list(r = r, b = b))
     }
 }
+
+
+#' applies a Type 1 move
+#' 
+#' @param gudir igraph undirected graph
+#' @param r igraph undirected graph
+#' @param b igraph undirected graph
+#' 
+#' @return igraph.graph
+apply_type_1_move <- function(gudir, r, b) {
+    igraph::union(
+        igraph::difference(gudir, r), b
+    )
+}
