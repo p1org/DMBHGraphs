@@ -229,3 +229,17 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
         return(list(r = r, b = b))
     }
 }
+
+
+#' applies a Type 2 move
+#' 
+#' @param gdir igraph directed graph
+#' @param r igraph directed graph
+#' @param b igraph directed graph
+#' 
+#' @return igraph.graph
+apply_type_2_move <- function(gdir, r, b) {
+    igraph::union(
+        igraph::difference(gdir, r), b
+    )
+}

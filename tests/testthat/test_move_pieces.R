@@ -305,3 +305,42 @@ testthat::test_that(
         
     }
 )
+
+
+######################################
+###### apply_type_2_move() ###########
+######################################
+
+testthat::test_that(
+    "Test that apply_type_2_move() works as expected",
+    {
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4, 1),
+                c(1, 3),
+                c(2, 3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4,1),
+                c(2,3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3),
+                c(1,3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- apply_type_2_move(gdir, r, b)
+        testthat::expect_true(igraph::isomorphic(expected, result)) 
+    }
+)
