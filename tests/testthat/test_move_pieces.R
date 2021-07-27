@@ -260,3 +260,48 @@ testthat::test_that(
 
         }
 )
+
+
+######################################
+###### generate_type_2_move() ########
+######################################
+
+
+testthat::test_that(
+    "Thest that generate_type_2_move() returns correct outputs for known valid move",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 6),
+                c(3, 5)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1, 6),
+                c(1, 2),
+                c(2, 6),
+                c(2, 5),
+                c(4, 3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b_expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1, 3),
+                c(4, 6)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        set.seed(42)
+
+        result <- generate_type_2_move(gdir, gudir, NULL, NULL)
+        result_move <- igraph::union(
+            igraph::delete_edges(gdir, result$r), result$b
+        )
+
+        testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)
+        testthat::expect_true(sum(degree(gdir) - degree(result_move)) == 0)
+
+        set.seed(NULL)
+        
+    }
+)

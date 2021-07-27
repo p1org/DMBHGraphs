@@ -225,6 +225,6 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     if (isFALSE(validate_type_2_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
         return(NULL)
     } else {
-        return(list(r = r, b = igraph::E(b)))
+        return(list(r = r, b = b))
     }
 }
