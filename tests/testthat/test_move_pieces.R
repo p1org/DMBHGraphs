@@ -320,10 +320,7 @@ testthat::test_that(
         set.seed(1234)
         result <- generate_type_1_move(gdir, gudir, NULL, NULL)
 
-        result_move <- igraph::union(
-            igraph::as.undirected(igraph::delete_edges(result$intermediate, result$r)),
-            result$b
-        )
+        result_move <- igraph::union(igraph::difference(gudir, result$r),result$b)
 
         testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)
     }

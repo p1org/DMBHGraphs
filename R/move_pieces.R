@@ -111,19 +111,18 @@ get_edges_to_add <- function(g, partitions, directed, zeros.graph = NULL) {
   return(do.call(igraph::union, new_edges))
 }
 
-# TODO: make a separate function for type 1 moves
 #' check that only new edges are added to graph
 #' 
 #' Check that none of the edges being added are already
 #' contained in the graph. 
 #' 
-#' @param gdir igraph directed graph
-#' @param r igraph directed graph containing edges to remove
-#' @param b igraph directed graph containing edges to add
+#' @param g igraph graph
+#' @param r igraph graph containing edges to remove
+#' @param b igraph graph containing edges to add
 #' 
 #' @return boolean
-check_mutual_edges <- function(gdir, r, b) {
-    mutual_edge_graph <- igraph::intersection(b, igraph::difference(gdir, r))
+check_mutual_edges <- function(g, r, b) {
+    mutual_edge_graph <- igraph::intersection(b, igraph::difference(g, r))
     if (igraph::ecount(mutual_edge_graph) > 0) {
         return(FALSE)
     } else {
@@ -224,12 +223,12 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
     if (!igraph::is_simple(b)) {
         return(FALSE)
     }
-    # TODO: r is now directed per changes in generate_type_1_move()
-    if (isFALSE(check_mutual_edges(gudir, r, igraph::as.undirected(b, mode="collapse")))) {
+
+    if (isFALSE(check_mutual_edges(gudir, r, b))) {
         return(FALSE)
     }
 
-    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), igraph::as.undirected(b, mode="collapse")))) {
+    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), b))) {
         return(FALSE)
     }
 
@@ -244,7 +243,7 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
 #' @param zeros.graph optional, igraph graph (directed or undirected)
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list or NULL
+#' @return list(r=igraph.graph, b=igraph.graph) or NULL
 generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
     directed_skeleton <- igraph::as.directed(gudir, mode = "arbitrary")
@@ -255,10 +254,13 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     if (is.null(b)) {
         return(NULL)
     }
-    # TODO: change the use of ends to induced subgraph, or make sure these give the same answer
-    if (isFALSE(validate_type_1_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed=FALSE), b))) {
+    
+    b <- igraph::as.undirected(b)
+    r <- igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed = FALSE)
+
+    if (isFALSE(validate_type_1_move(gdir, gudir, r, b))) {
         return(NULL)
     } else {
-        return(list(r = r, b = as.undirected(b), intermediate = directed_skeleton))
+        return(list(r = r, b = b))
     }
 }
