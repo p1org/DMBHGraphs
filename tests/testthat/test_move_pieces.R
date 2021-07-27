@@ -295,7 +295,7 @@ testthat::test_that(
 
         result <- generate_type_2_move(gdir, gudir, NULL, NULL)
         result_move <- igraph::union(
-            igraph::delete_edges(gdir, result$r), result$b
+            igraph::difference(gdir, result$r), result$b
         )
 
         testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)

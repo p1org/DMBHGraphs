@@ -212,7 +212,7 @@ validate_type_2_move <- function(gdir, gudir, r, b){
 #' @param zeros.graph optional, igraph graph (directed or undirected)
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list or NULL
+#' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
 generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
@@ -221,8 +221,9 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
 
     if (is.null(b)) {
         return(NULL)
-    }# should not remove this edge
-    if (isFALSE(validate_type_2_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
+    }
+    r <- igraph::graph_from_edgelist(igraph::ends(gdir, r), directed = TRUE)
+    if (isFALSE(validate_type_2_move(gdir, gudir, r, b))) {
         return(NULL)
     } else {
         return(list(r = r, b = b))
