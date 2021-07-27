@@ -292,3 +292,39 @@ testthat::test_that(
         testthat::expect_false(result)
     }
 )
+
+testthat::test_that(
+    "Test that generate_type_1_move() returns correct output for known example.",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 6),
+                c(3, 5)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1, 6),
+                c(1, 2),
+                c(2, 6)
+                #c(2, 5),
+                #c(4, 3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b_expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 5),
+                c(3, 6)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        set.seed(1234)
+        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
+
+        result_move <- igraph::union(
+            igraph::as.undirected(igraph::delete_edges(result$intermediate, result$r)),
+            result$b
+        )
+
+        testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)
+    }
+)

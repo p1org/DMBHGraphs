@@ -111,6 +111,7 @@ get_edges_to_add <- function(g, partitions, directed, zeros.graph = NULL) {
   return(do.call(igraph::union, new_edges))
 }
 
+# TODO: make a separate function for type 1 moves
 #' check that only new edges are added to graph
 #' 
 #' Check that none of the edges being added are already
@@ -223,12 +224,12 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
     if (!igraph::is_simple(b)) {
         return(FALSE)
     }
-
-    if (isFALSE(check_mutual_edges(gudir, r, b))) {
+    # TODO: r is now directed per changes in generate_type_1_move()
+    if (isFALSE(check_mutual_edges(gudir, r, igraph::as.undirected(b, mode="collapse")))) {
         return(FALSE)
     }
 
-    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), b))) {
+    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), igraph::as.undirected(b, mode="collapse")))) {
         return(FALSE)
     }
 
@@ -246,16 +247,18 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
 #' @return list or NULL
 generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
-    r <- sample_edges(igraph::as.directed(gudir, mode = "arbitrary"), small.moves.coin = small.moves.coin)
+    directed_skeleton <- igraph::as.directed(gudir, mode = "arbitrary")
+    r <- sample_edges(directed_skeleton, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
-    b <- get_edges_to_add(gudir, partitions, directed = FALSE, zeros.graph = zeros.graph)
+    b <- get_edges_to_add(directed_skeleton, partitions, directed = FALSE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {
         return(NULL)
     }
-    if (isFALSE(validate_type_1_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gudir, r), directed=FALSE), b))) {
+    # TODO: change the use of ends to induced subgraph, or make sure these give the same answer
+    if (isFALSE(validate_type_1_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed=FALSE), b))) {
         return(NULL)
     } else {
-        return(list(r = r, b = igraph::E(b)))
+        return(list(r = r, b = as.undirected(b), intermediate = directed_skeleton))
     }
 }
