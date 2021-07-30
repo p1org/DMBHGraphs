@@ -255,7 +255,6 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
         return(NULL)
     }
     
-    b <- igraph::as.undirected(b)
     r <- igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed = FALSE)
 
     if (isFALSE(validate_type_1_move(gdir, gudir, r, b))) {
