@@ -95,7 +95,7 @@ testthat::test_that(
         c(1, 4)
         ), ncol = 2, byrow = TRUE), directed = TRUE)
 
-        testthat::expect_true(!check_mutual_edges(G, r, b))
+        testthat::expect_false(check_mutual_edges(G, r, b))
     }
 )
 
@@ -211,7 +211,7 @@ testthat::test_that(
 
         result <- validate_type_2_move(NULL, NULL, NULL, G1)
 
-        testthat::expect_true(!result)
+        testthat::expect_false(result)
     }
 )
 
@@ -320,9 +320,7 @@ testthat::test_that(
         set.seed(1234)
         result <- generate_type_1_move(gdir, gudir, NULL, NULL)
 
-        result_move <- igraph::union(igraph::difference(gudir, result$r),result$b)
-
-        testthat::expect_true(sum(degree(b_expected) - degree(result$b)) == 0)
+        testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
     }
 )
 
