@@ -154,6 +154,24 @@ check_intersection <- function(gudir, b) {
     }
 }
 
+#' check for bidirected edges
+#' 
+#' Checks if a directed graph contains bidirected edges. Note
+#' that this function will also return true if it contains 
+#' multi-edges. 
+#' 
+#' 
+#' @param g igraph directed graph
+#'
+#' @return boolean
+check_bidirected <- function(g) {
+    status <- !igraph::is.simple(
+        igraph::as.undirected(g, mode = "each")
+    )
+    return(status)
+}
+
+
 #' run validation checks 
 #' 
 #' Runs validations in Algorithm 4 (TODO: reference paper)
@@ -161,20 +179,25 @@ check_intersection <- function(gudir, b) {
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param r igraph directed graph
-#' @param b igraph undirected graph
+#' @param b igraph directed graph
 #' 
 #' @return boolean
 validate_type_2_move <- function(gdir, gudir, r, b){
 
+    # checks that no multiedges will be added in the move
     if (!igraph::is.simple(b)) {
         return(FALSE)
     }
-
+    # checks that only new edges will be added in the move
     if (isFALSE(check_mutual_edges(gdir, r, b))) {
         return(FALSE)
     }
-
-    # TODO: need algorithm clarification
+    # checks that no bidirected edges will be created in the move
+    if (isTRUE(check_bidirected(igraph::union(igraph::difference(gdir, r), b)))) {
+        return(FALSE)
+    }
+    # checks that no edges that are in the undirected graph representing the reciprocated edges
+    # are added again during the move (this would create a multiedge in union(gudir, gdir))
     if (isFALSE(check_intersection(gudir, b))) {
         return(FALSE)
     }
@@ -189,8 +212,8 @@ validate_type_2_move <- function(gdir, gudir, r, b){
 #' @param zeros.graph optional, igraph graph (directed or undirected)
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list or NULL
-get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
+#' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
+generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
@@ -199,9 +222,24 @@ get_directed_piece <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin
     if (is.null(b)) {
         return(NULL)
     }
-    if (isFALSE(validate_type_2_move(gdir, gudir, igraph::graph_from_edgelist(igraph::ends(gdir, r), directed=TRUE), b))) {
+    r <- igraph::graph_from_edgelist(igraph::ends(gdir, r), directed = TRUE)
+    if (isFALSE(validate_type_2_move(gdir, gudir, r, b))) {
         return(NULL)
     } else {
-        return(list(r = r, b = igraph::E(b)))
+        return(list(r = r, b = b))
     }
+}
+
+
+#' applies a Type 2 move
+#' 
+#' @param gdir igraph directed graph
+#' @param r igraph directed graph
+#' @param b igraph directed graph
+#' 
+#' @return igraph.graph
+apply_type_2_move <- function(gdir, r, b) {
+    igraph::union(
+        igraph::difference(gdir, r), b
+    )
 }
