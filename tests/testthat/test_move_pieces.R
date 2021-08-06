@@ -257,24 +257,6 @@ testthat::test_that(
 
 
 testthat::test_that(
-    "Check validate_type_1_move() returns FALSE when b is not simple",
-    {
-        b <- igraph::graph_from_edgelist(
-            matrix(c(
-            c(1, 4),
-            c(1, 4),
-            c(4, 2),
-            c(2, 1),
-            c(1, 3)
-        ), ncol = 2, byrow = TRUE), directed = FALSE)
-
-        result <- validate_type_1_move(NULL, NULL, NULL, b)
-      
-        testthat::expect_false(result)
-     }
-)
-
-testthat::test_that(
     "Test that validate_type_2_move() returns FALSE when b adds a bidirected edge to G-r",
     {
         # example graphs taken from check_mutual_edges() test case where TRUE is expected to make sure 
@@ -303,6 +285,58 @@ testthat::test_that(
     }
 )
 
+testthat::test_that(
+    "Test that validate_type_2_move returns TRUE for valid inputs",
+    {
+        G_dir <- igraph::graph_from_edgelist(matrix(c(
+                c(1,4),
+                c(3,2)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        G_udir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,4)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,4),
+                c(3,2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,2),
+                c(4,3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        result <- validate_type_2_move(G_dir, G_udir, r, b)
+        testthat::expect_true(result)
+
+    }
+)
+
+######################################
+###### validate_type_1_move() ########
+######################################
+
+testthat::test_that(
+    "Check validate_type_1_move() returns FALSE when b is not simple",
+    {
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(NULL, NULL, NULL, b)
+      
+        testthat::expect_false(result)
+     }
+)
 
 testthat::test_that(
     "Check validate_type_1_move() returns TRUE on valid example",
@@ -362,73 +396,10 @@ testthat::test_that(
     }
 )
 
-testthat::test_that(
-    "Test that generate_type_1_move() returns correct output for known example.",
-    {
-        gudir <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(2, 6),
-                c(3, 5)
-            ), ncol = 2, byrow = TRUE), directed = FALSE)
-
-        gdir <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1, 6),
-                c(1, 2),
-                c(2, 6)
-                #c(2, 5),
-                #c(4, 3)
-            ), ncol = 2, byrow = TRUE), directed = TRUE)
-
-        b_expected <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(2, 5),
-                c(3, 6)
-            ), ncol = 2, byrow = TRUE), directed = FALSE)
-
-        set.seed(1234)
-        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
-
-        testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
-    }
-)
-
-testthat::test_that(
-    "Test that validate_type_2_move returns TRUE for valid inputs",
-    {
-        G_dir <- igraph::graph_from_edgelist(matrix(c(
-                c(1,4),
-                c(3,2)
-            ), ncol = 2, byrow = TRUE), directed = TRUE)
-
-        G_udir <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(2,4)
-            ), ncol = 2, byrow = TRUE), directed = FALSE)
-
-        r <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1,4),
-                c(3,2)
-        ), ncol = 2, byrow = TRUE), directed = TRUE)
-
-        b <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1,2),
-                c(4,3)
-        ), ncol = 2, byrow = TRUE), directed = TRUE)
-
-        result <- validate_type_2_move(G_dir, G_udir, r, b)
-        testthat::expect_true(result)
-
-    }
-)
-
 
 ######################################
 ###### generate_type_2_move() ########
 ######################################
-
 
 testthat::test_that(
     "Thest that generate_type_2_move() returns correct outputs for known valid move",
