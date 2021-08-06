@@ -553,3 +553,29 @@ testthat::test_that(
         testthat::expect_true(igraph::isomorphic(expected, result)) 
     }
 )
+
+
+######################################
+###### validate_type_3_move() ########
+######################################
+
+testthat::test_that(
+    "Test that validate_type_3_move() returns FALSE when there is a non-empty intersection",
+    {
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,2),
+                c(4,3),
+                c(2,3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+        
+        b_u <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,3),
+                c(2,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+        
+        result <- validate_type_3_move(gdir, b_u)
+        testthat::expect_false(result)
+    }
+)
