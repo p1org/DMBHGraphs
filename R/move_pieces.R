@@ -367,3 +367,21 @@ apply_type_2_move <- function(gdir, r, b) {
         igraph::difference(gdir, r), b
     )
 }
+
+
+#' applies a Type 3 move
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param r_u igraph undirected graph
+#' @param b_u igraph undirected graph
+#' @param r_d igraph directed graph
+#' @param b_d igraph directed graph
+#' 
+#' @return igraph.graph
+apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
+    list(
+        gdir = apply_type_2_move(gdir, r_d, b_d),
+        gudir = apply_type_1_move(gudir, r_u, b_u)
+    )
+}
