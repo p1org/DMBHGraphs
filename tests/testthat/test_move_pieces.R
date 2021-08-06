@@ -57,7 +57,7 @@ testthat::test_that(
 ######################################
 
 testthat::test_that(
-    "check_mutual_edges returns TRUE when expected", 
+    "check_mutual_edges returns TRUE when expected with directed graphs.", 
     {
 
         G <- igraph::graph_from_edgelist(
@@ -84,7 +84,7 @@ testthat::test_that(
 
 
 testthat::test_that(
-    "check_mutual_edges returns FALSE when expected", 
+    "check_mutual_edges returns FALSE when expected with directed graphs.", 
     {
 
         G <- igraph::graph_from_edgelist(
@@ -105,6 +105,61 @@ testthat::test_that(
         c(4, 2),
         c(1, 4)
         ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        testthat::expect_false(check_mutual_edges(G, r, b))
+    }
+)
+
+
+testthat::test_that(
+    "check_mutual_edges returns TRUE when expected on an undirected graph", 
+    {
+
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        testthat::expect_true(check_mutual_edges(G, r, b))
+    }
+)
+
+
+testthat::test_that(
+    "check_mutual_edges returns FALSE when expected on undirected graphs", 
+    {
+
+        G <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 1),
+        c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(matrix(c(
+        c(2, 3),
+        c(4, 2),
+        c(1, 4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         testthat::expect_true(!check_mutual_edges(G, r, b))
     }
@@ -129,7 +184,7 @@ testthat::test_that(
         G2 <- graph_from_edgelist(matrix(c(
             c(2, 1),
             c(4, 2)
-        ), ncol = 2, byrow = TRUE))
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         testthat::expect_true(!check_intersection(G1, G2))
     }
@@ -150,7 +205,7 @@ testthat::test_that(
         G2 <- graph_from_edgelist(matrix(c(
             c(3, 2),
             c(3, 4)
-        ), ncol = 2, byrow = TRUE))
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         testthat::expect_true(check_intersection(G1, G2))
     }
@@ -196,10 +251,28 @@ testthat::test_that(
 
         result <- validate_type_2_move(NULL, NULL, NULL, G1)
 
-        testthat::expect_true(!result)
+        testthat::expect_false(result)
     }
 )
 
+
+testthat::test_that(
+    "Check validate_type_1_move() returns FALSE when b is not simple",
+    {
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1, 4),
+            c(1, 4),
+            c(4, 2),
+            c(2, 1),
+            c(1, 3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(NULL, NULL, NULL, b)
+      
+        testthat::expect_false(result)
+     }
+)
 
 testthat::test_that(
     "Test that validate_type_2_move() returns FALSE when b adds a bidirected edge to G-r",
@@ -225,10 +298,100 @@ testthat::test_that(
         ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         result <- validate_type_2_move(G, NULL, r, b)
+
         testthat::expect_false(result)
     }
 )
 
+
+testthat::test_that(
+    "Check validate_type_1_move() returns TRUE on valid example",
+    {
+        Gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(4,2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        Gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,4),
+            c(2,3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- Gudir
+        
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,2),
+            c(3,4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(Gdir, Gudir, r, b)
+
+        testthat::expect_true(result)
+    }
+)
+
+
+testthat::test_that(
+    "Check validate_type_1_move() returns FALSE when b adds edge to directed component",
+    {
+        Gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,3),
+            c(1,4)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        Gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,2),
+            c(2,3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- Gudir
+        
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+            c(1,3),
+            c(3,4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- validate_type_1_move(Gdir, Gudir, r, b)
+
+        testthat::expect_false(result)
+    }
+)
+
+testthat::test_that(
+    "Test that generate_type_1_move() returns correct output for known example.",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 6),
+                c(3, 5)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1, 6),
+                c(1, 2),
+                c(2, 6)
+                #c(2, 5),
+                #c(4, 3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b_expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 5),
+                c(3, 6)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        set.seed(1234)
+        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
+
+        testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
+    }
+)
 
 testthat::test_that(
     "Test that validate_type_2_move returns TRUE for valid inputs",
@@ -258,7 +421,7 @@ testthat::test_that(
         result <- validate_type_2_move(G_dir, G_udir, r, b)
         testthat::expect_true(result)
 
-        }
+    }
 )
 
 
@@ -302,9 +465,9 @@ testthat::test_that(
         testthat::expect_true(sum(degree(gdir) - degree(result_move)) == 0)
 
         set.seed(NULL)
-        
     }
 )
+
 
 
 ######################################
@@ -319,6 +482,7 @@ testthat::test_that(
                 c(4, 1),
                 c(1, 3),
                 c(2, 3)
+
             ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         r <- igraph::graph_from_edgelist(
@@ -341,6 +505,80 @@ testthat::test_that(
             ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         result <- apply_type_2_move(gdir, r, b)
+        testthat::expect_true(igraph::isomorphic(expected, result)) 
+    }
+)
+
+######################################
+###### generate_type_1_move() ########
+######################################
+
+testthat::test_that(
+    "Test that generate_type_1_move() returns correct output for known example.",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 6),
+                c(3, 5)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        gdir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1, 6),
+                c(1, 2),
+                c(2, 6)
+                #c(2, 5),
+                #c(4, 3)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b_expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2, 5),
+                c(3, 6)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        set.seed(1234)
+        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
+
+        testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
+    }
+)
+
+
+######################################
+###### apply_type_1_move() ###########
+######################################
+
+testthat::test_that(
+    "Test that apply_type_1_move() works as expected",
+    {
+        gudir <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4, 1),
+                c(1, 3),
+                c(2, 3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4,1),
+                c(2,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(2,1),
+                c(4,3),
+                c(1,3)
+            ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        result <- apply_type_1_move(gudir, r, b)
         testthat::expect_true(igraph::isomorphic(expected, result)) 
     }
 )
