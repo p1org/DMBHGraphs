@@ -306,6 +306,33 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     }
 }
 
+generate_type_3_move <- function(gdir, gudir, zeros.graph.dir = NULL, zeros.graph.udir = NULL, small.moves.coin = NULL) {
+
+    type_1_move <- generate_type_1_move(gdir, gudir, zeros.graph.dir, small.moves.coin)
+    if (is.null(type_1_move)) {
+        return(NULL)
+    } 
+
+    type_2_move <- generate_type_2_move(gdir, gudir, zeros.graph.udir, small.moves.coin)
+    if (is.null(type_2_move)) {
+        return(NULL)
+    }
+
+    if (isFALSE(validate_type_3_move(gdir, type_1_move$b))) {
+        return(NULL)
+    }
+
+    return(
+        list(
+            r_u = type_1_move$r,
+            b_u = type_1_move$b,
+            r_d = type_2_move$r,
+            b_d = type_2_move$b
+        )
+    )
+
+}
+
 
 #' applies a Type 1 move
 #' 
