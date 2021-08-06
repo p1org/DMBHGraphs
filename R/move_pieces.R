@@ -306,6 +306,15 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     }
 }
 
+#' generate a Type 1 move
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param zeros.graph.dir optional, igraph directed graph
+#' @param zeros.graph.udir optional, igraph undirected graph
+#' @param small.moves.coin optional, numeric between (0, 1)
+#' 
+#' @return list(r_u=igraph.graph (undirected), b_u=igraph.graph (undirected), r_d=igraph.graph (directed), b_d=igraph.graph (directed)) or NULL
 generate_type_3_move <- function(gdir, gudir, zeros.graph.dir = NULL, zeros.graph.udir = NULL, small.moves.coin = NULL) {
 
     type_1_move <- generate_type_1_move(gdir, gudir, zeros.graph.dir, small.moves.coin)
