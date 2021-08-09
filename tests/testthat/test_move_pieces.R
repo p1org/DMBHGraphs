@@ -27,6 +27,20 @@ testthat::test_that(
     }
 )
 
+testthat::test_that(
+    "Test that sample_edges returns sets of length 1 and 2, resp. when G contains only 1 or 2 edges",
+    {
+        G1 <- igraph::erdos.renyi.game(n = 10, p.or.m = 1, directed = TRUE, type = "gnm")
+        G2 <- igraph::erdos.renyi.game(n = 10, p.or.m = 2, directed = TRUE, type = "gnm")
+
+        edge_sample_1 <- sample_edges(G1)
+        edge_sample_2 <- sample_edges(G2)
+
+        testthat::expect_equal(length(edge_sample_1), 1)
+        testthat::expect_equal(length(edge_sample_2), 2)
+    }
+)
+
 
 ######################################
 ####### recursive_partition() ########
