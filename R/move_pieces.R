@@ -28,7 +28,7 @@ sample_edges <- function(g, small.moves.coin = NULL) {
             }
         }   
     }
-    
+
     edge_sample <- sample(igraph::E(g), subset_size)
     return(edge_sample)
 }
@@ -241,6 +241,12 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
+    partitions <- partitions[which(unlist(lapply(X=partitions, FUN=length)) > 1)]
+    
+    if (identical(partitions, list())) {
+        return(NULL)
+    }
+
     b <- get_edges_to_add(gdir, partitions, directed = TRUE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {
@@ -296,6 +302,11 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     directed_skeleton <- igraph::as.directed(gudir, mode = "arbitrary")
     r <- sample_edges(directed_skeleton, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
+    partitions <- partitions[which(unlist(lapply(X=partitions, FUN=length)) > 1)]
+    
+    if (identical(partitions, list())) {
+        return(NULL)
+    }
     b <- get_edges_to_add(directed_skeleton, partitions, directed = FALSE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {

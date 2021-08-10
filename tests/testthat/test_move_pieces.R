@@ -457,6 +457,17 @@ testthat::test_that(
     }
 )
 
+testthat::test_that(
+    "Thest that generate_type_2_move() returns NULL when partitions contain a single edge",
+    {
+
+        gdir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
+
+        result <- generate_type_2_move(gdir, NULL, NULL, NULL)
+        testthat::expect_null(result)
+    }
+)
+
 
 
 ######################################
@@ -533,6 +544,17 @@ testthat::test_that(
     }
 )
 
+
+testthat::test_that(
+    "Thest that generate_type_1_move() returns NULL when partitions contain a single edge",
+    {
+
+        gudir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = FALSE, type = "gnm")
+
+        result <- generate_type_1_move(NULL, gudir, NULL, NULL)
+        testthat::expect_null(result)
+    }
+)
 
 ######################################
 ###### apply_type_1_move() ###########
