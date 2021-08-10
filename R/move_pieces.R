@@ -44,7 +44,7 @@ recursive_partition <- function(edges) {
     n <- length(edges)
     edges <- sample(edges, size = length(edges))
 
-    if (n == 2 || n == 3) {
+    if (n == 1 || n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
         

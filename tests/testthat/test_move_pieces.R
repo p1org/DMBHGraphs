@@ -49,17 +49,21 @@ testthat::test_that(
 testthat::test_that(
     "Test that recursive_partition returns correct output lengths for n=2,3,4",
     {
+        G1 <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
         G2 <- igraph::erdos.renyi.game(n = 3, p.or.m = 2, directed = TRUE, type = "gnm")
         G3 <- igraph::erdos.renyi.game(n = 3, p.or.m = 3, directed = TRUE, type = "gnm")
         G4 <- igraph::erdos.renyi.game(n = 4, p.or.m = 4, directed = TRUE, type = "gnm")
 
+        edges1 <- recursive_partition(E(G1))
         edges2 <- recursive_partition(E(G2))
         edges3 <- recursive_partition(E(G3))
         edges4 <- recursive_partition(E(G4))
 
+        testthat::expect_length(edges1, 1)
         testthat::expect_length(edges2, 1)
         testthat::expect_length(edges3, 1)
         testthat::expect_true(length(edges4) == 2 || length(edges4) == 1)
+        testthat::expect_length(edges1[[1]], 1)
         testthat::expect_length(edges2[[1]], 2)
         testthat::expect_length(edges3[[1]], 3)
     }
