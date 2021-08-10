@@ -19,17 +19,17 @@ sample_edges <- function(g, small.moves.coin = NULL) {
     if (m == 1 || m == 2) {
         subset_size <- m
     } else {
-        subset_size <- sample(2:igraph::ecount(g), 1)
-    }
-    edges <- igraph::E(g)
 
-    if (!is.null(small.moves.coin)) {
-        if (runif(1) < small.moves.coin) {
-            subset_size <- sample(2:4, 1)
-        }
-    }
+        subset_size <- sample(2:m, 1)
 
-    edge_sample <- sample(edges, subset_size)
+        if (!is.null(small.moves.coin)) {
+            if (runif(1) < small.moves.coin) {
+                subset_size <- sample(2:min(m, 4), 1)
+            }
+        }   
+    }
+    
+    edge_sample <- sample(igraph::E(g), subset_size)
     return(edge_sample)
 }
 
