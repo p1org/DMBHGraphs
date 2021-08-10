@@ -77,6 +77,7 @@ flatten_list <- function(x) {
   y
 }
 
+# TODO: remove zeros.graph parameter and references
 #' returns graph containing new edges to add
 #' 
 #' This is effectively a wrapper around bipartite_walk()
@@ -229,6 +230,7 @@ validate_type_3_move <- function(gdir, b_u) {
     return(TRUE)
 }
 
+# TODO: remove zeros.graph parameter and references
 #' generate a Type 2 move
 #' 
 #' @param gdir igraph directed graph
@@ -246,7 +248,7 @@ generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     if (identical(partitions, list())) {
         return(NULL)
     }
-
+    # TODO: remove zeros.graph parameter
     b <- get_edges_to_add(gdir, partitions, directed = TRUE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {
@@ -288,7 +290,7 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
     return(TRUE)
 }
 
-
+# TODO: remove zeros.graph parameter and references
 #' generate a Type 1 move
 #' 
 #' @param gdir igraph directed graph
@@ -307,6 +309,7 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     if (identical(partitions, list())) {
         return(NULL)
     }
+    # TODO: remove zeros.graph parameter
     b <- get_edges_to_add(directed_skeleton, partitions, directed = FALSE, zeros.graph = zeros.graph)
 
     if (is.null(b)) {
@@ -322,6 +325,7 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
     }
 }
 
+# TODO: remove zeros.graph parameter and references
 #' generate a Type 1 move
 #' 
 #' @param gdir igraph directed graph

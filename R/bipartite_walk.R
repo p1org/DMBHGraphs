@@ -27,6 +27,7 @@ reverse_walk <- function(g, edges) {
   return(new_edges)
 }
 
+# TODO: remove zeros.graph parameter
 #' wrapper for reverse_walk
 #' 
 #' Takes a list of edges and calls \code{reverse_walk}. If the subgraph induced by
@@ -56,21 +57,23 @@ bipartite_walk <- function(g, edges, zeros.graph = NULL) {
     return(NULL)
   }
 
-  # if move to using igragh edge sequences, see "graph.es" object and "intersection" method
-  if (!is.null(zeros.graph)) {
+  return(edges_to_add)
+}
 
+
+check_structural_zeros <- function(b, zeros.graph) {
+  
     if (!igraph::is.directed(zeros.graph)) {
-      subgraph_to_add <- igraph::as.undirected(subgraph_to_add, mode = "collapse")
+      b <- igraph::as.undirected(b, mode = "collapse")
     }
 
     n_common_edges <- igraph::ecount(
-      igraph::intersection(subgraph_to_add, zeros.graph)
+      igraph::intersection(b, zeros.graph)
     )
 
     if (n_common_edges > 0) {
-      return(NULL)
+      return(FALSE)
     }
-  }
 
-  return(edges_to_add)
+    return(TRUE)
 }
