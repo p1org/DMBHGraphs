@@ -42,7 +42,7 @@ recursive_partition <- function(edges) {
 # TODO: find some test case for when n > 4
 
     n <- length(edges)
-    edges <- sample(edges, size = length(edges))
+    edges <- sample(edges, size = n)
 
     if (n == 1 || n == 2 || n == 3) {
         return(list(edges))
