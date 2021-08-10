@@ -27,7 +27,6 @@ reverse_walk <- function(g, edges) {
   return(new_edges)
 }
 
-# TODO: remove zeros.graph parameter
 #' wrapper for reverse_walk
 #' 
 #' Takes a list of edges and calls \code{reverse_walk}. If the subgraph induced by
@@ -45,10 +44,9 @@ reverse_walk <- function(g, edges) {
 #' 
 #' @param g igraph graph
 #' @param edges graph.es object, edge sequence from g
-#' @param zeros.graph igraph graph or NULL
 #' 
 #' @return list or NULL
-bipartite_walk <- function(g, edges, zeros.graph = NULL) {
+bipartite_walk <- function(g, edges) {
 
   edges_to_add <- reverse_walk(g, edges)
   subgraph_to_add <- igraph::graph_from_edgelist(edges_to_add)
