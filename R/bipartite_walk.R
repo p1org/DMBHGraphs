@@ -44,10 +44,9 @@ reverse_walk <- function(g, edges) {
 #' 
 #' @param g igraph graph
 #' @param edges graph.es object, edge sequence from g
-#' @param zeros.graph igraph graph or NULL
 #' 
 #' @return list or NULL
-bipartite_walk <- function(g, edges, zeros.graph = NULL) {
+bipartite_walk <- function(g, edges) {
 
   edges_to_add <- reverse_walk(g, edges)
   subgraph_to_add <- igraph::graph_from_edgelist(edges_to_add)
@@ -56,21 +55,23 @@ bipartite_walk <- function(g, edges, zeros.graph = NULL) {
     return(NULL)
   }
 
-  # if move to using igragh edge sequences, see "graph.es" object and "intersection" method
-  if (!is.null(zeros.graph)) {
+  return(edges_to_add)
+}
 
+
+check_structural_zeros <- function(b, zeros.graph) {
+  
     if (!igraph::is.directed(zeros.graph)) {
-      subgraph_to_add <- igraph::as.undirected(subgraph_to_add, mode = "collapse")
+      b <- igraph::as.undirected(b, mode = "collapse")
     }
 
     n_common_edges <- igraph::ecount(
-      igraph::intersection(subgraph_to_add, zeros.graph)
+      igraph::intersection(b, zeros.graph)
     )
 
     if (n_common_edges > 0) {
-      return(NULL)
+      return(FALSE)
     }
-  }
 
-  return(edges_to_add)
+    return(TRUE)
 }

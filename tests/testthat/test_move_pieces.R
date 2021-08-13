@@ -445,7 +445,7 @@ testthat::test_that(
 
         set.seed(42)
 
-        result <- generate_type_2_move(gdir, gudir, NULL, NULL)
+        result <- generate_type_2_move(gdir, gudir, NULL)
         result_move <- igraph::union(
             igraph::difference(gdir, result$r), result$b
         )
@@ -463,7 +463,7 @@ testthat::test_that(
 
         gdir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
 
-        result <- generate_type_2_move(gdir, NULL, NULL, NULL)
+        result <- generate_type_2_move(gdir, NULL, NULL)
         testthat::expect_null(result)
     }
 )
@@ -538,7 +538,7 @@ testthat::test_that(
             ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         set.seed(1234)
-        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
+        result <- generate_type_1_move(gdir, gudir, NULL)
 
         testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
     }
@@ -551,7 +551,7 @@ testthat::test_that(
 
         gudir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = FALSE, type = "gnm")
 
-        result <- generate_type_1_move(NULL, gudir, NULL, NULL)
+        result <- generate_type_1_move(NULL, gudir, NULL)
         testthat::expect_null(result)
     }
 )
@@ -657,7 +657,7 @@ testthat::test_that(
             ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         set.seed(4)
-        results <- generate_type_3_move(gdir, gudir, NULL, NULL, NULL)
+        results <- generate_type_3_move(gdir, gudir, NULL)
 
         testthat::expect_true(igraph::isomorphic(results$b_d, b_d))
         testthat::expect_true(igraph::isomorphic(results$b_u, b_u))
