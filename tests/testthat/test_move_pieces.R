@@ -602,7 +602,7 @@ testthat::test_that(
 testthat::test_that(
     "Test that validate_type_3_move() returns FALSE when there is a non-empty intersection",
     {
-        gdir <- igraph::graph_from_edgelist(
+        b_d <- igraph::graph_from_edgelist(
             matrix(c(
                 c(1,2),
                 c(4,3),
@@ -615,7 +615,7 @@ testthat::test_that(
                 c(2,3)
             ), ncol = 2, byrow = TRUE), directed = FALSE)
         
-        result <- validate_type_3_move(gdir, b_u)
+        result <- validate_type_3_move(b_d, b_u)
         testthat::expect_false(result)
     }
 )
@@ -627,7 +627,6 @@ testthat::test_that(
 testthat::test_that(
     "Test that generate_type_3_move() returns correct output on valid example",
     {
-        #skip("Incomplete test")
 
         gdir <- igraph::graph_from_edgelist(
         matrix(c(

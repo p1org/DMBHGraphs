@@ -214,13 +214,13 @@ validate_type_2_move <- function(gdir, gudir, r, b){
 #' Since Type 3 move is a composition of Type 1 and Type 2 moves, 
 #' the validation functions for those moves are run separately.
 #' 
-#' @param gdir igraph directed graph
+#' @param b_d igraph directed graph
 #' @param b_u igraph undirected graph
 #' 
 #' @return boolean
-validate_type_3_move <- function(gdir, b_u) {
+validate_type_3_move <- function(b_d, b_u) {
 
-    if (isFALSE(check_intersection(igraph::as.undirected(gdir, mode="collapse"), b_u))) {
+    if (isFALSE(check_intersection(igraph::as.undirected(b_d, mode="collapse"), b_u))) {
         return(FALSE)
     }
 
