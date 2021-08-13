@@ -630,33 +630,33 @@ testthat::test_that(
         #skip("Incomplete test")
 
         gdir <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1, 2),
-                c(4, 3)
-            ), ncol = 2, byrow = TRUE), directed = TRUE)
+        matrix(c(
+            c(1, 3),
+            c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         gudir <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1, 2),
-                c(3, 4)
-            ), ncol = 2, byrow = TRUE), directed = FALSE)
+        matrix(c(
+            c(1, 2),
+            c(3, 4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         r_d <- gdir
         r_u <- gudir
 
         b_d <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(1,3),
-                c(4,2)
-            ), ncol = 2, byrow = TRUE), directed = TRUE)
+        matrix(c(
+            c(1,2),
+            c(4,3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
 
         b_u <- igraph::graph_from_edgelist(
-            matrix(c(
-                c(2,1),
-                c(4,3)
-            ), ncol = 2, byrow = TRUE), directed = FALSE)
+        matrix(c(
+            c(1,4),
+            c(2,3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
 
-        set.seed(4)
+        set.seed(1)
         results <- generate_type_3_move(gdir, gudir, NULL)
 
         testthat::expect_true(igraph::isomorphic(results$b_d, b_d))

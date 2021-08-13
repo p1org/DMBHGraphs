@@ -330,12 +330,12 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
         return(NULL)
     } 
 
-    type_2_move <- generate_type_2_move(gdir, gudir, small.moves.coin)
+    type_2_move <- generate_type_2_move(gdir, apply_type_1_move(gudir, type_1_move$r, type_1_move$b), small.moves.coin)
     if (is.null(type_2_move)) {
         return(NULL)
     }
 
-    if (isFALSE(validate_type_3_move(gdir, type_1_move$b))) {
+    if (isFALSE(validate_type_3_move(type_2_move$b, type_1_move$b))) {
         return(NULL)
     }
 
