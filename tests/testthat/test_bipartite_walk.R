@@ -29,49 +29,46 @@ testthat::test_that(
 testthat::test_that(
   "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is undirected",
   {
-    g <- igraph::graph_from_edgelist(
+
+    b <- igraph::graph_from_edgelist(
     matrix(c(
-      c(1, 3),
-      c(2, 4),
-      c(3, 5),
-      c(4, 6)
-    ), nrow = 4, byrow = TRUE), directed = TRUE)
+      c(2, 3),
+      c(2, 4)
+    ), ncol = 2, byrow = TRUE), directed = TRUE)
 
     zeros.graph <- igraph::graph_from_edgelist(
      matrix(c(
       c(2, 3),
       c(3, 4),
       c(4, 5),
-      c(1, 6)), nrow = 4, byrow = TRUE), directed = FALSE
+      c(1, 6)), ncol = 2, byrow = TRUE), directed = FALSE
     )
 
-    result <- bipartite_walk(g, igraph::E(g), zeros.graph = zeros.graph)
-    testthat::expect_null(result)
+    result <- check_structural_zeros(b = b, zeros.graph = zeros.graph)
+    testthat::expect_false(result)
   }
 )
 
 
 testthat::test_that(
-  "Test that bipartite_walk returns NULL when it tries to add a forbidden edge when zeros graph is directed",
+  "Test that check_structural_zeros() returns FALSE when it tries to add a forbidden edge when zeros graph is directed",
   {
-    g <- igraph::graph_from_edgelist(
+    b <- igraph::graph_from_edgelist(
     matrix(c(
-      c(1, 3),
-      c(2, 4),
-      c(3, 5),
-      c(4, 6)
-    ), nrow = 4, byrow = TRUE), directed = TRUE)
+      c(2, 3),
+      c(2, 4)
+    ), ncol = 2, byrow = TRUE), directed = TRUE)
 
     zeros.graph <- igraph::graph_from_edgelist(
      matrix(c(
       c(2, 3),
       c(3, 4),
       c(4, 5),
-      c(1, 6)), nrow = 4, byrow = TRUE)
+      c(1, 6)), ncol = 2, byrow = TRUE)
     )
 
-    result <- bipartite_walk(g, igraph::E(g), zeros.graph = zeros.graph)
-    testthat::expect_null(result)
+    result <- check_structural_zeros(b = b, zeros.graph = zeros.graph)
+    testthat::expect_false(result)
   }
 )
 
