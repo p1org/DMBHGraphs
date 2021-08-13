@@ -14,17 +14,22 @@
 #' @return igraph.es
 sample_edges <- function(g, small.moves.coin = NULL) {
 
-    edges <- igraph::E(g)
+    m <- igraph::ecount(g)
 
-    subset_size <- sample(2:igraph::ecount(g), 1)
+    if (m == 1 || m == 2) {
+        subset_size <- m
+    } else {
 
-    if (!is.null(small.moves.coin)) {
-        if (runif(1) < small.moves.coin) {
-            subset_size <- sample(2:4, 1)
-        }
+        subset_size <- sample(2:m, 1)
+
+        if (!is.null(small.moves.coin)) {
+            if (runif(1) < small.moves.coin) {
+                subset_size <- sample(2:min(m, 4), 1)
+            }
+        }   
     }
 
-    edge_sample <- sample(edges, subset_size)
+    edge_sample <- sample(igraph::E(g), subset_size)
     return(edge_sample)
 }
 
@@ -37,9 +42,9 @@ recursive_partition <- function(edges) {
 # TODO: find some test case for when n > 4
 
     n <- length(edges)
-    edges <- sample(edges, size = length(edges))
+    edges <- sample(edges, size = n)
 
-    if (n == 2 || n == 3) {
+    if (n == 1 || n == 2 || n == 3) {
         return(list(edges))
     } else if (n == 4) {
         
@@ -86,16 +91,14 @@ flatten_list <- function(x) {
 #' @param g igraph graph
 #' @param partitions list of igraph.es objects
 #' @param directed should the new edges be directed
-#' @param zeros.graph optional, igraph graph object
 #' 
 #' @return igraph object or NULL
-get_edges_to_add <- function(g, partitions, directed, zeros.graph = NULL) {
+get_edges_to_add <- function(g, partitions, directed) {
 
     new_edgelists <- lapply(
         X = partitions,
         FUN = bipartite_walk,
-        g = g,
-        zeros.graph = zeros.graph)
+        g = g)
 
     # if any of the results of bipartite_walk are NULL, return NULL
     if (sum(unlist(lapply(new_edgelists, is.null))) > 0) {
@@ -228,15 +231,19 @@ validate_type_3_move <- function(gdir, b_u) {
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
-#' @param zeros.graph optional, igraph graph (directed or undirected)
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
 #' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
-generate_type_2_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
+generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
-    b <- get_edges_to_add(gdir, partitions, directed = TRUE, zeros.graph = zeros.graph)
+    partitions <- partitions[which(unlist(lapply(X=partitions, FUN=length)) > 1)]
+    
+    if (identical(partitions, list())) {
+        return(NULL)
+    }
+    b <- get_edges_to_add(gdir, partitions, directed = TRUE)
 
     if (is.null(b)) {
         return(NULL)
@@ -277,21 +284,24 @@ validate_type_1_move <- function(gdir, gudir, r, b) {
     return(TRUE)
 }
 
-
 #' generate a Type 1 move
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
-#' @param zeros.graph optional, igraph graph (directed or undirected)
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
 #' @return list(r=igraph.graph, b=igraph.graph) or NULL
-generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.coin = NULL) {
+generate_type_1_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
     directed_skeleton <- igraph::as.directed(gudir, mode = "arbitrary")
     r <- sample_edges(directed_skeleton, small.moves.coin = small.moves.coin)
     partitions <- flatten_list(recursive_partition(r))
-    b <- get_edges_to_add(directed_skeleton, partitions, directed = FALSE, zeros.graph = zeros.graph)
+    partitions <- partitions[which(unlist(lapply(X=partitions, FUN=length)) > 1)]
+    
+    if (identical(partitions, list())) {
+        return(NULL)
+    }
+    b <- get_edges_to_add(directed_skeleton, partitions, directed = FALSE)
 
     if (is.null(b)) {
         return(NULL)
@@ -310,19 +320,17 @@ generate_type_1_move <- function(gdir, gudir, zeros.graph = NULL, small.moves.co
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
-#' @param zeros.graph.dir optional, igraph directed graph
-#' @param zeros.graph.udir optional, igraph undirected graph
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
 #' @return list(r_u=igraph.graph (undirected), b_u=igraph.graph (undirected), r_d=igraph.graph (directed), b_d=igraph.graph (directed)) or NULL
-generate_type_3_move <- function(gdir, gudir, zeros.graph.dir = NULL, zeros.graph.udir = NULL, small.moves.coin = NULL) {
+generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
-    type_1_move <- generate_type_1_move(gdir, gudir, zeros.graph.dir, small.moves.coin)
+    type_1_move <- generate_type_1_move(gdir, gudir, small.moves.coin)
     if (is.null(type_1_move)) {
         return(NULL)
     } 
 
-    type_2_move <- generate_type_2_move(gdir, gudir, zeros.graph.udir, small.moves.coin)
+    type_2_move <- generate_type_2_move(gdir, gudir, small.moves.coin)
     if (is.null(type_2_move)) {
         return(NULL)
     }

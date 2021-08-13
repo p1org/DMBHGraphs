@@ -27,6 +27,20 @@ testthat::test_that(
     }
 )
 
+testthat::test_that(
+    "Test that sample_edges returns sets of length 1 and 2, resp. when G contains only 1 or 2 edges",
+    {
+        G1 <- igraph::erdos.renyi.game(n = 10, p.or.m = 1, directed = TRUE, type = "gnm")
+        G2 <- igraph::erdos.renyi.game(n = 10, p.or.m = 2, directed = TRUE, type = "gnm")
+
+        edge_sample_1 <- sample_edges(G1)
+        edge_sample_2 <- sample_edges(G2)
+
+        testthat::expect_equal(length(edge_sample_1), 1)
+        testthat::expect_equal(length(edge_sample_2), 2)
+    }
+)
+
 
 ######################################
 ####### recursive_partition() ########
@@ -35,17 +49,21 @@ testthat::test_that(
 testthat::test_that(
     "Test that recursive_partition returns correct output lengths for n=2,3,4",
     {
+        G1 <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
         G2 <- igraph::erdos.renyi.game(n = 3, p.or.m = 2, directed = TRUE, type = "gnm")
         G3 <- igraph::erdos.renyi.game(n = 3, p.or.m = 3, directed = TRUE, type = "gnm")
         G4 <- igraph::erdos.renyi.game(n = 4, p.or.m = 4, directed = TRUE, type = "gnm")
 
+        edges1 <- recursive_partition(E(G1))
         edges2 <- recursive_partition(E(G2))
         edges3 <- recursive_partition(E(G3))
         edges4 <- recursive_partition(E(G4))
 
+        testthat::expect_length(edges1, 1)
         testthat::expect_length(edges2, 1)
         testthat::expect_length(edges3, 1)
         testthat::expect_true(length(edges4) == 2 || length(edges4) == 1)
+        testthat::expect_length(edges1[[1]], 1)
         testthat::expect_length(edges2[[1]], 2)
         testthat::expect_length(edges3[[1]], 3)
     }
@@ -427,7 +445,7 @@ testthat::test_that(
 
         set.seed(42)
 
-        result <- generate_type_2_move(gdir, gudir, NULL, NULL)
+        result <- generate_type_2_move(gdir, gudir, NULL)
         result_move <- igraph::union(
             igraph::difference(gdir, result$r), result$b
         )
@@ -436,6 +454,17 @@ testthat::test_that(
         testthat::expect_true(sum(degree(gdir) - degree(result_move)) == 0)
 
         set.seed(NULL)
+    }
+)
+
+testthat::test_that(
+    "Thest that generate_type_2_move() returns NULL when partitions contain a single edge",
+    {
+
+        gdir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
+
+        result <- generate_type_2_move(gdir, NULL, NULL)
+        testthat::expect_null(result)
     }
 )
 
@@ -509,12 +538,23 @@ testthat::test_that(
             ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         set.seed(1234)
-        result <- generate_type_1_move(gdir, gudir, NULL, NULL)
+        result <- generate_type_1_move(gdir, gudir, NULL)
 
         testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
     }
 )
 
+
+testthat::test_that(
+    "Thest that generate_type_1_move() returns NULL when partitions contain a single edge",
+    {
+
+        gudir <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = FALSE, type = "gnm")
+
+        result <- generate_type_1_move(NULL, gudir, NULL)
+        testthat::expect_null(result)
+    }
+)
 
 ######################################
 ###### apply_type_1_move() ###########
@@ -617,7 +657,7 @@ testthat::test_that(
             ), ncol = 2, byrow = TRUE), directed = FALSE)
 
         set.seed(4)
-        results <- generate_type_3_move(gdir, gudir, NULL, NULL, NULL)
+        results <- generate_type_3_move(gdir, gudir, NULL)
 
         testthat::expect_true(igraph::isomorphic(results$b_d, b_d))
         testthat::expect_true(igraph::isomorphic(results$b_u, b_u))
