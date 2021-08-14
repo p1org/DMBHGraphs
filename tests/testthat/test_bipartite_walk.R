@@ -1,7 +1,4 @@
 testthat::context("Test bipartite_walk function family")
-library(igraph)
-
-
 
 testthat::test_that(
   "Test that bipartite_walk returns the reversed walk when there are no zeros and the graph is simple.",

@@ -1,6 +1,4 @@
 testthat::context("Test Get.Configuration.Matrix function family")
-library(igraph)
-
 
 testthat::test_that(
   "Test that Get.Configuration.Matrix.p1.FW returns correct matrix on toy example", {

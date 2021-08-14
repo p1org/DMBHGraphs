@@ -1,6 +1,4 @@
 testthat::context("Test Get.MLE functions and helpers")
-library(igraph)
-
 
 testthat::test_that(
   "Test that balance_vertices() function works as expected", {

@@ -1,6 +1,4 @@
 testthat::context("Test input validation functions")
-library(igraph)
-
 
 testthat::test_that(
   "Test that validate_directed() throws error when passed undirected graph and returns NULL when passed directed graph", {
