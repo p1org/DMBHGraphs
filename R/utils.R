@@ -55,3 +55,12 @@ validate_bidirected_graph_part <- function(g, type){
   validate_undirected(g, type)            # check if graph is undirected
   validate_simple(g, type)                # check if graph is simple
 }
+
+reciprocated_edges <- function(g) {
+  apply(
+    X=igraph::ends(g, igraph::E(g), names=FALSE),
+    MARGIN=1,
+    FUN = function(e,g){e[1] %in% igraph::neighbors(g, e[2], mode="out")},
+    g=g
+  )
+}
