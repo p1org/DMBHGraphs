@@ -64,3 +64,13 @@ reciprocated_edges <- function(g) {
     g=g
   )
 }
+
+split_directed <- function(g) {
+  recip_idx <- reciprocated_edges(g)
+  return(
+    list(
+      gudir=igraph::as.undirected(igraph::subgraph.edges(g, igraph::E(g)[recip_idx], delete.vertices=FALSE), mode="collapse"),
+      gdir=igraph::subgraph.edges(g, igraph::E(g)[!recip_idx], delete.vertices=FALSE)
+    )
+  )
+}
