@@ -45,7 +45,7 @@ testthat::test_that(
 ######################################
 
 testthat::test_that(
-    "Test that recursive_partition returns correct output lengths for n=2,3,4",
+    "Test that recursive_partition returns correct output lengths for edge-cases",
     {
         G1 <- igraph::erdos.renyi.game(n = 3, p.or.m = 1, directed = TRUE, type = "gnm")
         G2 <- igraph::erdos.renyi.game(n = 3, p.or.m = 2, directed = TRUE, type = "gnm")
