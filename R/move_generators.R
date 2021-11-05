@@ -61,7 +61,7 @@ generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
 }
 
 
-#' generate a Type 1 move
+#' generate a Type 3 move
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
