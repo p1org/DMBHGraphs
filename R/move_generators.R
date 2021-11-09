@@ -23,11 +23,7 @@ generate_type_1_move <- function(gdir, gudir, small.moves.coin = NULL) {
     
     r <- igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed = FALSE)
 
-    if (isFALSE(validate_type_1_move(gdir, gudir, r, b))) {
-        return(NULL)
-    } else {
-        return(list(r = r, b = b))
-    }
+    return(list(r = r, b = b))
 }
 
 
@@ -53,11 +49,8 @@ generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
         return(NULL)
     }
     r <- igraph::graph_from_edgelist(igraph::ends(gdir, r), directed = TRUE)
-    if (isFALSE(validate_type_2_move(gdir, gudir, r, b))) {
-        return(NULL)
-    } else {
-        return(list(r = r, b = b))
-    }
+
+    return(list(r = r, b = b))
 }
 
 
@@ -80,10 +73,6 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
         return(NULL)
     }
 
-    if (isFALSE(validate_type_3_move(type_2_move$b, type_1_move$b))) {
-        return(NULL)
-    }
-
     return(
         list(
             r_u = type_1_move$r,
@@ -92,7 +81,6 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
             b_d = type_2_move$b
         )
     )
-
 }
 
 
