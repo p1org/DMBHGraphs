@@ -130,17 +130,31 @@ apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
 }
 
 
+#' Generates a move for the p1 model w/out reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param small.moves.coin options, numeric between (0,1)
+#' 
+#' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
 generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
 
     gcomb <- igraph::union(
         igraph::as.directed(gudir, mode = "mutual"), 
         gdir)
 
-    results <- generate_type_2_move(gcomb, NULL, small.moves.coin)
-    return(results)
+    return(generate_type_2_move(gcomb, NULL, small.moves.coin))
 }
 
 
+#' Generates a move for the p1 model with edge-dependent reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param small.moves.coin optional, numeric between (0, 1)
+#' @param move.type.coin optional, vector of probability weights of length 3
+#' 
+#' @return list, see generate_type_<n>_move() functions
 generate_p1_ed_recip_move <- function(gdir, gudir, small.moves.coin=NULL, move.type.coin=c(1/3,1/3,1/3)) {
     
     move_type <- sample.int(3, 1, prob = move.type.coin)

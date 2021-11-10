@@ -141,7 +141,13 @@ validate_type_3_move <- function(b_d, b_u) {
 }
 
 
-
+#' Applies validation check for moves for the p1 model with no reciprocation
+#' 
+#' @param gcomb igraph directed graph
+#' @param r igraph directed graph
+#' @param g igraph directed graph
+#' 
+#' @return boolean
 validate_p1_wo_recip_move <- function(gcomb, r, b) {
 
     # checks that no multiedges will be added in the move
@@ -158,6 +164,13 @@ validate_p1_wo_recip_move <- function(gcomb, r, b) {
 }
 
 
+#' Applies validation check for moves for the p1 model with edge-dependent reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @moves list
+#' 
+#' @return boolean
 validate_p1_ed_recip_move <- function(gdir, gudir, moves) {
     move_type <- attributes(moves)$type
 
