@@ -156,3 +156,35 @@ validate_p1_wo_recip_move <- function(gcomb, r, b) {
 
     return(TRUE)
 }
+
+
+validate_p1_ed_recip_move <- function(gdir, gudir, moves) {
+    move_type <- attributes(moves)$type
+
+    if (move_type == 1) {
+        return(validate_type_1_move(gdir, gudir, moves$r, moves$b))
+    }
+    if (move_type == 2) {
+        return(validate_type_2_move(gdir, gudir, moves$r, moves$b))
+    }
+    if (move_type == 3) {
+
+        if (isFALSE(validate_type_1_move(gdir, gudir, moves$r_u, moves$b_u))) {
+            return(FALSE)
+        }
+
+        if (isFALSE(
+                validate_type_2_move(
+                    gdir, 
+                    apply_type_1_move(gudir, moves$r_u, moves$b_u), 
+                    moves$r_d, 
+                    moves$b_d)
+                )
+            ) 
+        {
+            return(FALSE)
+        }
+
+        return(validate_type_3_move(moves$b_d, moves$b_u))
+    }
+}

@@ -406,3 +406,52 @@ testthat::test_that(
 
     }
 )
+
+###########################################
+###### validate_p1_ed_recip_move() ########
+###########################################
+
+testthat::test_that(
+    "Test that validate_p1_ed_recip_move() returns TRUE for a valid example",
+    {
+        # Uses example generate_type_3_move() test
+
+        gdir <- igraph::graph_from_edgelist(
+        matrix(c(
+            c(1, 3),
+            c(4, 2)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        gudir <- igraph::graph_from_edgelist(
+        matrix(c(
+            c(1, 2),
+            c(3, 4)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        r_d <- gdir
+        r_u <- gudir
+
+        b_d <- igraph::graph_from_edgelist(
+        matrix(c(
+            c(1,2),
+            c(4,3)
+        ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b_u <- igraph::graph_from_edgelist(
+        matrix(c(
+            c(1,4),
+            c(2,3)
+        ), ncol = 2, byrow = TRUE), directed = FALSE)
+
+        moves <- list(
+            r_d=r_d,
+            r_u=r_u,
+            b_u=b_u,
+            b_d=b_d
+        )
+        attr(moves, "type") <- 3
+
+        testthat::expect_true(validate_p1_ed_recip_move(gdir, gudir, moves))
+
+    }
+)

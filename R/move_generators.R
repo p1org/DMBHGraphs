@@ -139,3 +139,22 @@ generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
     results <- generate_type_2_move(gcomb, NULL, small.moves.coin)
     return(results)
 }
+
+
+generate_p1_ed_recip_move <- function(gdir, gudir, small.moves.coin=NULL, move.type.coin=c(1/3,1/3,1/3)) {
+    
+    move_type <- sample.int(3, 1, prob = move.type.coin)
+
+    if (move_type == 1) {
+        results <- generate_type_1_move(gdir, gudir, small.moves.coin)
+    }
+    if (move_type == 2) {
+        results <- generate_type_2_move(gdir, gudir, small.moves.coin)
+    }
+    if (move_type == 3) {
+        results <- generate_type_3_move(gdir, gudir, small.moves.coin)
+    }
+
+    attr(results, "type") <- move_type
+    return(results)
+}
