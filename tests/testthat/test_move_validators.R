@@ -372,3 +372,37 @@ testthat::test_that(
         testthat::expect_false(result)
     }
 )
+
+
+###########################################
+###### validate_p1_wo_recip_move() ########
+###########################################
+
+testthat::test_that(
+    "Test that validate_p1_wo_recip_move() returns TRUE for a valid move", 
+    {
+        gcomb <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(1,2),
+                c(3,1),
+                c(4,3),
+                c(2,4),
+                c(4,2)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        r <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(4,2),
+                c(3,1)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        b <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(3,2),
+                c(4,1)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+        testthat::expect_true(validate_p1_wo_recip_move(gcomb, r, b))
+
+    }
+)

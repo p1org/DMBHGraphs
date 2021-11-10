@@ -139,3 +139,20 @@ validate_type_3_move <- function(b_d, b_u) {
 
     return(TRUE)
 }
+
+
+
+validate_p1_wo_recip_move <- function(gcomb, r, b) {
+
+    # checks that no multiedges will be added in the move
+    if (!igraph::is.simple(b)) {
+        return(FALSE)
+    }
+
+    # checks that only new edges will be added in the move
+    if (isFALSE(check_mutual_edges(gcomb, r, b))) {
+        return(FALSE)
+    }
+
+    return(TRUE)
+}
