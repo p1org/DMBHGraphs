@@ -128,3 +128,14 @@ apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
         gudir = apply_type_1_move(gudir, r_u, b_u)
     )
 }
+
+
+generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
+
+    gcomb <- igraph::union(
+        igraph::as.directed(gudir, mode = "mutual"), 
+        gdir)
+
+    results <- generate_type_2_move(gcomb, NULL, small.moves.coin)
+    return(results)
+}

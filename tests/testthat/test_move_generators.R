@@ -228,3 +228,49 @@ testthat::test_that(
         testthat::expect_true(igraph::isomorphic(expected, result)) 
     }
 )
+
+
+
+###########################################
+###### generate_p1_wo_recip_move() ########
+###########################################
+
+testthat::test_that(
+    "Test that generate_p1_wo_recip_move() returns valid output for a known example", 
+    {
+        gudir <- igraph::graph_from_edgelist(
+        matrix(
+            c(
+             c(2,1),
+             c(3,4)
+            )
+        , ncol=2, byrow=TRUE),
+        directed=FALSE
+        )
+
+        gdir <- igraph::graph_from_edgelist(
+        matrix(
+            c(
+             c(3,1),
+             c(2,4)
+            ), ncol=2, byrow=TRUE
+        ), directed=TRUE)
+
+        b_expected <- igraph::graph_from_edgelist(
+            matrix(c(
+                c(3,1),
+                c(3,2),
+                c(2,4),
+                c(1,4)
+            ), ncol = 2, byrow = TRUE), directed = TRUE)
+
+
+        set.seed(888186)
+
+        result <- generate_p1_wo_recip_move(gdir, gudir, NULL)
+        testthat::expect_equal(sum(degree(b_expected) - degree(result$b)), 0)
+        testthat::expect_true(igraph::isomorphic(result$b, b_expected))
+        
+        set.seed(NULL)
+    }
+)
