@@ -209,7 +209,7 @@ check_deg_seq <- function(g1, g2, mode) {
 }
 
 check_deg_seq_p1_wo_recip <- function(gcomb1, gcomb2) {
-    check_deg_seq(gcomb1, gcomb2, "in") && check_deg_seq(gcomb1, gcomb2, "out"))
+    check_deg_seq(gcomb1, gcomb2, "in") && check_deg_seq(gcomb1, gcomb2, "out")
 }
 
 check_deg_seq_p1_ed_recip <- function(gdir1, gudir1, gdir2, gudir2) {
