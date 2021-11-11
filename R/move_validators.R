@@ -201,3 +201,21 @@ validate_p1_ed_recip_move <- function(gdir, gudir, moves) {
         return(validate_type_3_move(moves$b_d, moves$b_u))
     }
 }
+
+# Functions for checking sufficient statistics vectors
+
+check_deg_seq <- function(g1, g2, mode) {
+    sum(igraph::degree(g1, mode = mode) - igraph::degree(g2, mode = mode)) == 0
+}
+
+check_deg_seq_p1_wo_recip <- function(gcomb1, gcomb2) {
+    check_deg_seq(gcomb1, gcomb2, "in") && check_deg_seq(gcomb1, gcomb2, "out"))
+}
+
+check_deg_seq_p1_ed_recip <- function(gdir1, gudir1, gdir2, gudir2) {
+    check_deg_seq_p1_wo_recip(gdir1, gdir2) && check_deg_seq(gudir1, gudir2)
+}
+
+check_deg_seq_p1_w_const_recip <- function(gdir1, gudir1, gdir2, gudir2) {
+    check_deg_seq_p1_wo_recip(gdir1, gdir2) && (igraph::ecount(gudir1) == igraph::ecount(gudir2))
+}
