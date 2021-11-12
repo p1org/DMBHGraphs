@@ -455,3 +455,126 @@ testthat::test_that(
 
     }
 )
+
+
+#########################################################
+###### Sufficient Statistics Validator Functions ########
+#########################################################
+
+
+testthat::test_that(
+    "Test that check_degree_sequence() returns TRUE for valid input",
+    {
+        g <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(1, 2),
+                    c(3, 2)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        for (m in c("in", "out", "all")) {
+            testthat::expect_true(check_degree_sequence(g, g, m))
+        }
+
+    }
+)
+
+testthat::test_that(
+    "Test that check_degree_sequence() returns TRUE for valid input",
+    {
+        g <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(1, 2),
+                    c(3, 2)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        for (m in c("in", "out", "all")) {
+            testthat::expect_true(check_degree_sequence(g, g, m))
+        }
+
+    }
+)
+
+testthat::test_that(
+    "Test that check_suff_stat_p1_wo_recip() behaves as expected.", 
+    {
+        g1 <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(1, 2),
+                    c(3, 2)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        g2 <- igraph::add_edges(g1, c(2, 3))
+
+        testthat::expect_true(check_suff_stat_p1_wo_recip(g1, g1))
+        testthat::expect_false(check_suff_stat_p1_wo_recip(g2, g1))
+    }
+)
+
+testthat::test_that(
+    "Test that check_suff_stat_p1_ed_recip() behaves as expected.", 
+    {
+        gdir1 <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(1, 2),
+                    c(3, 2)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        gudir1 <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(3, 1)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        gdir2 <- igraph::add_edges(gdir1, c(3, 1))
+        gudir2 <- igraph::add_edges(gudir1, c(2, 1))
+
+        testthat::expect_true(check_suff_stat_p1_ed_recip(gdir1, gudir1, gdir1, gudir1))
+        testthat::expect_false(check_suff_stat_p1_ed_recip(gdir1, gudir1, gdir2, gudir2))
+
+    }
+)
+
+testthat::test_that(
+    "Test that check_suff_stat_p1_w_const_recip() behaves as expected",
+    {
+        gdir1 <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(1, 2),
+                    c(3, 2)
+                ), ncol = 2, byrow = TRUE
+            ), directed = TRUE
+        )
+
+        gudir1 <- igraph::graph_from_edgelist(
+            matrix(
+                c(
+                    c(3, 1)
+                ), ncol = 2, byrow = TRUE
+            ), directed = FALSE
+        )
+
+        gudir2 <- igraph::add_edges(gudir1, c(2, 3))
+
+        testthat::expect_true(
+            check_suff_stat_p1_w_const_recip(gdir1, gudir1, gdir1, gudir1)
+        )
+        testthat::expect_false(
+            check_suff_stat_p1_w_const_recip(gdir1, gudir1, gdir1, gudir2)
+        )
+    }
+)
