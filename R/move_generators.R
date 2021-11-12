@@ -23,11 +23,7 @@ generate_type_1_move <- function(gdir, gudir, small.moves.coin = NULL) {
     
     r <- igraph::graph_from_edgelist(igraph::ends(directed_skeleton, r), directed = FALSE)
 
-    if (isFALSE(validate_type_1_move(gdir, gudir, r, b))) {
-        return(NULL)
-    } else {
-        return(list(r = r, b = b))
-    }
+    return(list(r = r, b = b))
 }
 
 
@@ -53,11 +49,8 @@ generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
         return(NULL)
     }
     r <- igraph::graph_from_edgelist(igraph::ends(gdir, r), directed = TRUE)
-    if (isFALSE(validate_type_2_move(gdir, gudir, r, b))) {
-        return(NULL)
-    } else {
-        return(list(r = r, b = b))
-    }
+
+    return(list(r = r, b = b))
 }
 
 
@@ -80,10 +73,6 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
         return(NULL)
     }
 
-    if (isFALSE(validate_type_3_move(type_2_move$b, type_1_move$b))) {
-        return(NULL)
-    }
-
     return(
         list(
             r_u = type_1_move$r,
@@ -92,7 +81,6 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
             b_d = type_2_move$b
         )
     )
-
 }
 
 
@@ -139,4 +127,48 @@ apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
         gdir = apply_type_2_move(gdir, r_d, b_d),
         gudir = apply_type_1_move(gudir, r_u, b_u)
     )
+}
+
+
+#' Generates a move for the p1 model w/out reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param small.moves.coin options, numeric between (0,1)
+#' 
+#' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
+generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
+
+    gcomb <- igraph::union(
+        igraph::as.directed(gudir, mode = "mutual"), 
+        gdir)
+
+    return(generate_type_2_move(gcomb, NULL, small.moves.coin))
+}
+
+
+#' Generates a move for the p1 model with edge-dependent reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @param small.moves.coin optional, numeric between (0, 1)
+#' @param move.type.coin optional, vector of probability weights of length 3
+#' 
+#' @return list, see generate_type_<n>_move() functions
+generate_p1_ed_recip_move <- function(gdir, gudir, small.moves.coin=NULL, move.type.coin=c(1/3,1/3,1/3)) {
+    
+    move_type <- sample.int(3, 1, prob = move.type.coin)
+
+    if (move_type == 1) {
+        results <- generate_type_1_move(gdir, gudir, small.moves.coin)
+    }
+    if (move_type == 2) {
+        results <- generate_type_2_move(gdir, gudir, small.moves.coin)
+    }
+    if (move_type == 3) {
+        results <- generate_type_3_move(gdir, gudir, small.moves.coin)
+    }
+
+    attr(results, "type") <- move_type
+    return(results)
 }

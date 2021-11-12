@@ -139,3 +139,83 @@ validate_type_3_move <- function(b_d, b_u) {
 
     return(TRUE)
 }
+
+
+#' Applies validation check for moves for the p1 model with no reciprocation
+#' 
+#' @param gcomb igraph directed graph
+#' @param r igraph directed graph
+#' @param g igraph directed graph
+#' 
+#' @return boolean
+validate_p1_wo_recip_move <- function(gcomb, r, b) {
+
+    # checks that no multiedges will be added in the move
+    if (!igraph::is.simple(b)) {
+        return(FALSE)
+    }
+
+    # checks that only new edges will be added in the move
+    if (isFALSE(check_mutual_edges(gcomb, r, b))) {
+        return(FALSE)
+    }
+
+    return(TRUE)
+}
+
+
+#' Applies validation check for moves for the p1 model with edge-dependent reciprocation
+#' 
+#' @param gdir igraph directed graph
+#' @param gudir igraph undirected graph
+#' @moves list
+#' 
+#' @return boolean
+validate_p1_ed_recip_move <- function(gdir, gudir, moves) {
+    move_type <- attributes(moves)$type
+
+    if (move_type == 1) {
+        return(validate_type_1_move(gdir, gudir, moves$r, moves$b))
+    }
+    if (move_type == 2) {
+        return(validate_type_2_move(gdir, gudir, moves$r, moves$b))
+    }
+    if (move_type == 3) {
+
+        if (isFALSE(validate_type_1_move(gdir, gudir, moves$r_u, moves$b_u))) {
+            return(FALSE)
+        }
+
+        if (isFALSE(
+                validate_type_2_move(
+                    gdir, 
+                    apply_type_1_move(gudir, moves$r_u, moves$b_u), 
+                    moves$r_d, 
+                    moves$b_d)
+                )
+            ) 
+        {
+            return(FALSE)
+        }
+
+        return(validate_type_3_move(moves$b_d, moves$b_u))
+    }
+}
+
+# Functions for checking sufficient statistics vectors
+
+check_degree_sequence <- function(g1, g2, mode) {
+    sum(igraph::degree(g1, mode = mode) - igraph::degree(g2, mode = mode)) == 0
+}
+
+check_suff_stat_p1_wo_recip <- function(gcomb1, gcomb2) {
+    check_degree_sequence(gcomb1, gcomb2, "in") && check_degree_sequence(gcomb1, gcomb2, "out")
+}
+
+check_suff_stat_p1_ed_recip <- function(gdir1, gudir1, gdir2, gudir2) {
+    check_suff_stat_p1_wo_recip(gdir1, gdir2) && check_degree_sequence(gudir1, gudir2, "all")
+}
+
+check_suff_stat_p1_w_const_recip <- function(gdir1, gudir1, gdir2, gudir2) {
+    check_suff_stat_p1_wo_recip(gdir1, gdir2) && (igraph::ecount(gudir1) == igraph::ecount(gudir2))
+}
