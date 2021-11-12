@@ -482,25 +482,6 @@ testthat::test_that(
 )
 
 testthat::test_that(
-    "Test that check_degree_sequence() returns TRUE for valid input",
-    {
-        g <- igraph::graph_from_edgelist(
-            matrix(
-                c(
-                    c(1, 2),
-                    c(3, 2)
-                ), ncol = 2, byrow = TRUE
-            ), directed = TRUE
-        )
-
-        for (m in c("in", "out", "all")) {
-            testthat::expect_true(check_degree_sequence(g, g, m))
-        }
-
-    }
-)
-
-testthat::test_that(
     "Test that check_suff_stat_p1_wo_recip() behaves as expected.", 
     {
         g1 <- igraph::graph_from_edgelist(
