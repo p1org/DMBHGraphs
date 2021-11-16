@@ -1,11 +1,9 @@
-
-
-
-
 #' Finds reciprocated edges
 #' 
+#' @details
 #' Finds reciprocated edges by checking if the sending vertex u
-#' is in the out-neighborhood of its out-neighbors, i.e. is u in N(v) for v in N(u)
+#' is in the out-neighborhood of its out-neighbors, 
+#' i.e. is \eqn{u} in \eqn{N(v)} for \eqn{v} in \eqn{N(u)}
 #' 
 #' @param g igraph directed graph
 #' 
@@ -19,21 +17,33 @@ reciprocated_edges <- function(g) {
   )
 }
 
-#' Splits graph into reciprocated and unreciprocated parts
-#' 
-#' The graph containing the reciprocated edges is represented by an igraph undirected graph object. 
-#' The graph containing the unreciprocated edges is represented by an igraph directed graph. 
+#' Split graph into reciprocated and unreciprocated parts
 #' 
 #' @param g igraph directed graph
 #' 
-#' @return list(igraph undirected graph, igraph directed graph)
+#' @return List containing the following: 
+#' \itemize{
+#'  \item \code{gudir}: graph containing the reciprocated edges is 
+#'    represented by an igraph undirected graph object. 
+#'  \item \code{gdir}: graph containing the unreciprocated edges 
+#'    is represented by an igraph directed graph. 
+#' }
 split_directed <- function(g) {
   recip_idx <- reciprocated_edges(g)
   return(
     list(
-      gudir=igraph::as.undirected(
-        igraph::subgraph.edges(g, igraph::E(g)[recip_idx], delete.vertices=FALSE), mode="collapse"),
-      gdir=igraph::subgraph.edges(g, igraph::E(g)[!recip_idx], delete.vertices=FALSE)
+      gudir = igraph::as.undirected(
+        igraph::subgraph.edges(
+          g, 
+          igraph::E(g)[recip_idx], 
+          delete.vertices = FALSE
+        ), mode = "collapse"
+      ),
+      gdir = igraph::subgraph.edges(
+        g, 
+        igraph::E(g)[!recip_idx], 
+        delete.vertices = FALSE
+      )
     )
   )
 }
