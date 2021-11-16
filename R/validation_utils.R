@@ -110,7 +110,16 @@ balance_vertices <- function(g1, g2) {
   return(list(g1, g2))
 }
 
+# TODO: need to test this function, maybe change warning to message
 #' Balance number of vertices in structural zeros graph
+#' 
+#' @section Errors: 
+#' Raises an error if the structural zeros graph has more than the inputted
+#' number of vertices. 
+#' 
+#' @section Warnings: 
+#' Raises warning if vertices need to be added to the structural
+#' zeros graph. 
 #' 
 #' @param g igraph graph object, represents structural zeros graph
 #' @param n integer, the number of vertices \code{g} should have
@@ -121,7 +130,7 @@ validate_zeros_graph_order <- function(g, n, type){
   nsz <- igraph::vcount(g)
   
   if (nsz < n){
-    # TODO: add warning
+    warning(sub("graphtype", type, "Adding vertices to the graphtype structural zeros graph"))
     g <- igraph::add_vertices(g, n - nsz)
   } else if (nsz > n){
     stop(sub("graphtype", type, "The inputted structural zeros graphtype graph has more vertices than the inputted graphtype graph."))
