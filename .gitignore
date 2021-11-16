@@ -30,6 +30,8 @@ docker-compose.yml
 .rstudio/
 kitematic/
 *.Rproj
+*.pdf
+.config
 
 # produced vignettes
 vignettes/*.html
@@ -54,4 +56,7 @@ docs/
 
 # other
 dev_*
-env_config/*
+env_config
+scratch_files
+.bash_history
+.cache
