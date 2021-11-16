@@ -1,12 +1,19 @@
-#' reverses the direction of an edge list
+#' Reverses the direction a directed path
 #' 
-#' Takes a list of edges and connects connects the head of each to the
-#' head of the previous edge.
+#' @description
+#' Takes a list of edges and connects the head of each to the
+#' tail of the previous edge.
 #' 
-#' This set of edges is obtained by joining the head of e[i+1] with the tail 
-#' of e[i] for i through m-1 and joining the tail of e[1] with the head of e[m]
+#' @details
+#' This set of edges is obtained by joining the head of \eqn{e[i+1]}
+#' with the tail of \eqn{e[i]} for \eqn{i} through \eqn{m-1} and joining 
+#' the tail of \eqn{e[1]} with the head of \eqn{e[m]}. 
 #' 
-#' @param g igraph graph object from where the edges came from
+#' The edges in \code{edges} must be from \code{g}. 
+#' 
+#' @seealso \code{\link{bipartite_walk}}
+#' 
+#' @param g igraph graph object from which \code{edges} came from
 #' @param edges graph.es object, edge sequence from g
 #' 
 #' @return list
@@ -27,25 +34,22 @@ reverse_walk <- function(g, edges) {
   return(new_edges)
 }
 
-#' wrapper for reverse_walk
+#' Wrapper for reverse_walk
 #' 
-#' Takes a list of edges and calls \code{reverse_walk}. If the subgraph induced by
-#' the resulting edges contains loops or multi-edges, this function returns NULL.
-#' If the resulting subgraph contains a structural zero, this function returns NULL.
+#' Applies \code{reverse_walk} and converts output to igraph graph and checks for simplicity.
 #' 
-#' @section Details
+#' @details
+#' Takes a list of edges and calls \code{reverse_walk}. 
 #' 
-#' The edgelist passed to this function is always directed. However the graph representing
-#' the structural zeros graph (\code{zeros.graph} argument) can be directed or undirected. 
-#' When this graph is undirected, the edges in the graph represent bidirected edges in the 
-#' main graph. The logic for determining which case is applicable is determined by the calling
-#' function. 
-#' 
+#' This function returns \code{NULL} if the subgraph induced by
+#' the resulting edges contains loops or multi-edges.
+#'  
+#' @seealso \code{\link{reverse_walk}}
 #' 
 #' @param g igraph graph
-#' @param edges graph.es object, edge sequence from g
+#' @param edges graph.es object representing an edge sequence from g
 #' 
-#' @return list or NULL
+#' @return list or \code{NULL}
 bipartite_walk <- function(g, edges) {
 
   edges_to_add <- reverse_walk(g, edges)

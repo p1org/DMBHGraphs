@@ -168,7 +168,6 @@ validate_p1_wo_recip_move <- function(gcomb, r, b) {
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
-#' @moves list
 #' 
 #' @return boolean
 validate_p1_ed_recip_move <- function(gdir, gudir, moves) {
