@@ -74,3 +74,58 @@ validate_bidirected_graph_part <- function(g, type){
   validate_undirected(g, type)            # check if graph is undirected
   validate_simple(g, type)                # check if graph is simple
 }
+
+
+#' Balance the number of vertices between two graphs
+#' 
+#' @details
+#' Ensures the input graphs have the same order. If
+#' the order is different, vertices are added to the smaller 
+#' graph so they have the same number of vertices.
+#' 
+#' @section: Warnings
+#' Raises warning if orders are unbalanced. 
+#' 
+#' @param g1 igraph graph
+#' @param g2 igraph graph
+#' 
+#' @return List containing the original graphs
+#' but augmented with additional vertices if 
+#' needed. 
+balance_vertices <- function(g1, g2) {
+  
+  n1 <- igraph::vcount(g1)
+  n2 <- igraph::vcount(g2)
+  
+  if (n1 != n2) {
+    warning("Vertex sets unbalanced. Adding vertices to compensate.")
+  }
+  if (n1 > n2) {
+    g2 <- igraph::add_vertices(g2, n1 - n2)
+  }
+  if (n2 > n1) {
+    g1 <- igraph::add_vertices(g1, n2 - n1)
+  }
+  
+  return(list(g1, g2))
+}
+
+#' Balance number of vertices in structural zeros graph
+#' 
+#' @param g igraph graph object, represents structural zeros graph
+#' @param n integer, the number of vertices \code{g} should have
+#' @param type string, describing the graph 
+#' 
+#' @return The original graph augmented with additional vertices. 
+validate_zeros_graph_order <- function(g, n, type){
+  nsz <- igraph::vcount(g)
+  
+  if (nsz < n){
+    # TODO: add warning
+    g <- igraph::add_vertices(g, n - nsz)
+  } else if (nsz > n){
+    stop(sub("graphtype", type, "The inputted structural zeros graphtype graph has more vertices than the inputted graphtype graph."))
+  }
+  
+  return(g)
+}
