@@ -1,36 +1,4 @@
-library(igraph)
 
-
-balance_vertices <- function(g1, g2, message="Warning! Vertex sets unbalanced. Adding vertices to compensate."){
-  
-  n1 <- igraph::vcount(g1)
-  n2 <- igraph::vcount(g2)
-  
-  if (n1 != n2){
-    warning(message)
-  }
-  if (n1 > n2){
-    g2 <- igraph::add_vertices(g2, n1-n2)
-  }
-  if (n2 > n1){
-    g1 <- igraph::add.vertices(g1, n2-n1)
-  }
-  
-  return(list(g1, g2))
-}
-
-# TODO: rename this function to clarify what its validating
-validate_structural_zeros_graph <- function(g, n, type){
-  nsz <- igraph::vcount(g)
-  
-  if (nsz < n){
-    g <- igraph::add_vertices(g, n-nsz)
-  } else if (nsz > n){
-    stop(sub("graphtype", type, "The inputted structural zeros graphtype graph has more vertices than the inputted graphtype graph."))
-  }
-  
-  return(g)
-}
 
 
 structural_zeros_matrix <- function(zeros.dir, zeros.bidir){
@@ -96,13 +64,13 @@ Get.MLE.p1.FW<-function(gdir, gbidir, reciprocation="edge-dependent", zeros.dir=
   
   # Ensure user-specified structural zeros are set
   if (!is.null(zeros.dir)){
-    zeros.dir <- validate_structural_zeros_graph(zeros.dir, n, "directed")
+    zeros.dir <- validate_zeros_graph_order(zeros.dir, n, "directed")
   } else {
     zeros.dir <- igraph::graph.empty(n)
   }
   
   if (!is.null(zeros.bidir)){
-    zeros.bidir <- validate_structural_zeros_graph(zeros.bidir, n, "undirected")
+    zeros.bidir <- validate_zeros_graph_order(zeros.bidir, n, "undirected")
   } else {
     zeros.bidir <- igraph::graph.empty(n, directed=FALSE)
   }

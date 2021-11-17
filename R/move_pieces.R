@@ -1,27 +1,22 @@
-#' samples edge set of a graph
+#' Sample edges of a graph
 #' 
-#' Takes a random sample of edges from a graph. Also has an 
-#' optional parameter to favor small samples with a specified
-#' probability.
-#' 
-#' This parameter is the small.moves.coin which is a numeric
-#' between (0, 1) representing the probability of returning
-#' a small sample, of size between 2 and 4. 
+#' Sample edges of a graph with the option to favor small samples.
 #' 
 #' @param g igraph graph object
-#' @param small.moves.coin numeric in the interval (0, 1)
+#' @param small.moves.coin numeric in the interval (0, 1),
+#' controls the probability of choosing a small sample
 #' 
 #' @return igraph.es
 sample_edges <- function(g, small.moves.coin = NULL) {
 
-    m <- igraph::ecount(g)
+    m <- igraph::ecount(g) # TODO: handle case where m = 0
 
     if (m == 1 || m == 2) {
         subset_size <- m
     } else {
 
         subset_size <- sample(2:m, 1)
-
+        # TODO: need to increase minimum move size because can't have a move with less than 4 vertices
         if (!is.null(small.moves.coin)) {
             if (runif(1) < small.moves.coin) {
                 subset_size <- sample(2:min(m, 4), 1)
@@ -77,22 +72,25 @@ flatten_list <- function(x) {
 }
 
 
-#' returns graph containing new edges to add
+#' Computes edges to add to the move
 #' 
-#' This is effectively a wrapper around bipartite_walk()
+#' Apply \code{bipartite_walk} to a list of edge partitions.
 #' 
+#' @details
 #' Takes a list of edge partitions taken from a graph 
 #' along with the graph itself and applies the \code{bipartite_walk}
-#' function over each set of edges. 
+#' over each set of edges.
 #' 
-#' If none of the results are NULL, the graph whose edges are 
+#' If none of the results are \code{NULL}, the graph whose edges are
 #' the union of all the bipartite walks is returned.
 #' 
 #' @param g igraph graph
-#' @param partitions list of igraph.es objects
-#' @param directed should the new edges be directed
+#' @param partitions list of igraph.es objects of edges from \code{g}
+#' @param directed boolean, should the new edges be directed?
 #' 
-#' @return igraph object or NULL
+#' @return igraph object or \code{NULL}
+#' 
+#' @seealso \code{\link{bipartite_walk}}, \code{\link{recursive_bipartition}}
 get_edges_to_add <- function(g, partitions, directed) {
 
     new_edgelists <- lapply(

@@ -1,10 +1,20 @@
-#' generate a Type 1 move
+# TODO: add @sources to this and other move generators
+#' Generate a Type 1 move
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list(r=igraph.graph, b=igraph.graph) or NULL
+#' @return 
+#' A list with the following elements
+#' \itemize{
+#'  \item \code{r} edges to remove, an undirected igraph graph
+#'  \item \code{b} edges to add, an undirected igraph graph
+#' }
+#' 
+#' Will return \code{NULL} if move is not a simple graph or all partitions are empty. 
+#' 
+#' @seealso \code{\link{get_edges_to_add}}, \code{\link{sample_edges}}
 generate_type_1_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
     directed_skeleton <- igraph::as.directed(gudir, mode = "arbitrary")
@@ -27,13 +37,22 @@ generate_type_1_move <- function(gdir, gudir, small.moves.coin = NULL) {
 }
 
 
-#' generate a Type 2 move
+#' Generate a Type 2 move
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
+#' @return 
+#' A list with the following elements
+#' \itemize{
+#'  \item \code{r} edges to remove, a directed igraph graph
+#'  \item \code{b} edges to add, a directed igraph graph
+#' }
+#' 
+#' Will return \code{NULL} if move is not a simple graph or all partitions are empty. 
+#' 
+#' @seealso \code{\link{get_edges_to_add}}, \code{\link{sample_edges}}
 generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
     r <- sample_edges(gdir, small.moves.coin = small.moves.coin)
@@ -53,14 +72,31 @@ generate_type_2_move <- function(gdir, gudir, small.moves.coin = NULL) {
     return(list(r = r, b = b))
 }
 
-
-#' generate a Type 3 move
+# TODO: add @sources section
+#' Generate a Type 3 move
+#' 
+#' Apply a composition of Type 1 and Type 2 moves
+#' 
+#' This function generates both Type 1 and Type 2 moves. The Type 1 move is first generated
+#' then applied, followed by the Type 2 move to ensure valid moves are not
+#' rejected due to the addition of conflicting edges. 
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param small.moves.coin optional, numeric between (0, 1)
 #' 
-#' @return list(r_u=igraph.graph (undirected), b_u=igraph.graph (undirected), r_d=igraph.graph (directed), b_d=igraph.graph (directed)) or NULL
+#' @return
+#' A list with the following elements:
+#' \itemize{
+#'  \item \code{r_u}: undirected igraph graph representing Type 1 move
+#'  \item \code{b_u}: undirected igraph graph representing Type 1 move
+#'  \item \code{r_d}: directed igraph graph representing Type 2 move
+#'  \item \code{b_d}: directed igraph graph representing Type 2 move
+#' }
+#' 
+#' This function will return \code{NULL} a move is a multigraph or all edge partitions are empty. 
+#' 
+#' @seealso \code{\link{generate_type_1_move}}, \code{\link{generate_type_2_move}}, \code{\link{get_edges_to_add}}
 generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
 
     type_1_move <- generate_type_1_move(gdir, gudir, small.moves.coin)
@@ -84,13 +120,15 @@ generate_type_3_move <- function(gdir, gudir, small.moves.coin = NULL) {
 }
 
 
-#' applies a Type 1 move
+#' Applies a Type 1 move
 #' 
 #' @param gudir igraph undirected graph
 #' @param r igraph undirected graph
 #' @param b igraph undirected graph
 #' 
-#' @return igraph.graph
+#' @return directed igraph graph
+#' 
+#' @seealso \code{\link{generate_type_1_move}}
 apply_type_1_move <- function(gudir, r, b) {
     igraph::union(
         igraph::difference(gudir, r), b
@@ -98,13 +136,15 @@ apply_type_1_move <- function(gudir, r, b) {
 }
 
 
-#' applies a Type 2 move
+#' Applies a Type 2 move
 #' 
 #' @param gdir igraph directed graph
 #' @param r igraph directed graph
 #' @param b igraph directed graph
 #' 
-#' @return igraph.graph
+#' @return directed igraph graph
+#' 
+#' @seealso \code{\link{generate_type_2_move}}
 apply_type_2_move <- function(gdir, r, b) {
     igraph::union(
         igraph::difference(gdir, r), b
@@ -112,7 +152,7 @@ apply_type_2_move <- function(gdir, r, b) {
 }
 
 
-#' applies a Type 3 move
+#' Applies a Type 3 move
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
@@ -121,7 +161,14 @@ apply_type_2_move <- function(gdir, r, b) {
 #' @param r_d igraph directed graph
 #' @param b_d igraph directed graph
 #' 
-#' @return igraph.graph
+#' @return 
+#' A list containing the following elements
+#' \itemize{
+#'  \item \code{gdir}: a directed igraph graph
+#'  \item \code{gudir}: an undirected igraph graph
+#' }
+#' 
+#' @seealso \code{link{generate_type_3_move}}
 apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
     list(
         gdir = apply_type_2_move(gdir, r_d, b_d),
@@ -130,13 +177,19 @@ apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
 }
 
 
-#' Generates a move for the p1 model w/out reciprocation
+#' Generates a move for the p1 model without reciprocation
+#' 
+#' @details
+#' Combines the directed and undirected component graphs into a single
+#' directed graph before calling \code{generate_type_2_move}
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param small.moves.coin options, numeric between (0,1)
 #' 
 #' @return list(r = igraph.graph (directed), b = igraph.graph (directed) ) or NULL
+#' 
+#' @seealso \code{\link{generate_type_2_move}}
 generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
 
     gcomb <- igraph::union(
@@ -152,9 +205,12 @@ generate_p1_wo_recip_move <- function(gdir, gudir, small.moves.coin=NULL) {
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
 #' @param small.moves.coin optional, numeric between (0, 1)
-#' @param move.type.coin optional, vector of probability weights of length 3
+#' @param move.type.coin optional, vector of probability weights of length 3.
+#' These control the probability of using a Type 1, 2 or 3 move, respectively. 
 #' 
-#' @return list, see generate_type_<n>_move() functions
+#' @return list containing move components
+#' 
+#' @seealso \code{link{generate_type_1_move}}, \code{link{generate_type_2_move}}, \code{link{generate_type_3_move}}
 generate_p1_ed_recip_move <- function(gdir, gudir, small.moves.coin=NULL, move.type.coin=c(1/3,1/3,1/3)) {
     
     move_type <- sample.int(3, 1, prob = move.type.coin)

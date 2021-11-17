@@ -20,8 +20,8 @@ testthat::test_that(
     g1 <- igraph::make_full_graph(n-1)
     g2 <- igraph::make_full_graph(n+1)
     
-    testthat::expect_equal(igraph::vcount(validate_structural_zeros_graph(g1, n, "test_graph")), 5)
-    testthat::expect_error(validate_structural_zeros_graph(g2, n, "test_graph"))
+    testthat::expect_equal(igraph::vcount(validate_zeros_graph_order(g1, n, "test_graph")), 5)
+    testthat::expect_error(validate_zeros_graph_order(g2, n, "test_graph"))
     
     
   }
