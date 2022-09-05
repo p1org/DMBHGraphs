@@ -156,10 +156,10 @@ apply_type_2_move <- function(gdir, r, b) {
 #' 
 #' @param gdir igraph directed graph
 #' @param gudir igraph undirected graph
-#' @param r_u igraph undirected graph
-#' @param b_u igraph undirected graph
 #' @param r_d igraph directed graph
 #' @param b_d igraph directed graph
+#' @param r_u igraph undirected graph
+#' @param b_u igraph undirected graph
 #' 
 #' @return 
 #' A list containing the following elements
@@ -169,7 +169,7 @@ apply_type_2_move <- function(gdir, r, b) {
 #' }
 #' 
 #' @seealso \code{link{generate_type_3_move}}
-apply_type_3_move <- function(gdir, gudir, r_d, b_r, r_u, b_u) {
+apply_type_3_move <- function(gdir, gudir, r_d, b_d, r_u, b_u) {
     list(
         gdir = apply_type_2_move(gdir, r_d, b_d),
         gudir = apply_type_1_move(gudir, r_u, b_u)
